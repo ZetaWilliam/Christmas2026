@@ -232,7 +232,7 @@
         <div class="bg-white/90 p-3.5 rounded-xl border border-pine/10 shadow-sm hover:border-gold transition">
           <div class="text-xl sm:text-2xl mb-1">📅</div>
           <div class="text-[11px] font-bold uppercase tracking-wider text-cranberry">Date</div>
-          <div class="font-serif font-bold text-pine text-sm sm:text-base">Wednesday</div>
+          <div class="font-serif font-bold text-pine text-sm sm:text-base">Tuesday</div>
           <div class="text-xs text-pine/70">9 Dec 2026</div>
         </div>
 
@@ -948,3 +948,242 @@
       document.getElementById('statTotalRsvps').textContent = list.length;
       document.getElementById('statEscapeRooms').textContent = escapeCount;
       document.getElementById('statLoungeOnly').textContent = loungeCount;
+      document.getElementById('statSpecialDiets').textContent = specialDietCount;
+    }
+
+    function exportToCsv() {
+      const list = cloudRoster;
+      if (!list.length) {
+        alert("No reservations to export.");
+        return;
+      }
+
+      let csv = "Preferred Name,Full Name,Email,Affiliation,Escape Room,Dietary Requirements,Comments\r\n";
+      list.forEach(r => {
+        const row = [
+          `"${(r.preferredName || '').replace(/"/g, '""')}"`,
+          `"${(r.fullName || '').replace(/"/g, '""')}"`,
+          `"${(r.email || '').replace(/"/g, '""')}"`,
+          `"${(r.affiliation || '').replace(/"/g, '""')}"`,
+          `"${(r.escapeRoom || '').replace(/"/g, '""')}"`,
+          `"${(r.dietary || '').replace(/"/g, '""')}"`,
+          `"${(r.comments || '').replace(/"/g, '""')}"`
+        ];
+        csv += row.join(",") + "\r\n";
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `UoA_Pharmacology_Christmas_RSVP_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    let latestRegistration = null;
+
+    async function handleFormSubmit(e) {
+      e.preventDefault();
+
+      const preferredName = document.getElementById('preferredName').value.trim();
+      const fullName = document.getElementById('fullName').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const affiliation = document.getElementById('affiliation').value;
+      const escapeRoom = document.querySelector('input[name="escapeRoom"]:checked')?.value || "Yes";
+
+      const selectedDiets = Array.from(document.querySelectorAll('input[name="diet"]:checked')).map(cb => cb.value);
+      const notes = document.getElementById('dietaryNotes').value.trim();
+      if (notes) selectedDiets.push(notes);
+      const dietary = selectedDiets.length ? selectedDiets.join(", ") : "None";
+
+      const comments = document.getElementById('comments').value.trim();
+
+      const record = {
+        preferredName,
+        fullName,
+        email,
+        affiliation,
+        escapeRoom,
+        dietary,
+        comments,
+        timestamp: new Date().toISOString()
+      };
+
+      const submitBtn = document.getElementById('submitBtn');
+      const originalBtnHtml = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>Saving RSVP...</span>';
+
+      try {
+        const response = await fetch('/api/rsvps', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(record)
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Unable to save RSVP.');
+      } catch (err) {
+        alert(err.message);
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnHtml;
+        return;
+      }
+
+      latestRegistration = record;
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalBtnHtml;
+
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#0D3025', '#C0362C', '#D4AF37', '#ffffff']
+        });
+      }
+
+      document.getElementById('ticketAttendeeName').textContent = `${preferredName} (${fullName})`;
+      document.getElementById('ticketRole').textContent = `${affiliation} • UoA Pharmacology`;
+      document.getElementById('ticketEscapePref').textContent = escapeRoom === 'Yes' ? '🕵️ Escape Room' : '🍕 Lounge Only';
+      document.getElementById('ticketDiet').textContent = dietary;
+
+      const qrTarget = document.getElementById('ticketQr');
+      qrTarget.innerHTML = '';
+      if (typeof QRCode !== 'undefined') {
+        new QRCode(qrTarget, {
+          text: `UOA-PHARM-2026:${email}:${preferredName}`,
+          width: 64,
+          height: 64,
+          colorDark: "#0D3025",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      }
+
+      const modal = document.getElementById('successModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+
+      document.getElementById('rsvpForm').reset();
+    }
+
+    function closeSuccessModal() {
+      document.getElementById('successModal').classList.add('hidden');
+      document.getElementById('successModal').classList.remove('flex');
+    }
+
+    function downloadIcsFile() {
+      const icsData = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//University of Auckland//Pharmacology Christmas 2026//EN",
+        "CALSCALE:GREGORIAN",
+        "METHOD:PUBLISH",
+        "BEGIN:VEVENT",
+        "UID:uoa-pharm-xmas-2026@auckland.ac.nz",
+        "SUMMARY:UoA Pharmacology End of Year Christmas Party",
+        "DESCRIPTION:Join the Department of Pharmacology and Clinical Pharmacology for escape rooms, pizza, and holiday celebrations! Please arrive at 11:00 AM for check-in and locker storage.",
+        "LOCATION:Escapade NZ, Level 1, 23 Victoria Street East, Auckland CBD 1010",
+        "DTSTART:20261208T220000Z",
+        "DTEND:20261209T010000Z",
+        "STATUS:CONFIRMED",
+        "END:VEVENT",
+        "END:VCALENDAR"
+      ].join("\r\n");
+
+      const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = "UoA_Pharmacology_Christmas_Party_2026.ics";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // 微粒动画
+    const canvas = document.getElementById('particle-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    let sparklesActive = true;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    class Particle {
+      constructor() {
+        this.reset();
+      }
+      reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * -canvas.height;
+        this.size = Math.random() * 2.8 + 1.2;
+        this.speedY = Math.random() * 0.7 + 0.4;
+        this.speedX = (Math.random() - 0.5) * 0.4;
+        this.color = Math.random() > 0.4 ? 'rgba(212, 175, 55, ' : 'rgba(243, 229, 171, ';
+        this.alpha = Math.random() * 0.6 + 0.2;
+        this.pulse = Math.random() * 0.02 + 0.01;
+      }
+      update() {
+        this.y += this.speedY;
+        this.x += this.speedX;
+        this.alpha += Math.sin(this.y * 0.05) * this.pulse;
+        if (this.y > canvas.height) {
+          this.reset();
+          this.y = 0;
+        }
+      }
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = this.color + Math.max(0.1, Math.min(0.8, this.alpha)) + ')';
+        ctx.fill();
+      }
+    }
+
+    for (let i = 0; i < 40; i++) {
+      particles.push(new Particle());
+    }
+
+    function animateSparkles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (sparklesActive) {
+        particles.forEach(p => {
+          p.update();
+          p.draw();
+        });
+      }
+      requestAnimationFrame(animateSparkles);
+    }
+    animateSparkles();
+
+    document.getElementById('toggleSparklesBtn').addEventListener('click', () => {
+      sparklesActive = !sparklesActive;
+      const btn = document.getElementById('toggleSparklesBtn');
+      if (sparklesActive) {
+        btn.classList.add('text-gold');
+        btn.classList.remove('opacity-50');
+      } else {
+        btn.classList.remove('text-gold');
+        btn.classList.add('opacity-50');
+      }
+    });
+  </script>
+</body>
+</html>
