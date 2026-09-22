@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pharmacology End of Year Christmas Party 2026 | University of Auckland</title>
+  <meta name="description" content="Official RSVP for the University of Auckland Department of Pharmacology and Clinical Pharmacology End of Year Christmas Party at Escapade NZ on Wednesday, 9 Dec 2026.">
+  
+  <!-- Google Fonts: Playfair Display, Outfit & Caveat -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Canvas Confetti CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- QRCode.js CDN for live ticket generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            pine: '#0D3025',
+            'pine-light': '#164839',
+            cranberry: '#C0362C',
+            'cranberry-dark': '#9A241B',
+            gold: '#D4AF37',
+            'gold-light': '#F3E5AB',
+            parchment: '#FAF7F2',
+            sand: '#F2EDE4'
+          },
+          fontFamily: {
+            serif: ['"Playfair Display"', 'Georgia', 'serif'],
+            sans: ['"Outfit"', 'system-ui', 'sans-serif'],
+            handwriting: ['"Caveat"', 'cursive']
+          },
+          keyframes: {
+            floatRow: {
+              '0%, 100%': { transform: 'translateX(0px) translateY(0px) rotate(0deg)' },
+              '50%': { transform: 'translateX(18px) translateY(-5px) rotate(1.5deg)' }
+            },
+            paddleStroke: {
+              '0%, 100%': { transform: 'rotate(-12deg)' },
+              '50%': { transform: 'rotate(12deg)' }
+            },
+            bellSwing: {
+              '0%, 100%': { transform: 'rotate(0deg)' },
+              '20%': { transform: 'rotate(9deg)' },
+              '40%': { transform: 'rotate(-9deg)' },
+              '60%': { transform: 'rotate(4deg)' },
+              '80%': { transform: 'rotate(-4deg)' }
+            },
+            lightsPulse: {
+              '0%, 100%': { opacity: '0.9', filter: 'drop-shadow(0 0 4px #D4AF37)' },
+              '50%': { opacity: '0.45', filter: 'drop-shadow(0 0 1px #D4AF37)' }
+            }
+          },
+          animation: {
+            rower: 'floatRow 6s ease-in-out infinite',
+            paddle: 'paddleStroke 3s ease-in-out infinite',
+            bell: 'bellSwing 4s ease-in-out infinite',
+            fairyLights: 'lightsPulse 2.5s ease-in-out infinite'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    .bg-holiday-pattern {
+      background-color: #FAF7F2;
+      background-image: radial-gradient(rgba(212, 175, 55, 0.12) 1px, transparent 0);
+      background-size: 28px 28px;
+    }
+    #particle-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 40;
+    }
+  </style>
+</head>
+<body class="bg-holiday-pattern text-[#222222] font-sans antialiased selection:bg-cranberry selection:text-white relative">
+
+  <!-- 背景夏日闪烁微粒 Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- 圣诞元素 1: 顶部微光彩灯链 -->
+  <div class="fixed top-0 left-0 right-0 z-50 pointer-events-none overflow-hidden h-7">
+    <svg class="w-full h-full animate-fairyLights" preserveAspectRatio="none" viewBox="0 0 1200 24" fill="none">
+      <path d="M0,4 Q100,16 200,4 Q300,16 400,4 Q500,16 600,4 Q700,16 800,4 Q900,16 1000,4 Q1100,16 1200,4" stroke="#D4AF37" stroke-width="1.2" opacity="0.6"/>
+      <circle cx="100" cy="15" r="4.5" fill="#C0362C"/>
+      <circle cx="200" cy="5" r="3.5" fill="#D4AF37"/>
+      <circle cx="300" cy="15" r="4.5" fill="#164839"/>
+      <circle cx="400" cy="5" r="3.5" fill="#C0362C"/>
+      <circle cx="500" cy="15" r="4.5" fill="#D4AF37"/>
+      <circle cx="600" cy="5" r="3.5" fill="#164839"/>
+      <circle cx="700" cy="15" r="4.5" fill="#C0362C"/>
+      <circle cx="800" cy="5" r="3.5" fill="#D4AF37"/>
+      <circle cx="900" cy="15" r="4.5" fill="#164839"/>
+      <circle cx="1000" cy="5" r="3.5" fill="#C0362C"/>
+      <circle cx="1100" cy="15" r="4.5" fill="#D4AF37"/>
+    </svg>
+  </div>
+
+  <!-- 顶部导航栏 -->
+  <header class="sticky top-0 z-30 bg-pine/95 backdrop-blur-md text-white border-b border-gold/30 shadow-md">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <a href="#" class="flex items-center space-x-2.5 group">
+        <span class="text-xl">🎄</span>
+        <div class="leading-tight">
+          <div class="text-xs uppercase tracking-wider text-gold font-semibold">University of Auckland</div>
+          <div class="text-sm font-serif font-bold text-white group-hover:text-gold transition">Pharmacology End of Year</div>
+        </div>
+      </a>
+
+      <nav class="hidden md:flex items-center space-x-7 text-sm font-medium">
+        <a href="#about" class="text-white/80 hover:text-gold transition">About</a>
+        <a href="#schedule" class="text-white/80 hover:text-gold transition">Schedule</a>
+        <a href="#venue" class="text-white/80 hover:text-gold transition">Venue & Guidelines</a>
+        <a href="#rsvp" class="text-white/80 hover:text-gold transition">RSVP</a>
+      </nav>
+
+      <div class="flex items-center space-x-3">
+        <button id="toggleSparklesBtn" title="Toggle summer sparkles" class="p-2 rounded-full bg-pine-light border border-gold/40 text-gold hover:bg-gold hover:text-pine transition text-xs flex items-center space-x-1">
+          <span>✨</span>
+          <span class="hidden sm:inline text-xs font-semibold">Sparkles</span>
+        </button>
+
+        <a href="#rsvp" class="bg-cranberry hover:bg-cranberry-dark text-white text-xs sm:text-sm font-semibold px-4 py-2 rounded-full shadow-lg border border-gold/40 hover:scale-105 transition flex items-center space-x-1">
+          <span>RSVP Now</span>
+          <span>&rarr;</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero 区域：奥克兰海湾天际线与划独木舟的夏季圣诞老人 -->
+  <section id="about" class="relative pt-12 pb-20 md:pt-16 md:pb-28 overflow-hidden bg-gradient-to-b from-[#E7F0EB] via-sand to-parchment">
+    
+    <div class="absolute inset-x-0 bottom-0 h-64 pointer-events-none opacity-45 overflow-hidden">
+      <!-- 天空塔与城市剪影 -->
+      <svg class="absolute bottom-10 right-8 sm:right-24 w-64 h-48 opacity-25" viewBox="0 0 200 160" fill="#0D3025">
+        <rect x="70" y="20" width="4" height="120"/>
+        <path d="M66,60 L78,60 L74,75 L68,75 Z"/>
+        <rect x="71" y="0" width="2" height="25"/>
+        <rect x="20" y="80" width="24" height="60"/>
+        <rect x="48" y="95" width="18" height="45"/>
+        <rect x="80" y="70" width="30" height="70"/>
+        <rect x="115" y="85" width="22" height="55"/>
+        <rect x="142" y="90" width="35" height="50"/>
+      </svg>
+
+      <!-- 海湾水波 -->
+      <svg class="absolute bottom-0 w-[200%] h-16 animate-[floatRow_12s_ease-in-out_infinite]" viewBox="0 0 1200 48" fill="#164839" opacity="0.35">
+        <path d="M0,24 C150,38 350,10 500,24 C650,38 850,10 1000,24 C1150,38 1350,10 1500,24 L1500,48 L0,48 Z"/>
+      </svg>
+      <svg class="absolute bottom-0 w-[200%] h-12" viewBox="0 0 1200 48" fill="#0D3025" opacity="0.2">
+        <path d="M0,16 C200,32 400,0 600,16 C800,32 1000,0 1200,16 L1200,48 L0,48 Z"/>
+      </svg>
+
+      <!-- 划独木舟的夏季圣诞老人 -->
+      <div class="absolute bottom-4 left-6 sm:left-24 animate-rower">
+        <svg width="150" height="85" viewBox="0 0 160 90" fill="none" class="filter drop-shadow-md">
+          <path d="M10,65 C45,72 120,72 155,62 C135,76 35,76 10,65 Z" fill="#C0362C"/>
+          <path d="M15,64 L150,62" stroke="#D4AF37" stroke-width="1.8"/>
+          <circle cx="85" cy="28" r="11" fill="#FFDFC4"/>
+          <path d="M75,26 C75,14 96,12 96,25 Z" fill="#C0362C"/>
+          <rect x="74" y="24" width="23" height="4" rx="2" fill="#FFFFFF"/>
+          <circle cx="98" cy="18" r="3.5" fill="#FFFFFF"/>
+          <path d="M85,27 L95,27" stroke="#111111" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M78,32 C78,44 95,44 95,32 Z" fill="#FFFFFF"/>
+          <path d="M74,40 C74,56 96,56 96,40 Z" fill="#C0362C"/>
+          <circle cx="75" cy="50" r="3" fill="#FFDFC4"/>
+          <circle cx="95" cy="48" r="3" fill="#FFDFC4"/>
+          <g class="animate-paddle" style="transform-origin: 85px 48px;">
+            <line x1="42" y1="28" x2="128" y2="68" stroke="#D4AF37" stroke-width="3" stroke-linecap="round"/>
+            <ellipse cx="40" cy="26" rx="8" ry="4" transform="rotate(-30 40 26)" fill="#164839"/>
+            <ellipse cx="130" cy="70" rx="8" ry="4" transform="rotate(-30 130 70)" fill="#164839"/>
+          </g>
+          <path d="M2,68 Q15,64 28,68" stroke="#ffffff" stroke-width="2" opacity="0.75" stroke-linecap="round"/>
+          <path d="M135,66 Q148,63 158,66" stroke="#ffffff" stroke-width="1.5" opacity="0.6" stroke-linecap="round"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="relative max-w-4xl mx-auto px-4 sm:px-6 text-center">
+      
+      <div class="inline-flex items-center space-x-2 bg-white/80 border border-gold/40 px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold uppercase tracking-widest text-pine mb-5 shadow-sm">
+        <span>🎄</span>
+        <span>You're Invited To Our Annual Gathering</span>
+        <span>🎄</span>
+      </div>
+
+      <!-- 圣诞元素 2: 金色铃铛与摇摆动画 -->
+      <div class="flex justify-center -mb-2">
+        <svg class="w-12 h-12 animate-bell" viewBox="0 0 64 64" fill="none">
+          <path d="M32,16 C25,8 18,18 30,22 C32,18 32,18 32,16 Z" fill="#C0362C"/>
+          <path d="M32,16 C39,8 46,18 34,22 C32,18 32,18 32,16 Z" fill="#C0362C"/>
+          <circle cx="32" cy="18" r="3.5" fill="#D4AF37"/>
+          <path d="M22,25 C22,20 28,18 30,24 L34,36 C35,40 20,40 22,25 Z" fill="#D4AF37"/>
+          <path d="M42,25 C42,20 36,18 34,24 L30,36 C29,40 44,40 42,25 Z" fill="#F3E5AB"/>
+          <ellipse cx="27" cy="38" rx="8" ry="2.5" fill="#D4AF37"/>
+          <ellipse cx="37" cy="38" rx="8" ry="2.5" fill="#D4AF37"/>
+          <circle cx="27" cy="40" r="2" fill="#9A241B"/>
+          <circle cx="37" cy="40" r="2" fill="#9A241B"/>
+        </svg>
+      </div>
+
+      <h1 class="font-serif text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight text-pine uppercase mb-2">
+        End of Year
+      </h1>
+      <h2 class="font-serif text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-cranberry uppercase mb-4 drop-shadow-sm">
+        Christmas Party
+      </h2>
+
+      <p class="text-xs sm:text-base tracking-[0.22em] uppercase font-semibold text-pine/80 mb-6">
+        Games &bull; Pizza &bull; Good Company
+      </p>
+
+      <p class="max-w-2xl mx-auto text-base sm:text-lg text-pine/90 leading-relaxed font-normal mb-8">
+        Join us for escape rooms, pizza, and time to celebrate another productive year together across our department!
+      </p>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 max-w-3xl mx-auto mb-10 text-left">
+        <div class="bg-white/90 p-3.5 rounded-xl border border-pine/10 shadow-sm hover:border-gold transition">
+          <div class="text-xl sm:text-2xl mb-1">📅</div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-cranberry">Date</div>
+          <div class="font-serif font-bold text-pine text-sm sm:text-base">Tuesday</div>
+          <div class="text-xs text-pine/70">9 Dec 2026</div>
+        </div>
+
+        <div class="bg-white/90 p-3.5 rounded-xl border border-pine/10 shadow-sm hover:border-gold transition">
+          <div class="text-xl sm:text-2xl mb-1">⏰</div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-cranberry">Time</div>
+          <div class="font-serif font-bold text-pine text-sm sm:text-base">11am &ndash; 2pm</div>
+          <div class="text-xs text-pine/70">NZDT</div>
+        </div>
+
+        <div class="bg-white/90 p-3.5 rounded-xl border border-pine/10 shadow-sm hover:border-gold transition">
+          <div class="text-xl sm:text-2xl mb-1">📍</div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-cranberry">Location</div>
+          <div class="font-serif font-bold text-pine text-sm sm:text-base leading-tight">Escapade NZ</div>
+          <div class="text-[11px] text-pine/70 leading-tight">23 Victoria St East</div>
+        </div>
+
+        <div class="bg-white/90 p-3.5 rounded-xl border border-pine/10 shadow-sm hover:border-gold transition">
+          <div class="text-xl sm:text-2xl mb-1">🍕</div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-cranberry">Catering</div>
+          <div class="font-serif font-bold text-pine text-sm sm:text-base">Pizza Provided</div>
+          <div class="text-[11px] text-pine/70 leading-tight">Drinks at licensed bar</div>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <a href="#rsvp" class="w-full sm:w-auto inline-flex items-center justify-center space-x-2 bg-cranberry hover:bg-cranberry-dark text-white font-bold text-base px-8 py-3.5 rounded-full shadow-lg shadow-cranberry/30 hover:scale-105 transition transform">
+          <span>RSVP NOW</span>
+          <span>&rarr;</span>
+        </a>
+        <a href="#schedule" class="w-full sm:w-auto inline-flex items-center justify-center space-x-1.5 bg-white/90 hover:bg-white text-pine font-semibold text-sm px-6 py-3.5 rounded-full border border-pine/15 hover:border-gold transition">
+          <span>View Programme</span>
+          <span>&darr;</span>
+        </a>
+      </div>
+
+      <p class="text-xs text-pine/70 mt-3 italic">
+        Please RSVP with your dietary requirements (vegetarian, allergies, etc.) by Friday, 27 November.
+      </p>
+
+    </div>
+  </section>
+
+  <!-- 活动流程安排 -->
+  <section id="schedule" class="py-16 sm:py-20 bg-sand/60 border-y border-pine/10">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6">
+      <div class="text-center mb-12">
+        
+        <!-- 圣诞元素 3: 冬青枝叶与红浆果 -->
+        <div class="inline-flex items-center justify-center mb-1.5">
+          <svg class="w-10 h-6" viewBox="0 0 40 24" fill="none">
+            <path d="M20,12 C14,6 4,10 6,18 C12,18 16,14 20,12 Z" fill="#164839"/>
+            <path d="M20,12 C26,6 36,10 34,18 C28,18 24,14 20,12 Z" fill="#0D3025"/>
+            <circle cx="18" cy="14" r="3" fill="#C0362C"/>
+            <circle cx="23" cy="14" r="2.8" fill="#9A241B"/>
+            <circle cx="20.5" cy="10" r="2.6" fill="#D4AF37"/>
+          </svg>
+        </div>
+
+        <div class="text-xs uppercase tracking-widest font-bold text-cranberry mb-1">Wednesday, 9 December 2026</div>
+        <h2 class="font-serif text-3xl sm:text-4xl font-bold text-pine">Programme of Events</h2>
+        <p class="text-pine/70 text-sm max-w-lg mx-auto mt-2">
+          Dedicated time to solve puzzles, capture department photos, and enjoy lunch together.
+        </p>
+      </div>
+
+      <div class="relative border-l-2 border-gold/50 ml-4 sm:ml-32 pl-6 sm:pl-10 space-y-9">
+
+        <!-- 11:00 AM -->
+        <div class="relative group">
+          <div class="absolute -left-[31px] sm:-left-[47px] top-1 w-6 h-6 rounded-full bg-pine border-4 border-parchment flex items-center justify-center text-white text-[10px]">
+            ✓
+          </div>
+          <span class="sm:absolute sm:-left-32 top-0.5 inline-block text-xs font-bold text-cranberry uppercase tracking-wide">
+            11:00 AM
+          </span>
+          <div class="bg-white p-4 sm:p-5 rounded-xl border border-pine/10 shadow-sm group-hover:border-gold transition">
+            <h3 class="font-serif font-bold text-pine text-base sm:text-lg">Arrival, Check-in & Team Briefing</h3>
+            <p class="text-sm text-pine/80 leading-relaxed mt-1">
+              Arrive at Escapade NZ (Level 1). Store your belongings in complimentary secure lockers, meet fellow colleagues, and receive team room assignments and game instructions.
+            </p>
+          </div>
+        </div>
+
+        <!-- 11:30 AM -->
+        <div class="relative group">
+          <div class="absolute -left-[31px] sm:-left-[47px] top-1 w-6 h-6 rounded-full bg-cranberry border-4 border-parchment flex items-center justify-center text-white text-[10px]">
+            ★
+          </div>
+          <span class="sm:absolute sm:-left-32 top-0.5 inline-block text-xs font-bold text-cranberry uppercase tracking-wide">
+            11:30 AM
+          </span>
+          <div class="bg-white p-4 sm:p-5 rounded-xl border border-pine/10 shadow-sm group-hover:border-gold transition">
+            <h3 class="font-serif font-bold text-pine text-base sm:text-lg">Escape Room Challenges (60 Mins)</h3>
+            <p class="text-sm text-pine/80 leading-relaxed mt-1">
+              60 minutes on the clock! Teams head into their assigned mystery rooms. Colleagues choosing the social track can relax and grab a drink in the licensed lounge.
+            </p>
+          </div>
+        </div>
+
+        <!-- 12:45 PM -->
+        <div class="relative group">
+          <div class="absolute -left-[31px] sm:-left-[47px] top-1 w-6 h-6 rounded-full bg-gold border-4 border-parchment flex items-center justify-center text-pine text-[10px]">
+            📸
+          </div>
+          <span class="sm:absolute sm:-left-32 top-0.5 inline-block text-xs font-bold text-cranberry uppercase tracking-wide">
+            12:45 PM
+          </span>
+          <div class="bg-white p-4 sm:p-5 rounded-xl border border-pine/10 shadow-sm group-hover:border-gold transition">
+            <h3 class="font-serif font-bold text-pine text-base sm:text-lg">Room Debrief & Department Photo</h3>
+            <p class="text-sm text-pine/80 leading-relaxed mt-1">
+              Rooms finish, scores are revealed, and teams gather together in the main lounge area for the annual end-of-year department group photo.
+            </p>
+          </div>
+        </div>
+
+        <!-- 12:50 PM -->
+        <div class="relative group">
+          <div class="absolute -left-[31px] sm:-left-[47px] top-1 w-6 h-6 rounded-full bg-pine border-4 border-parchment flex items-center justify-center text-white text-[10px]">
+            🍕
+          </div>
+          <span class="sm:absolute sm:-left-32 top-0.5 inline-block text-xs font-bold text-cranberry uppercase tracking-wide">
+            12:50 PM
+          </span>
+          <div class="bg-white p-4 sm:p-5 rounded-xl border border-pine/10 shadow-sm group-hover:border-gold transition">
+            <h3 class="font-serif font-bold text-pine text-base sm:text-lg">Pizza & Social Time</h3>
+            <p class="text-sm text-pine/80 leading-relaxed mt-1">
+              Assorted hot pizzas served catering to all noted dietary needs. Drinks are available for purchase directly at the licensed lounge bar.
+            </p>
+          </div>
+        </div>
+
+        <!-- 1:45 PM -->
+        <div class="relative group">
+          <div class="absolute -left-[31px] sm:-left-[47px] top-1 w-6 h-6 rounded-full bg-pine border-4 border-parchment flex items-center justify-center text-white text-[10px]">
+            🎁
+          </div>
+          <span class="sm:absolute sm:-left-32 top-0.5 inline-block text-xs font-bold text-cranberry uppercase tracking-wide">
+            1:45 PM
+          </span>
+          <div class="bg-white p-4 sm:p-5 rounded-xl border border-pine/10 shadow-sm group-hover:border-gold transition">
+            <h3 class="font-serif font-bold text-pine text-base sm:text-lg">Closing Remarks & Holiday Wishes</h3>
+            <p class="text-sm text-pine/80 leading-relaxed mt-1">
+              Brief words from department leadership thanking everyone for their dedication throughout 2026, followed by holiday greetings before we wrap up at 2:00 PM.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- 场地指南与须知 -->
+  <section id="venue" class="py-16 sm:py-20 bg-parchment">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6">
+      <div class="text-center mb-12">
+        
+        <!-- 圣诞元素 4: 圣诞花与红金吊饰 -->
+        <div class="inline-flex items-center justify-center space-x-2 mb-1">
+          <svg class="w-8 h-8" viewBox="0 0 36 36" fill="none">
+            <circle cx="18" cy="18" r="6" fill="#C0362C"/>
+            <path d="M18,4 L18,12 M18,24 L18,32 M4,18 L12,18 M24,18 L32,18 M8,8 L14,14 M22,22 L28,28 M28,8 L22,14 M14,22 L8,28" stroke="#C0362C" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="18" cy="4" r="2" fill="#D4AF37"/>
+            <circle cx="18" cy="32" r="2" fill="#D4AF37"/>
+            <circle cx="4" cy="18" r="2" fill="#D4AF37"/>
+            <circle cx="32" cy="18" r="2" fill="#D4AF37"/>
+          </svg>
+          <span class="text-xs uppercase tracking-widest font-bold text-cranberry">Venue & Guidelines</span>
+        </div>
+
+        <h2 class="font-serif text-3xl sm:text-4xl font-bold text-pine">Escapade NZ Auckland Central</h2>
+        <p class="text-sm text-pine/75 max-w-xl mx-auto mt-2">
+          Venue guidelines and key details for group reservations.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- 地址与交通 -->
+        <div class="bg-white p-6 rounded-2xl border border-pine/10 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="w-10 h-10 rounded-full bg-pine/10 text-pine flex items-center justify-center text-lg mb-4">
+              📍
+            </div>
+            <h3 class="font-serif font-bold text-pine text-lg mb-2">Location & Transit</h3>
+            <p class="text-sm text-pine/80 leading-relaxed mb-3">
+              <strong>Level 1, 23 Victoria Street East</strong><br>
+              Auckland CBD 1010<br>
+              <span class="text-xs text-pine/60">(Corner of Lorne Street & Victoria St East)</span>
+            </p>
+            <ul class="text-xs text-pine/70 space-y-1.5 list-disc pl-4 mb-4">
+              <li>10-min walk from Grafton Campus or quick 24B/70 bus.</li>
+              <li>Close to Britomart Station & Queen St bus corridors.</li>
+              <li>Nearby parking available at Victoria St Carpark (Civic).</li>
+            </ul>
+          </div>
+          <a href="https://maps.google.com/?q=Escapade+NZ+23+Victoria+Street+East+Auckland" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center space-x-1 text-xs font-semibold text-cranberry hover:text-cranberry-dark border border-cranberry/30 hover:border-cranberry py-2 px-3 rounded-lg transition">
+            <span>Open in Google Maps &rarr;</span>
+          </a>
+        </div>
+
+        <!-- 酒水执照与规则 -->
+        <div class="bg-white p-6 rounded-2xl border border-pine/10 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="w-10 h-10 rounded-full bg-cranberry/10 text-cranberry flex items-center justify-center text-lg mb-4">
+              🍹
+            </div>
+            <h3 class="font-serif font-bold text-pine text-lg mb-2">Licensed Bar & Rules</h3>
+            <p class="text-sm text-pine/80 leading-relaxed mb-3">
+              Escapade operates a fully licensed lounge bar offering craft beer, wine, cider, and non-alcoholic options.
+            </p>
+            <div class="bg-sand/70 p-3 rounded-lg border border-pine/5 text-xs text-pine/85 space-y-1.5 mb-4">
+              <p><strong>Strict No-BYO Policy:</strong> Outside alcohol is prohibited by NZ licensing law.</p>
+              <p><strong>Sobriety Policy:</strong> Intoxicated players cannot participate in the escape rooms.</p>
+            </div>
+          </div>
+          <a href="https://escapadenz.co.nz/christmas-parties/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center space-x-1 text-xs font-semibold text-pine hover:text-cranberry border border-pine/20 hover:border-cranberry py-2 px-3 rounded-lg transition">
+            <span>View Escapade Christmas Info &rarr;</span>
+          </a>
+        </div>
+
+        <!-- 储物柜与着装建议 -->
+        <div class="bg-white p-6 rounded-2xl border border-pine/10 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="w-10 h-10 rounded-full bg-gold/20 text-pine flex items-center justify-center text-lg mb-4">
+              👟
+            </div>
+            <h3 class="font-serif font-bold text-pine text-lg mb-2">Comfort & Lockers</h3>
+            <p class="text-sm text-pine/80 leading-relaxed mb-3">
+              Preparation tips for enjoying your escape room experience:
+            </p>
+            <ul class="text-xs text-pine/75 space-y-2 list-disc pl-4 mb-4">
+              <li><strong>Secure Lockers:</strong> Complimentary lockers are provided inside the lounge for bags and jackets.</li>
+              <li><strong>Footwear:</strong> Flat, comfortable footwear is recommended as you will be exploring clues.</li>
+              <li><strong>Team Sizes:</strong> Up to 6 themed rooms accommodate groups from 2 to 6 participants per room.</li>
+            </ul>
+          </div>
+          <div class="text-xs text-pine/60 italic text-center py-2">
+            No intense physical exertion required &mdash; purely observation & puzzle solving!
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 报名表单 -->
+  <section id="rsvp" class="py-16 sm:py-24 bg-gradient-to-b from-parchment to-sand/80 relative">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6">
+      
+      <div class="bg-white rounded-3xl p-6 sm:p-10 border border-pine/10 shadow-xl relative overflow-visible">
+        
+        <!-- 圣诞元素 5（全新升级）: 复古深红火漆印章与烫金双尾丝带 (Embossed Wax Seal) -->
+        <div class="absolute -top-6 right-8 flex flex-col items-center pointer-events-none select-none z-20">
+          <!-- 悬垂丝带分叉 -->
+          <div class="relative w-10 h-4 overflow-hidden -mb-1">
+            <div class="w-4 h-6 bg-cranberry-dark transform -rotate-12 absolute left-1 top-0 shadow-sm"></div>
+            <div class="w-4 h-6 bg-cranberry transform rotate-12 absolute right-1 top-0 shadow-sm"></div>
+          </div>
+          <!-- 火漆圆章体 -->
+          <div class="w-12 h-12 rounded-full bg-gradient-to-br from-cranberry via-cranberry-dark to-[#70130E] flex items-center justify-center shadow-lg border border-gold/50">
+            <!-- 凹凸内印与金色纹路 -->
+            <div class="w-9 h-9 rounded-full border border-gold/70 flex flex-col items-center justify-center text-gold shadow-inner bg-[#801812]/40">
+              <span class="text-xs leading-none">🎄</span>
+              <span class="text-[7px] font-serif font-bold tracking-tight uppercase mt-0.5 text-gold-light">UOA • 26</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-center mb-8">
+          <span class="text-2xl">📩</span>
+          <h2 class="font-serif text-3xl sm:text-4xl font-bold text-pine mt-1">Reserve Your Place</h2>
+          <p class="text-sm text-pine/75 mt-1.5">
+            Kindly respond by <strong>Friday, 27 November 2026</strong> for game room and catering arrangements.
+          </p>
+        </div>
+
+        <form id="rsvpForm" class="space-y-5" onsubmit="handleFormSubmit(event)">
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="preferredName" class="block text-xs font-bold uppercase tracking-wider text-pine/80 mb-1">
+                Preferred Name <span class="text-cranberry">*</span>
+              </label>
+              <input type="text" id="preferredName" required placeholder="e.g. Zack" class="w-full px-3.5 py-2.5 rounded-xl border border-pine/20 text-sm focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent transition">
+            </div>
+            <div>
+              <label for="fullName" class="block text-xs font-bold uppercase tracking-wider text-pine/80 mb-1">
+                Full Name <span class="text-cranberry">*</span>
+              </label>
+              <input type="text" id="fullName" required placeholder="e.g. Zehua (Zack) Wang" class="w-full px-3.5 py-2.5 rounded-xl border border-pine/20 text-sm focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent transition">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="email" class="block text-xs font-bold uppercase tracking-wider text-pine/80 mb-1">
+                University Email <span class="text-cranberry">*</span>
+              </label>
+              <input type="email" id="email" required placeholder="name@auckland.ac.nz" class="w-full px-3.5 py-2.5 rounded-xl border border-pine/20 text-sm focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent transition">
+            </div>
+            <div>
+              <label for="affiliation" class="block text-xs font-bold uppercase tracking-wider text-pine/80 mb-1">
+                Role / Affiliation <span class="text-cranberry">*</span>
+              </label>
+              <select id="affiliation" required class="w-full px-3.5 py-2.5 rounded-xl border border-pine/20 text-sm focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent transition bg-white text-pine">
+                <option value="" disabled selected>Select your role...</option>
+                <option value="Academic / Faculty Staff">Academic / Faculty Staff</option>
+                <option value="Professional / Admin Staff">Professional / Admin Staff</option>
+                <option value="Research Fellow / Postdoc">Research Fellow / Postdoc</option>
+                <option value="PhD Student">PhD Student</option>
+                <option value="Honours / Masters Student">Honours / Masters Student</option>
+                <option value="Technical / Lab Support Staff">Technical / Lab Support Staff</option>
+                <option value="Visiting Scholar / Guest">Visiting Scholar / Guest</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-pine/80 mb-2">
+              Will you be participating in the Escape Rooms? <span class="text-cranberry">*</span>
+            </label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label class="cursor-pointer flex items-center p-3 rounded-xl border border-pine/20 hover:border-gold has-[:checked]:border-cranberry has-[:checked]:bg-cranberry/5 transition">
+                <input type="radio" name="escapeRoom" value="Yes" checked class="text-cranberry focus:ring-gold h-4 w-4">
+                <div class="ml-3 text-sm">
+                  <div class="font-bold text-pine">Yes, lock me in! 🕵️‍♂️</div>
+                  <div class="text-xs text-pine/60">I will join an escape room team.</div>
+                </div>
+              </label>
+
+              <label class="cursor-pointer flex items-center p-3 rounded-xl border border-pine/20 hover:border-gold has-[:checked]:border-cranberry has-[:checked]:bg-cranberry/5 transition">
+                <input type="radio" name="escapeRoom" value="Lounge Only" class="text-cranberry focus:ring-gold h-4 w-4">
+                <div class="ml-3 text-sm">
+                  <div class="font-bold text-pine">Pizza & Lounge Only 🍕</div>
+                  <div class="text-xs text-pine/60">I'll socialize and cheer from the lounge.</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-pine/80 mb-1.5">
+              Dietary Requirements (select all that apply)
+            </label>
+            <div class="flex flex-wrap gap-2 mb-2">
+              <label class="cursor-pointer inline-flex items-center text-xs px-3 py-1.5 rounded-full border border-pine/20 has-[:checked]:bg-pine has-[:checked]:text-white transition">
+                <input type="checkbox" name="diet" value="Vegetarian" class="sr-only">
+                <span>🌱 Vegetarian</span>
+              </label>
+              <label class="cursor-pointer inline-flex items-center text-xs px-3 py-1.5 rounded-full border border-pine/20 has-[:checked]:bg-pine has-[:checked]:text-white transition">
+                <input type="checkbox" name="diet" value="Vegan" class="sr-only">
+                <span>🌿 Vegan</span>
+              </label>
+              <label class="cursor-pointer inline-flex items-center text-xs px-3 py-1.5 rounded-full border border-pine/20 has-[:checked]:bg-pine has-[:checked]:text-white transition">
+                <input type="checkbox" name="diet" value="Gluten-Free" class="sr-only">
+                <span>🌾 Gluten-Free</span>
+              </label>
+              <label class="cursor-pointer inline-flex items-center text-xs px-3 py-1.5 rounded-full border border-pine/20 has-[:checked]:bg-pine has-[:checked]:text-white transition">
+                <input type="checkbox" name="diet" value="Halal" class="sr-only">
+                <span>🌙 Halal</span>
+              </label>
+              <label class="cursor-pointer inline-flex items-center text-xs px-3 py-1.5 rounded-full border border-pine/20 has-[:checked]:bg-pine has-[:checked]:text-white transition">
+                <input type="checkbox" name="diet" value="Nut Allergy" class="sr-only">
+                <span>🥜 Nut Allergy</span>
+              </label>
+              <label class="cursor-pointer inline-flex items-center text-xs px-3 py-1.5 rounded-full border border-pine/20 has-[:checked]:bg-pine has-[:checked]:text-white transition">
+                <input type="checkbox" name="diet" value="Dairy-Free" class="sr-only">
+                <span>🥛 Dairy-Free</span>
+              </label>
+            </div>
+            <input type="text" id="dietaryNotes" placeholder="Other specific allergies or preferences..." class="w-full px-3.5 py-2 rounded-xl border border-pine/20 text-xs focus:outline-none focus:ring-1 focus:ring-gold transition">
+          </div>
+
+          <div>
+            <label for="comments" class="block text-xs font-bold uppercase tracking-wider text-pine/80 mb-1">
+              Notes or Teammate Preferences (Optional)
+            </label>
+            <textarea id="comments" rows="2" placeholder="Let us know if you have any questions or accessibility requests..." class="w-full px-3.5 py-2 rounded-xl border border-pine/20 text-xs focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent transition"></textarea>
+          </div>
+
+          <button type="submit" id="submitBtn" class="w-full py-4 rounded-xl bg-cranberry hover:bg-cranberry-dark text-white font-bold text-base shadow-lg shadow-cranberry/30 hover:scale-[1.01] active:scale-[0.99] transition transform flex items-center justify-center space-x-2">
+            <span>Confirm & Reserve My Place</span>
+            <span>&rarr;</span>
+          </button>
+        </form>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- 报名成功弹窗与电子票 -->
+  <div id="successModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white max-w-lg w-full rounded-3xl p-6 sm:p-8 border border-gold shadow-2xl relative">
+      <button onclick="closeSuccessModal()" class="absolute top-4 right-4 text-pine/50 hover:text-pine text-2xl font-bold w-8 h-8 rounded-full flex items-center justify-center">
+        &times;
+      </button>
+
+      <div class="text-center mb-6">
+        <div class="w-14 h-14 bg-[#164839]/10 text-pine-light rounded-full flex items-center justify-center text-3xl mx-auto mb-3">
+          🎉
+        </div>
+        <h3 class="font-serif text-2xl sm:text-3xl font-bold text-pine">Reservation Confirmed!</h3>
+        <p class="text-xs text-pine/70 mt-1">
+          Thank you! Your spot for the 2026 Pharmacology Christmas Party is saved.
+        </p>
+      </div>
+
+      <div class="bg-sand/70 rounded-2xl p-5 border border-pine/10 text-left mb-6 relative">
+        <div class="flex items-start justify-between">
+          <div>
+            <div class="text-[10px] uppercase tracking-wider font-bold text-cranberry">Event Pass</div>
+            <div id="ticketAttendeeName" class="font-serif text-xl font-bold text-pine">Zack Wang</div>
+            <div id="ticketRole" class="text-xs text-pine/75">Department of Pharmacology</div>
+          </div>
+          <div id="ticketQr" class="bg-white p-1 rounded-lg border border-pine/10"></div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mt-4 pt-3 border-t border-pine/10 text-xs">
+          <div>
+            <span class="text-pine/60 block text-[10px] uppercase font-bold">Time & Date</span>
+            <span class="font-semibold text-pine">Wed 9 Dec 2026 &bull; 11am</span>
+          </div>
+          <div>
+            <span class="text-pine/60 block text-[10px] uppercase font-bold">Venue</span>
+            <span class="font-semibold text-pine">Escapade NZ Level 1</span>
+          </div>
+          <div>
+            <span class="text-pine/60 block text-[10px] uppercase font-bold">Escape Room</span>
+            <span id="ticketEscapePref" class="font-semibold text-pine">Yes</span>
+          </div>
+          <div>
+            <span class="text-pine/60 block text-[10px] uppercase font-bold">Dietary</span>
+            <span id="ticketDiet" class="font-semibold text-pine truncate">None</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-2.5">
+        <button onclick="downloadIcsFile()" class="w-full py-2.5 px-4 bg-pine hover:bg-pine-light text-white text-xs sm:text-sm font-semibold rounded-xl flex items-center justify-center space-x-2 transition">
+          <span>📅</span>
+          <span>Add to Outlook / Apple / Google Calendar (.ics)</span>
+        </button>
+        <button onclick="closeSuccessModal()" class="w-full py-2.5 px-4 bg-sand hover:bg-sand/80 text-pine text-xs sm:text-sm font-medium rounded-xl transition">
+          Done & Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 管理员密码验证弹窗（纯密码输入，无任何密码提示，严格保护隐私） -->
+  <div id="authModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white max-w-sm w-full rounded-2xl p-6 border border-pine/20 shadow-2xl relative">
+      <button onclick="closeAuthModal()" class="absolute top-3 right-3 text-pine/50 hover:text-pine text-xl font-bold w-8 h-8 rounded-full flex items-center justify-center">
+        &times;
+      </button>
+
+      <div class="text-center mb-4">
+        <div class="w-12 h-12 bg-pine/10 text-pine rounded-full flex items-center justify-center text-xl mx-auto mb-2">
+          🔒
+        </div>
+        <h3 class="font-serif text-xl font-bold text-pine">Organiser Access</h3>
+        <p class="text-xs text-pine/60 mt-1">Authorized access only for the department organising committee.</p>
+      </div>
+
+      <form onsubmit="handleAuthSubmit(event)" class="space-y-3">
+        <div>
+          <label for="organiserPasscode" class="block text-xs font-bold uppercase tracking-wider text-pine/70 mb-1">Enter Passcode</label>
+          <input type="password" id="organiserPasscode" required placeholder="••••••••" class="w-full px-3 py-2 rounded-xl border border-pine/20 text-sm focus:outline-none focus:ring-2 focus:ring-pine transition text-center tracking-widest">
+          <p id="authErrorMsg" class="text-xs text-cranberry mt-1.5 hidden font-medium text-center">Incorrect passcode. Access restricted.</p>
+        </div>
+
+        <button type="submit" class="w-full py-2.5 rounded-xl bg-pine hover:bg-pine-light text-white font-semibold text-xs transition">
+          Unlock Dashboard
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 管理员后台看板 -->
+  <div id="rosterModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-6">
+    <div class="bg-white max-w-4xl w-full max-h-[90vh] rounded-3xl p-5 sm:p-8 border border-pine/20 shadow-2xl flex flex-col relative overflow-hidden">
+      
+      <div class="flex items-center justify-between pb-4 border-b border-pine/10">
+        <div class="flex items-center space-x-3">
+          <div class="text-2xl">📋</div>
+          <div>
+            <h3 class="font-serif text-xl sm:text-2xl font-bold text-pine">2026 Organiser Dashboard</h3>
+            <p class="text-xs text-pine/60">Live attendee roster and escape room allocation.</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button onclick="lockAndExit()" class="px-2.5 py-1 text-xs font-medium text-cranberry hover:bg-cranberry/10 rounded-lg transition">
+            🔒 Lock & Exit
+          </button>
+          <button onclick="closeRosterModal()" class="text-pine/50 hover:text-pine text-2xl font-bold w-8 h-8 rounded-full flex items-center justify-center">
+            &times;
+          </button>
+        </div>
+      </div>
+
+      <!-- 四位组织者信息公示栏 -->
+      <div class="bg-sand/70 p-3 rounded-xl border border-pine/10 mt-3 text-xs text-pine/80">
+        <div class="font-bold text-pine uppercase tracking-wider text-[10px] mb-1">2026 Organising Committee:</div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[11px]">
+          <div>👑 <strong>Lara Molloy (Lead Organiser):</strong> <a href="mailto:lara.molloy@auckland.ac.nz" class="underline">lara.molloy@auckland.ac.nz</a></div>
+          <div>🤝 <strong>Zack Wang (Organising Team):</strong> <a href="mailto:zack.wang@auckland.ac.nz" class="underline">zack.wang@auckland.ac.nz</a></div>
+          <div>🤝 <strong>Samantha Rickard (Organising Team):</strong> <a href="mailto:samantha.rickard@auckland.ac.nz" class="underline">samantha.rickard@auckland.ac.nz</a></div>
+          <div>🏛️ <strong>Prof. Bronwen Connor (Dept Lead):</strong> <a href="mailto:b.connor@auckland.ac.nz" class="underline">b.connor@auckland.ac.nz</a></div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4 my-4">
+        <div class="bg-sand/50 p-3 rounded-xl border border-pine/10 text-center">
+          <div id="statTotalRsvps" class="font-serif text-2xl font-bold text-pine">0</div>
+          <div class="text-[10px] uppercase font-bold text-pine/60">Total RSVPs</div>
+        </div>
+        <div class="bg-sand/50 p-3 rounded-xl border border-pine/10 text-center">
+          <div id="statEscapeRooms" class="font-serif text-2xl font-bold text-cranberry">0</div>
+          <div class="text-[10px] uppercase font-bold text-pine/60">Escape Rooms</div>
+        </div>
+        <div class="bg-sand/50 p-3 rounded-xl border border-pine/10 text-center">
+          <div id="statLoungeOnly" class="font-serif text-2xl font-bold text-gold">0</div>
+          <div class="text-[10px] uppercase font-bold text-pine/60">Lounge Only</div>
+        </div>
+        <div class="bg-sand/50 p-3 rounded-xl border border-pine/10 text-center">
+          <div id="statSpecialDiets" class="font-serif text-2xl font-bold text-pine-light">0</div>
+          <div class="text-[10px] uppercase font-bold text-pine/60">Special Diets</div>
+        </div>
+      </div>
+
+      <!-- 实时报名名单表格 -->
+      <div class="flex-1 overflow-y-auto border border-pine/10 rounded-xl mb-4">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-pine text-white uppercase text-[10px] tracking-wider sticky top-0">
+            <tr>
+              <th class="py-2.5 px-3">Name</th>
+              <th class="py-2.5 px-3">Email</th>
+              <th class="py-2.5 px-3">Affiliation</th>
+              <th class="py-2.5 px-3">Room Pref</th>
+              <th class="py-2.5 px-3">Dietary</th>
+            </tr>
+          </thead>
+          <tbody id="rosterTableBody" class="divide-y divide-pine/10 text-pine/90 bg-white">
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-pine/10">
+        <button onclick="resetDefaultRoster()" class="text-xs text-cranberry hover:underline">
+          Clear local roster
+        </button>
+        <button onclick="exportToCsv()" class="w-full sm:w-auto px-5 py-2.5 bg-pine hover:bg-pine-light text-white font-semibold text-xs rounded-xl flex items-center justify-center space-x-1.5 transition">
+          <span>📥</span>
+          <span>Export Roster to Excel / CSV</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 紧凑精简页脚 -->
+  <footer class="bg-pine text-white py-5 sm:py-6 border-t border-gold/30">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-white/10">
+        <div>
+          <a href="https://www.auckland.ac.nz/en/fmhs/about-the-faculty/sms/departments-disciplines-centres/department-of-pharmacology.html" target="_blank" rel="noopener noreferrer" class="font-serif text-base sm:text-lg font-bold text-white hover:text-gold transition">
+            Department of Pharmacology and Clinical Pharmacology
+          </a>
+          <div class="text-xs text-white/70 mt-0.5">
+            School of Medical Sciences &bull; 
+            <a href="https://www.auckland.ac.nz/en/fmhs.html" target="_blank" rel="noopener noreferrer" class="underline hover:text-gold">Faculty of Medical and Health Sciences</a> &bull; 
+            <a href="https://www.auckland.ac.nz/" target="_blank" rel="noopener noreferrer" class="hover:text-gold">University of Auckland</a>
+          </div>
+        </div>
+
+        <div class="flex items-center flex-wrap gap-4 text-xs font-medium">
+          <a href="#about" class="text-white/80 hover:text-gold transition">Top</a>
+          <a href="#schedule" class="text-white/80 hover:text-gold transition">Schedule</a>
+          <a href="#venue" class="text-white/80 hover:text-gold transition">Venue</a>
+          <a href="#rsvp" class="text-white/80 hover:text-gold transition">RSVP</a>
+          <a href="https://escapadenz.co.nz/christmas-parties/" target="_blank" rel="noopener noreferrer" class="text-gold hover:underline">Escapade NZ &rarr;</a>
+          
+          <button onclick="openOrganiserPortal()" class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-gold hover:text-pine text-white/90 border border-white/20 transition">
+            <span>🔒</span>
+            <span class="text-[11px] font-semibold">Organiser Access</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row items-center justify-between pt-3 text-[11px] text-white/60">
+        <div>&copy; 2026 Department of Pharmacology, The University of Auckland.</div>
+        <div class="font-handwriting text-gold text-lg sm:text-xl mt-1 sm:mt-0">
+          Happy Holidays and a fruitful New Year ahead!
+        </div>
+      </div>
+
+    </div>
+  </footer>
+
+  <script>
+    // 管理员密码：PharmXmas26 (界面无任何密码提示)
+    const VALID_PASSCODES = ['PharmXmas26'];
+    let isAuthorized = false;
+
+    // 默认组委会及测试名单（已移除 Nick 与 James）
+    const DEFAULT_SAMPLE_RSVPS = [];
+
+    const STORAGE_KEY = 'uoa_pharmacology_rsvps_2026_prod';
+
+    function getStoredRsvps() {
+      const data = localStorage.getItem(STORAGE_KEY);
+      if (!data) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_SAMPLE_RSVPS));
+        return DEFAULT_SAMPLE_RSVPS;
+      }
+      try {
+        return JSON.parse(data);
+      } catch (e) {
+        return DEFAULT_SAMPLE_RSVPS;
+      }
+    }
+
+    function saveRsvp(newEntry) {
+      const list = getStoredRsvps();
+      list.unshift(newEntry);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    }
+
+    function resetDefaultRoster() {
+      if (confirm("Clear all RSVP records stored in this browser?")) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_SAMPLE_RSVPS));
+        renderRoster();
+      }
+    }
+
+    function openOrganiserPortal() {
+      if (isAuthorized) {
+        renderRoster();
+        document.getElementById('rosterModal').classList.remove('hidden');
+        document.getElementById('rosterModal').classList.add('flex');
+      } else {
+        document.getElementById('organiserPasscode').value = '';
+        document.getElementById('authErrorMsg').classList.add('hidden');
+        document.getElementById('authModal').classList.remove('hidden');
+        document.getElementById('authModal').classList.add('flex');
+        setTimeout(() => document.getElementById('organiserPasscode').focus(), 100);
+      }
+    }
+
+    function closeAuthModal() {
+      document.getElementById('authModal').classList.add('hidden');
+      document.getElementById('authModal').classList.remove('flex');
+    }
+
+    function handleAuthSubmit(e) {
+      e.preventDefault();
+      const code = document.getElementById('organiserPasscode').value.trim();
+      if (VALID_PASSCODES.includes(code)) {
+        isAuthorized = true;
+        closeAuthModal();
+        renderRoster();
+        document.getElementById('rosterModal').classList.remove('hidden');
+        document.getElementById('rosterModal').classList.add('flex');
+      } else {
+        document.getElementById('authErrorMsg').classList.remove('hidden');
+        document.getElementById('organiserPasscode').select();
+      }
+    }
+
+    function lockAndExit() {
+      isAuthorized = false;
+      closeRosterModal();
+    }
+
+    function closeRosterModal() {
+      document.getElementById('rosterModal').classList.add('hidden');
+      document.getElementById('rosterModal').classList.remove('flex');
+    }
+
+    function renderRoster() {
+      const list = getStoredRsvps();
+      const tbody = document.getElementById('rosterTableBody');
+      tbody.innerHTML = '';
+
+      let escapeCount = 0;
+      let loungeCount = 0;
+      let specialDietCount = 0;
+
+      list.forEach(r => {
+        if (r.escapeRoom === 'Yes') escapeCount++;
+        else loungeCount++;
+
+        const isDietSpecial = r.dietary && r.dietary !== 'None' && r.dietary !== 'No restrictions';
+        if (isDietSpecial) specialDietCount++;
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-sand/30 transition";
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 font-semibold text-pine">
+            ${escapeHtml(r.preferredName)} <span class="font-normal text-pine/60">(${escapeHtml(r.fullName)})</span>
+          </td>
+          <td class="py-2.5 px-3 text-pine/80 font-mono text-[11px]">${escapeHtml(r.email)}</td>
+          <td class="py-2.5 px-3 text-pine/80">${escapeHtml(r.affiliation)}</td>
+          <td class="py-2.5 px-3">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${r.escapeRoom === 'Yes' ? 'bg-pine/10 text-pine' : 'bg-gold/20 text-pine'}">
+              ${r.escapeRoom === 'Yes' ? '🕵️ Escape Room' : '🍕 Lounge'}
+            </span>
+          </td>
+          <td class="py-2.5 px-3">
+            <div class="font-medium ${isDietSpecial ? 'text-cranberry' : 'text-pine/70'}">${escapeHtml(r.dietary || 'None')}</div>
+            ${r.comments ? `<div class="text-[10px] text-pine/60 italic truncate max-w-xs">"${escapeHtml(r.comments)}"</div>` : ''}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('statTotalRsvps').textContent = list.length;
+      document.getElementById('statEscapeRooms').textContent = escapeCount;
+      document.getElementById('statLoungeOnly').textContent = loungeCount;
