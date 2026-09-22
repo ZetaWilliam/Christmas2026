@@ -232,7 +232,7 @@
         <div class="bg-white/90 p-3.5 rounded-xl border border-pine/10 shadow-sm hover:border-gold transition">
           <div class="text-xl sm:text-2xl mb-1">📅</div>
           <div class="text-[11px] font-bold uppercase tracking-wider text-cranberry">Date</div>
-          <div class="font-serif font-bold text-pine text-sm sm:text-base">Tuesday</div>
+          <div class="font-serif font-bold text-pine text-sm sm:text-base">Wednesday</div>
           <div class="text-xs text-pine/70">9 Dec 2026</div>
         </div>
 
@@ -719,7 +719,7 @@
           <div class="text-2xl">📋</div>
           <div>
             <h3 class="font-serif text-xl sm:text-2xl font-bold text-pine">2026 Organiser Dashboard</h3>
-            <p class="text-xs text-pine/60">Live attendee roster and escape room allocation.</p>
+            <p class="text-xs text-pine/60">Live cloud RSVP roster and escape room allocation.</p>
           </div>
         </div>
         <div class="flex items-center space-x-2">
@@ -750,7 +750,7 @@
         </div>
         <div class="bg-sand/50 p-3 rounded-xl border border-pine/10 text-center">
           <div id="statEscapeRooms" class="font-serif text-2xl font-bold text-cranberry">0</div>
-          <div class="text-[10px] uppercase font-bold text-pine/60">Escape Rooms</div>
+          <div class="text-[10px] uppercase font-bold text-pine/60">Escape Rooms (max 36)</div>
         </div>
         <div class="bg-sand/50 p-3 rounded-xl border border-pine/10 text-center">
           <div id="statLoungeOnly" class="font-serif text-2xl font-bold text-gold">0</div>
@@ -780,9 +780,7 @@
       </div>
 
       <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-pine/10">
-        <button onclick="resetDefaultRoster()" class="text-xs text-cranberry hover:underline">
-          Clear local roster
-        </button>
+        <div class="text-xs text-pine/50">Cloud roster • shared across organisers</div>
         <button onclick="exportToCsv()" class="w-full sm:w-auto px-5 py-2.5 bg-pine hover:bg-pine-light text-white font-semibold text-xs rounded-xl flex items-center justify-center space-x-1.5 transition">
           <span>📥</span>
           <span>Export Roster to Excel / CSV</span>
@@ -833,44 +831,33 @@
   </footer>
 
   <script>
-    // 管理员密码：PharmXmas26 (界面无任何密码提示)
-    const VALID_PASSCODES = ['PharmXmas26'];
     let isAuthorized = false;
+    let organiserPasscode = '';
+    let cloudRoster = [];
 
-    // 默认组委会及测试名单（已移除 Nick 与 James）
-    const DEFAULT_SAMPLE_RSVPS = [];
-
-    const STORAGE_KEY = 'uoa_pharmacology_rsvps_2026_prod';
-
-    function getStoredRsvps() {
-      const data = localStorage.getItem(STORAGE_KEY);
-      if (!data) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_SAMPLE_RSVPS));
-        return DEFAULT_SAMPLE_RSVPS;
-      }
-      try {
-        return JSON.parse(data);
-      } catch (e) {
-        return DEFAULT_SAMPLE_RSVPS;
-      }
-    }
-
-    function saveRsvp(newEntry) {
-      const list = getStoredRsvps();
-      list.unshift(newEntry);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    }
-
-    function resetDefaultRoster() {
-      if (confirm("Clear all RSVP records stored in this browser?")) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_SAMPLE_RSVPS));
-        renderRoster();
-      }
+    async function fetchCloudRoster(passcode) {
+      const response = await fetch('/api/rsvps', {
+        headers: { 'x-admin-passcode': passcode }
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'Unable to load RSVP roster.');
+      cloudRoster = (data.rows || []).map(r => ({
+        preferredName: r.preferred_name,
+        fullName: r.full_name,
+        email: r.email,
+        affiliation: r.affiliation,
+        escapeRoom: r.escape_room,
+        dietary: r.dietary,
+        comments: r.comments,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at
+      }));
+      return data;
     }
 
     function openOrganiserPortal() {
       if (isAuthorized) {
-        renderRoster();
+        fetchCloudRoster(organiserPasscode).then(() => renderRoster()).catch(() => {});
         document.getElementById('rosterModal').classList.remove('hidden');
         document.getElementById('rosterModal').classList.add('flex');
       } else {
@@ -887,23 +874,32 @@
       document.getElementById('authModal').classList.remove('flex');
     }
 
-    function handleAuthSubmit(e) {
+    async function handleAuthSubmit(e) {
       e.preventDefault();
       const code = document.getElementById('organiserPasscode').value.trim();
-      if (VALID_PASSCODES.includes(code)) {
+      const error = document.getElementById('authErrorMsg');
+      error.classList.add('hidden');
+      try {
+        organiserPasscode = code;
+        await fetchCloudRoster(code);
         isAuthorized = true;
         closeAuthModal();
         renderRoster();
         document.getElementById('rosterModal').classList.remove('hidden');
         document.getElementById('rosterModal').classList.add('flex');
-      } else {
-        document.getElementById('authErrorMsg').classList.remove('hidden');
+      } catch (err) {
+        organiserPasscode = '';
+        isAuthorized = false;
+        error.textContent = err.message === 'Unauthorized.' ? 'Incorrect passcode. Access restricted.' : err.message;
+        error.classList.remove('hidden');
         document.getElementById('organiserPasscode').select();
       }
     }
 
     function lockAndExit() {
       isAuthorized = false;
+      organiserPasscode = '';
+      cloudRoster = [];
       closeRosterModal();
     }
 
@@ -913,7 +909,7 @@
     }
 
     function renderRoster() {
-      const list = getStoredRsvps();
+      const list = cloudRoster;
       const tbody = document.getElementById('rosterTableBody');
       tbody.innerHTML = '';
 
