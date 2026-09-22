@@ -7,3 +7,5 @@ This is a static single-page site. Import this repository into Vercel with the p
 
 ## Important
 The current RSVP prototype stores submissions in the visitor's browser (localStorage). It is suitable for preview/testing only until a shared backend is connected. Do not rely on the organiser dashboard as a central RSVP database yet.
+
+Production environment configured for cloud RSVP deployment.
