@@ -136,6 +136,6 @@
   document.addEventListener('DOMContentLoaded',()=>{
     const button=document.getElementById('runnerTrackBtn');if(!button)return;
     const label=()=>{const d=window.HarbourDash?.audio();button.textContent=(d?.track===1?'Christmas Bossa':'Christmas Bells')+' ↻';button.title='Switch original Christmas instrumental';};
-    label();button.addEventListener('click',label);
+    label();for(const id of ['runnerTrackBtn','runnerMusicBtn','runnerSoundBtn'])document.getElementById(id)?.addEventListener('click',label);
   });
 })();
