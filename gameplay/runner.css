@@ -1,0 +1,20 @@
+/* Scoped: never changes the RSVP form, invitation or organiser dashboard. */
+#game {scroll-margin-top:76px;}
+#game .runner-context{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:0 0 10px;color:#355749;font-size:12px;line-height:1.5;}
+#game .runner-help{position:static;background:none;padding:0;font-size:12px;}
+#game .runner-location{position:static;border:1px solid #d1ded5;border-radius:20px;padding:4px 10px;background:#f5f8f3;font-size:11px;font-weight:600;}
+#game .runner-stage{position:relative;overflow:hidden;border:1px solid #b8d0c4;border-radius:14px;}
+#runnerCanvas{display:block;width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;touch-action:manipulation;outline-offset:-3px;}
+#game .runner-feedback{position:static!important;transform:none!important;display:block;width:100%;max-width:none;min-height:44px;margin:8px 0 0;padding:9px 12px;border:1px solid #d8e4d9;border-radius:9px;background:#f5f8f2;color:#26483b;font-size:12px;line-height:1.6;text-align:left;}
+#runnerComboBadge{pointer-events:none;top:8px!important;font-size:12px;box-shadow:none;}
+#runnerHopBtn,#runnerDuckBtn{touch-action:none!important;user-select:none;-webkit-user-select:none;min-height:58px;}
+#runnerPauseBtn{min-height:40px;border:1px solid #b9cec0;background:#f7f9f3;color:#26483b;border-radius:20px;padding:8px 13px;font-size:12px;font-weight:600;}
+#runnerPauseBtn:disabled{opacity:.4;}
+#game .runner-best{display:block;white-space:nowrap;font:10px/1.5 Arial,sans-serif;color:#527062;}
+#game .runner-summary{font-size:13px;font-weight:600;margin-bottom:10px;color:#1e493a;}
+#game .runner-board-row{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:10px;background:#f8faf5;border:1px solid #d9e4d9;border-radius:10px;padding:10px;}
+#game .runner-board-row small{display:block;font-size:11px;color:#526958;overflow-wrap:anywhere;}
+#game .runner-board-row strong{font-size:13px;overflow-wrap:anywhere;}
+#game .runner-board-row>b{color:#a9322d;}
+#game .runner-empty{padding:14px;color:#526958;font-size:13px;}
+@media(max-width:639px){#game>div{padding-left:8px!important;padding-right:8px!important;}#game .runner-stage{border-radius:10px;}#game canvas{margin:0;}#game .runner-context{gap:6px;}#game .runner-help{font-size:11px;}#game .runner-feedback{font-size:12px;}#game .grid.grid-cols-4{column-gap:15px!important;}#game .rounded-3xl{padding:12px!important;}#game h2{font-size:30px;}}
