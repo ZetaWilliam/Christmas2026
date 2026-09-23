@@ -1400,6 +1400,10 @@
       const dietary = selectedDiets.length ? selectedDiets.join(", ") : "None";
 
       const comments = document.getElementById('comments').value.trim();
+      const teamMode = escapeRoom === 'Yes' ?
+        document.querySelector('input[name="teamMode"]:checked')?.value || 'match' : 'none';
+      const teamName = document.getElementById('teamName').value.trim();
+      const teamCode = document.getElementById('teamCode').value.trim().toUpperCase();
 
       const record = {
         preferredName,
@@ -1409,6 +1413,9 @@
         escapeRoom,
         dietary,
         comments,
+        teamMode,
+        teamName,
+        teamCode,
         timestamp: new Date().toISOString()
       };
 
@@ -1417,6 +1424,7 @@
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<span>Saving RSVP...</span>';
 
+      let savedTeam = null;
       try {
         const response = await fetch('/api/rsvps', {
           method: 'POST',
@@ -1425,6 +1433,7 @@
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.error || 'Unable to save RSVP.');
+        savedTeam = data.rsvp;
       } catch (err) {
         alert(err.message);
         submitBtn.disabled = false;
@@ -1449,6 +1458,7 @@
       document.getElementById('ticketRole').textContent = `${affiliation} • UoA Pharmacology`;
       document.getElementById('ticketEscapePref').textContent = escapeRoom === 'Yes' ? '🕵️ Escape Room' : '🍕 Lounge Only';
       document.getElementById('ticketDiet').textContent = dietary;
+      if (savedTeam) showTeamReceipt(savedTeam);
 
       const qrTarget = document.getElementById('ticketQr');
       qrTarget.innerHTML = '';
@@ -1468,6 +1478,7 @@
       modal.classList.add('flex');
 
       document.getElementById('rsvpForm').reset();
+      updateTeamModeUI();
     }
 
     function closeSuccessModal() {
