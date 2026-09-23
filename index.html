@@ -678,6 +678,49 @@
             </div>
           </div>
 
+          <!-- Optional lightweight escape-room team builder -->
+          <div id="teamChoices" class="rounded-2xl border border-pine/15 bg-[#F5F7F3] p-4 sm:p-5 space-y-3">
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <h3 class="font-serif text-lg font-bold text-pine">Build Your Escape Team</h3>
+                <p class="text-xs text-pine/70 mt-1">Six people per team. Everyone submits their own RSVP.</p>
+              </div>
+              <span class="shrink-0 text-[10px] font-bold rounded-full bg-white border border-pine/15 px-2 py-1 text-pine">6 rooms · 36 spots</span>
+            </div>
+            <fieldset class="space-y-2">
+              <legend class="sr-only">How would you like to join an escape team?</legend>
+              <label class="block cursor-pointer rounded-xl bg-white border border-pine/15 px-3 py-2.5 has-[:checked]:border-pine has-[:checked]:bg-pine/5">
+                <input type="radio" name="teamMode" value="match" checked class="accent-[#0D3025] mr-2">
+                <span class="text-sm font-semibold text-pine">Find me a team</span>
+                <span class="block pl-6 text-xs text-pine/65">The organisers will help place me with other participants.</span>
+              </label>
+              <label class="block cursor-pointer rounded-xl bg-white border border-pine/15 px-3 py-2.5 has-[:checked]:border-pine has-[:checked]:bg-pine/5">
+                <input type="radio" name="teamMode" value="create" class="accent-[#0D3025] mr-2">
+                <span class="text-sm font-semibold text-pine">Create a team</span>
+                <span class="block pl-6 text-xs text-pine/65">Choose a name and share your invitation link with colleagues.</span>
+              </label>
+              <label class="block cursor-pointer rounded-xl bg-white border border-pine/15 px-3 py-2.5 has-[:checked]:border-pine has-[:checked]:bg-pine/5">
+                <input type="radio" name="teamMode" value="join" class="accent-[#0D3025] mr-2">
+                <span class="text-sm font-semibold text-pine">Join a team</span>
+                <span class="block pl-6 text-xs text-pine/65">Enter the invitation code shared by your teammate.</span>
+              </label>
+            </fieldset>
+            <div id="createTeamFields" class="hidden space-y-1">
+              <label for="teamName" class="block text-xs font-bold text-pine">Your Team Name</label>
+              <input id="teamName" maxlength="60" minlength="2" placeholder="e.g. The Pharmacokinetics" class="w-full px-3.5 py-2.5 rounded-xl border border-pine/20 text-sm focus:outline-none focus:ring-2 focus:ring-gold">
+              <p class="text-xs text-pine/60">Your own RSVP will count as the first member (1/6).</p>
+            </div>
+            <div id="joinTeamFields" class="hidden space-y-2">
+              <label for="teamCode" class="block text-xs font-bold text-pine">Team Invitation Code</label>
+              <div class="flex flex-col sm:flex-row gap-2">
+                <input id="teamCode" maxlength="10" autocapitalize="characters" autocomplete="off" placeholder="10-character code" class="min-w-0 flex-1 px-3.5 py-2.5 rounded-xl border border-pine/20 text-sm uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-gold">
+                <button type="button" onclick="checkTeamCode()" class="rounded-xl border border-pine/25 px-4 py-2.5 text-xs font-semibold text-pine hover:bg-pine/5">Check team</button>
+              </div>
+              <p id="teamLookupResult" class="text-xs text-pine/70" role="status" aria-live="polite">Use the code or link from your teammate.</p>
+            </div>
+            <p id="teamMatchMessage" class="text-xs text-pine/70">No team yet? We'll arrange one before the event.</p>
+          </div>
+
           <div>
             <label class="block text-xs font-bold uppercase tracking-wider text-pine/80 mb-1.5">
               Dietary Requirements (select all that apply)
@@ -775,6 +818,18 @@
         </div>
       </div>
 
+      <div id="teamReceipt" class="hidden mb-5 rounded-2xl border border-pine/15 bg-[#F5F7F3] p-4 text-left">
+        <div class="text-xs uppercase font-bold tracking-wide text-pine/65 mb-1">Your Escape Team</div>
+        <div id="receiptTeamName" class="font-serif text-lg font-bold text-pine"></div>
+        <p id="receiptTeamCount" class="text-xs text-pine/70 mt-1"></p>
+        <div id="teamInviteControls" class="hidden mt-3 space-y-2">
+          <label for="teamShareUrl" class="block text-xs font-bold text-pine">Invitation link · code <span id="receiptTeamCode" class="font-mono"></span></label>
+          <input id="teamShareUrl" type="text" readonly class="w-full rounded-lg bg-white border border-pine/15 px-3 py-2 text-xs text-pine">
+          <button type="button" onclick="copyTeamLink()" class="w-full rounded-xl bg-pine text-white py-2.5 text-sm font-semibold hover:bg-pine-light">Copy team invitation link</button>
+        </div>
+        <p class="text-xs text-pine/60 mt-2">Each teammate must complete their own RSVP. The organisers confirm the final room allocation.</p>
+      </div>
+
       <div class="space-y-2.5">
         <button onclick="downloadIcsFile()" class="w-full py-2.5 px-4 bg-pine hover:bg-pine-light text-white text-xs sm:text-sm font-semibold rounded-xl flex items-center justify-center space-x-2 transition">
           <span>📅</span>
@@ -868,15 +923,33 @@
         </div>
       </div>
 
+      <section class="rounded-2xl border border-pine/15 bg-[#F5F7F3] p-3 sm:p-4 mb-4 space-y-3" aria-label="Escape-room teams">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h4 class="font-serif text-base font-bold text-pine">Escape Team Allocation</h4>
+            <p id="teamOverviewLabel" class="text-xs text-pine/65">Loading team allocations…</p>
+          </div>
+          <button type="button" onclick="refreshRoster()" class="rounded-lg border border-pine/20 bg-white px-3 py-2 text-xs font-semibold text-pine hover:bg-sand">Refresh roster</button>
+        </div>
+        <div id="organiserTeamCards" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+        <details class="rounded-xl bg-white border border-pine/15 p-3" open>
+          <summary class="cursor-pointer text-xs font-bold text-pine">Assign or move participants</summary>
+          <p class="text-[11px] text-pine/65 my-2">Allocate attendees to a team, create a new team, or return someone to the awaiting list. Changes are saved to the shared database.</p>
+          <div id="teamAllocation" class="space-y-2 max-h-48 overflow-y-auto"></div>
+        </details>
+        <button type="button" onclick="exportTeamCsv()" class="w-full sm:w-auto rounded-xl border border-pine/25 bg-white text-pine px-4 py-2.5 text-xs font-semibold hover:bg-sand">Export team allocation CSV</button>
+      </section>
+
       <!-- 实时报名名单表格 -->
       <div class="flex-1 overflow-y-auto border border-pine/10 rounded-xl mb-4">
-        <table class="w-full text-left text-xs">
+        <table class="w-full min-w-[700px] text-left text-xs">
           <thead class="bg-pine text-white uppercase text-[10px] tracking-wider sticky top-0">
             <tr>
               <th class="py-2.5 px-3">Name</th>
               <th class="py-2.5 px-3">Email</th>
               <th class="py-2.5 px-3">Affiliation</th>
               <th class="py-2.5 px-3">Room Pref</th>
+              <th class="py-2.5 px-3">Team</th>
               <th class="py-2.5 px-3">Dietary</th>
             </tr>
           </thead>
