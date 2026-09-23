@@ -761,6 +761,7 @@
             <textarea id="comments" rows="2" placeholder="Let us know if you have any questions or accessibility requests..." class="w-full px-3.5 py-2 rounded-xl border border-pine/20 text-xs focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent transition"></textarea>
           </div>
 
+          <p class="text-[11px] text-pine/60 leading-relaxed">Already registered? Submitting again with the same email updates your RSVP and team choice. Each attendee should register individually.</p>
           <button type="submit" id="submitBtn" class="w-full py-4 rounded-xl bg-cranberry hover:bg-cranberry-dark text-white font-bold text-base shadow-lg shadow-cranberry/30 hover:scale-[1.01] active:scale-[0.99] transition transform flex items-center justify-center space-x-2">
             <span>Confirm & Reserve My Place</span>
             <span>&rarr;</span>
@@ -1149,21 +1150,21 @@
       let csv = "Preferred Name,Full Name,Email,Affiliation,Escape Room,Team Name,Team Code,Team Status,Dietary Requirements,Comments\r\n";
       list.forEach(r => {
         const row = [
-          `"${(r.preferredName || '').replace(/"/g, '""')}"`,
-          `"${(r.fullName || '').replace(/"/g, '""')}"`,
-          `"${(r.email || '').replace(/"/g, '""')}"`,
-          `"${(r.affiliation || '').replace(/"/g, '""')}"`,
+          csvCell(r.preferredName),
+          csvCell(r.fullName),
+          csvCell(r.email),
+          csvCell(r.affiliation),
           csvCell(r.escapeRoom),
           csvCell(r.teamName),
           csvCell(r.teamCode),
           csvCell(r.escapeRoom !== 'Yes' ? 'Lounge Only' : (r.teamId ? 'Assigned' : 'Awaiting Team')),
           csvCell(r.dietary),
-          `"${(r.comments || '').replace(/"/g, '""')}"`
+          csvCell(r.comments),
         ];
         csv += row.join(",") + "\r\n";
       });
 
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.setAttribute("href", url);
