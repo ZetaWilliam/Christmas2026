@@ -1870,6 +1870,7 @@
     let gameStartedAt = 0;
     let gameEndedAt = 0;
     let gameScoreValue = 0;
+    let gameDistanceValue = 0;
     let gameStrokeCount = 0;
     let gameLastSide = null;
     let gameLastStrokeAt = 0;
@@ -1884,6 +1885,9 @@
     const gameRightBtn = document.getElementById('gameRightBtn');
     const gameCourse = document.getElementById('gameCourse');
     const gameBoat = document.getElementById('gameBoat');
+    const gameWorldTrack = document.getElementById('gameWorldTrack');
+    const gameLandmark = document.getElementById('gameLandmark');
+    const gameLap = document.getElementById('gameLap');
     const gameMessage = document.getElementById('gameMessage');
     const gameSubmitPanel = document.getElementById('gameSubmitPanel');
     const gameSaveBtn = document.getElementById('gameSaveBtn');
@@ -1897,6 +1901,7 @@
 
     function resetGameVisuals() {
       gameScoreValue = 0;
+      gameDistanceValue = 0;
       gameStrokeCount = 0;
       gameLastSide = null;
       gameLastStrokeAt = 0;
@@ -1905,7 +1910,10 @@
       gameScoreEl.textContent = '0';
       gameStrokesEl.textContent = '0';
       gameBoat.style.transform = 'translateX(0px)';
-      gameMessage.textContent = 'Alternate left and right paddles for the best rhythm.';
+      gameWorldTrack.style.transform = 'translateX(0px)';
+      gameLandmark.textContent = 'CBD · Sky Tower';
+      gameLap.textContent = 'Loop 1';
+      gameMessage.textContent = 'Alternate left and right paddles — the harbour keeps scrolling as Santa goes.';
       gameSubmitPanel.classList.add('hidden');
       gameSaveStatus.textContent = '';
       gameSaveBtn.disabled = false;
@@ -1948,17 +1956,36 @@
       gameSubmitPanel.classList.remove('hidden');
 
       if (gameScoreValue >= 650) {
-        gameMessage.textContent = '🏁 Harbour crossed! Brilliant paddling.';
+        gameMessage.textContent = '🌊 Harbour Hero! Santa kept moving across Tāmaki Makaurau.';
         if (typeof confetti === 'function') {
           confetti({ particleCount: 70, spread: 62, origin: { y: 0.66 }, colors: ['#0D3025','#C0362C','#D4AF37','#ffffff'] });
         }
       } else if (gameScoreValue >= 430) {
-        gameMessage.textContent = '🌊 Great rhythm — Santa made excellent progress!';
+        gameMessage.textContent = '⛵ Great rhythm — another Auckland harbour loop complete!';
       } else if (gameScoreValue >= 220) {
-        gameMessage.textContent = '🎄 Nice run! Try again for a smoother rhythm.';
+        gameMessage.textContent = '🎄 Nice run! Try again for a smoother endless paddle.';
       } else {
         gameMessage.textContent = '☀️ Warm-up complete — alternate the paddles to go faster!';
       }
+    }
+
+    function updateSantaCamera() {
+      const width = Math.max(1, gameCourse.clientWidth);
+      const maxBoatX = Math.max(0, Math.min(width * 0.44, width - gameBoat.offsetWidth - 24));
+      const cameraThreshold = 260;
+      const boatProgress = Math.min(1, gameDistanceValue / cameraThreshold);
+      gameBoat.style.transform = 'translateX(' + Math.round(maxBoatX * boatProgress) + 'px)';
+
+      const sceneProgress = Math.max(0, (gameDistanceValue - cameraThreshold) / 250);
+      const loopWidth = width * 4;
+      const worldOffset = (sceneProgress * width) % loopWidth;
+      gameWorldTrack.style.transform = 'translateX(-' + Math.round(worldOffset) + 'px)';
+
+      const landmarks = ['CBD · Sky Tower', 'Waitematā · Harbour Bridge', 'Devonport · Ferry', 'Rangitoto'];
+      const sceneIndex = Math.floor(sceneProgress) % landmarks.length;
+      const loopNumber = Math.floor(sceneProgress / landmarks.length) + 1;
+      gameLandmark.textContent = landmarks[sceneIndex];
+      gameLap.textContent = 'Loop ' + loopNumber;
     }
 
     function animateGamePaddle(side) {
@@ -1995,15 +2022,14 @@
       gameLastSide = side;
       gameLastStrokeAt = now;
       gameStrokeCount += 1;
+      gameDistanceValue += points;
       gameScoreValue = Math.min(2500, gameScoreValue + points);
 
       gameScoreEl.textContent = String(gameScoreValue);
       gameStrokesEl.textContent = String(gameStrokeCount);
       animateGamePaddle(side);
 
-      const maxX = Math.max(0, gameCourse.clientWidth - gameBoat.offsetWidth - 30);
-      const progress = Math.min(0.96, gameScoreValue / 650);
-      gameBoat.style.transform = 'translateX(' + Math.round(maxX * progress) + 'px)';
+      updateSantaCamera();
 
       if (!alternating) gameMessage.textContent = 'Use the other paddle next — keep Santa balanced!';
       else if (points >= 18) gameMessage.textContent = 'Perfect rhythm! +' + points;
