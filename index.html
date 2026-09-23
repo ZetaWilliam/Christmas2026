@@ -1882,14 +1882,18 @@
     const runnerCanvas = document.getElementById('runnerCanvas');
     const runnerCtx = runnerCanvas.getContext('2d');
     const runnerStartBtn = document.getElementById('runnerStartBtn');
+    const runnerSoundBtn = document.getElementById('runnerSoundBtn');
     const runnerHopBtn = document.getElementById('runnerHopBtn');
     const runnerDuckBtn = document.getElementById('runnerDuckBtn');
     const runnerMessage = document.getElementById('runnerMessage');
     const runnerScoreEl = document.getElementById('runnerScore');
     const runnerDistanceEl = document.getElementById('runnerDistance');
     const runnerFlowersEl = document.getElementById('runnerFlowers');
+    const runnerGoldenFlowersEl = document.getElementById('runnerGoldenFlowers');
     const runnerSpeedEl = document.getElementById('runnerSpeed');
     const runnerLandmarkEl = document.getElementById('runnerLandmark');
+    const runnerSkyPhaseEl = document.getElementById('runnerSkyPhase');
+    const runnerComboBadge = document.getElementById('runnerComboBadge');
     const runnerSubmitPanel = document.getElementById('runnerSubmitPanel');
     const runnerSaveBtn = document.getElementById('runnerSaveBtn');
     const runnerSaveStatus = document.getElementById('runnerSaveStatus');
@@ -1901,6 +1905,8 @@
     const RUNNER_PLAYER_X = 132;
     const RUNNER_GRAVITY = 1550;
     const RUNNER_JUMP_V = -610;
+    const RUNNER_COMBO_WINDOW = 6000;
+    const RUNNER_DAY_CYCLE_MS = 36000;
 
     let runnerRunning = false;
     let runnerCrashed = false;
@@ -1911,21 +1917,90 @@
     let runnerScore = 0;
     let runnerDistance = 0;
     let runnerFlowers = 0;
+    let runnerGoldenFlowers = 0;
+    let runnerRewardBonus = 0;
+    let runnerCombo = 0;
+    let runnerMaxCombo = 0;
+    let runnerLastFlowerAt = 0;
+    let runnerLastMilestone = 0;
     let runnerSpeed = 320;
     let runnerWorld = 0;
-    let runnerNextObstacle = 760;
-    let runnerNextFlower = 980;
+    let runnerNextObstacle = 860;
+    let runnerNextFlower = 820;
     let runnerObstacles = [];
     let runnerRewards = [];
     let runnerFerries = [];
     let runnerPlayer = { jumpY: 0, vy: 0, duck: false, grounded: true };
     let runnerPaddlePhase = 0;
+    let runnerAudioCtx = null;
+    let runnerSoundEnabled = true;
 
     const runnerLandmarks = ['CBD · Sky Tower', 'Waitematā · Harbour Bridge', 'Devonport · Ferry Terminal', 'Rangitoto'];
+    const runnerStarField = [
+      [60,38,1.4],[118,72,1.1],[180,34,1.2],[246,88,1.5],[310,48,1],[366,24,1.4],
+      [432,70,1.2],[505,38,1.5],[565,92,1],[628,52,1.3],[690,28,1.1],[742,78,1.5],
+      [805,45,1.2],[872,88,1.1],[918,30,1.4],[94,118,1],[275,128,1.3],[570,126,1.1],
+      [760,121,1.2],[850,142,1]
+    ];
 
     function runnerSetControls(enabled) {
       runnerHopBtn.disabled = !enabled;
       runnerDuckBtn.disabled = !enabled;
+    }
+
+    function runnerEnsureAudio() {
+      if (!runnerSoundEnabled) return null;
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return null;
+      if (!runnerAudioCtx) runnerAudioCtx = new AudioCtx();
+      if (runnerAudioCtx.state === 'suspended') runnerAudioCtx.resume().catch(() => {});
+      return runnerAudioCtx;
+    }
+
+    function runnerTone(freq, duration=0.09, type='sine', gain=0.035, delay=0) {
+      const ac = runnerEnsureAudio();
+      if (!ac) return;
+      const osc = ac.createOscillator();
+      const g = ac.createGain();
+      const start = ac.currentTime + delay;
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, start);
+      g.gain.setValueAtTime(0.0001, start);
+      g.gain.exponentialRampToValueAtTime(gain, start + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      osc.connect(g); g.connect(ac.destination);
+      osc.start(start); osc.stop(start + duration + 0.02);
+    }
+
+    function runnerPlayMilestone(milestone) {
+      if (!runnerSoundEnabled) return;
+      const base = milestone >= 2000 ? 587 : milestone >= 1000 ? 523 : 440;
+      runnerTone(base, .08, 'triangle', .03, 0);
+      runnerTone(base * 1.25, .08, 'triangle', .028, .075);
+      runnerTone(base * 1.5, .12, 'triangle', .028, .15);
+    }
+
+    function runnerPlayCollect(golden=false) {
+      if (!runnerSoundEnabled) return;
+      if (golden) {
+        runnerTone(660,.08,'sine',.035,0);
+        runnerTone(880,.10,'sine',.035,.07);
+        runnerTone(1175,.14,'sine',.032,.15);
+      } else {
+        runnerTone(740,.07,'sine',.024,0);
+      }
+    }
+
+    function runnerPlayCrash() {
+      if (!runnerSoundEnabled) return;
+      runnerTone(145,.16,'sawtooth',.025,0);
+      runnerTone(105,.22,'sawtooth',.018,.08);
+    }
+
+    function runnerResetCombo() {
+      runnerCombo = 0;
+      runnerComboBadge.classList.add('hidden');
+      runnerComboBadge.textContent = 'COMBO ×2';
     }
 
     function runnerReset() {
@@ -1934,20 +2009,28 @@
       runnerScore = 0;
       runnerDistance = 0;
       runnerFlowers = 0;
+      runnerGoldenFlowers = 0;
+      runnerRewardBonus = 0;
+      runnerMaxCombo = 0;
+      runnerLastFlowerAt = 0;
+      runnerLastMilestone = 0;
       runnerSpeed = 320;
       runnerWorld = 0;
-      runnerNextObstacle = 760;
-      runnerNextFlower = 980;
+      runnerNextObstacle = 860;
+      runnerNextFlower = 820;
       runnerObstacles = [];
       runnerRewards = [];
       runnerFerries = [];
       runnerPlayer = { jumpY: 0, vy: 0, duck: false, grounded: true };
       runnerPaddlePhase = 0;
+      runnerResetCombo();
       runnerScoreEl.textContent = '0';
       runnerDistanceEl.textContent = '0';
       runnerFlowersEl.textContent = '0';
+      runnerGoldenFlowersEl.textContent = '★0';
       runnerSpeedEl.textContent = '1.0×';
       runnerLandmarkEl.textContent = runnerLandmarks[0];
+      runnerSkyPhaseEl.textContent = 'Day';
       runnerMessage.textContent = 'Press Start Run — or Space — when you\'re ready.';
       runnerSubmitPanel.classList.add('hidden');
       runnerSaveStatus.textContent = '';
@@ -1959,6 +2042,7 @@
 
     function runnerStart() {
       if (runnerRunning) return;
+      runnerEnsureAudio();
       if (runnerRaf) cancelAnimationFrame(runnerRaf);
       runnerReset();
       runnerRunning = true;
@@ -1968,7 +2052,9 @@
       runnerStartBtn.textContent = 'Running…';
       runnerStartBtn.disabled = true;
       runnerSetControls(true);
-      runnerMessage.textContent = 'Hop, duck, collect blooms — the harbour gets faster!';
+      runnerMessage.textContent = 'Hazards are amber/dark. Flowers glow red or gold — collect those!';
+      runnerTone(440,.08,'triangle',.022,0);
+      runnerTone(660,.10,'triangle',.022,.09);
       try { runnerCanvas.focus({preventScroll:true}); } catch (e) { runnerCanvas.focus(); }
       runnerRaf = requestAnimationFrame(runnerLoop);
     }
@@ -1982,7 +2068,9 @@
       runnerStartBtn.disabled = false;
       runnerStartBtn.textContent = 'Run Again';
       runnerSubmitPanel.classList.remove('hidden');
+      runnerResetCombo();
       runnerMessage.textContent = reason || 'Splash! Run over — press Space or Run Again.';
+      runnerPlayCrash();
       if (typeof confetti === 'function' && runnerScore >= 1200) {
         confetti({ particleCount: 45, spread: 55, origin: { y: 0.72 }, colors: ['#0D3025','#C0362C','#D4AF37'] });
       }
@@ -1993,49 +2081,71 @@
       runnerPlayer.duck = false;
       runnerPlayer.grounded = false;
       runnerPlayer.vy = RUNNER_JUMP_V;
-      runnerMessage.textContent = 'Hop!';
     }
 
     function runnerSetDuck(on) {
       if (!runnerRunning) return;
       runnerPlayer.duck = !!on && runnerPlayer.grounded;
-      if (runnerPlayer.duck) runnerMessage.textContent = 'Duck!';
+    }
+
+    function runnerMakeObstacle(type, x) {
+      const obstacle = { type, x, passed: false };
+      if (type === 'gull') obstacle.y = RUNNER_WATER_Y - 88 - Math.random() * 4;
+      runnerObstacles.push(obstacle);
     }
 
     function runnerSpawnObstacle() {
-      const speedFactor = Math.min(1, (runnerSpeed - 320) / 400);
+      const difficulty = Math.min(1, runnerDistance / 1800);
       const roll = Math.random();
       let type;
       if (roll < 0.30) type = 'buoy';
       else if (roll < 0.54) type = 'wake';
-      else if (roll < 0.77) type = 'sailboat';
+      else if (roll < 0.78) type = 'sailboat';
       else type = 'gull';
 
-      const obstacle = { type, x: RUNNER_W + 40, passed: false };
-      if (type === 'gull') obstacle.y = RUNNER_WATER_Y - 88 - Math.random() * 5;
-      runnerObstacles.push(obstacle);
+      const x = RUNNER_W + 50;
+      runnerMakeObstacle(type, x);
 
-      if (Math.random() < 0.18 && runnerFerries.length < 1) {
-        runnerFerries.push({ x: RUNNER_W + 180, y: RUNNER_WATER_Y - 70, speedScale: 0.42 });
+      // Later runs form readable clusters requiring the same response: jump-jump or duck-duck.
+      if (difficulty > 0.25 && Math.random() < difficulty * 0.44) {
+        if (type === 'gull') {
+          runnerMakeObstacle('gull', x + 145 + Math.random() * 35);
+        } else {
+          const jumpables = ['buoy','wake','sailboat'];
+          const second = jumpables[Math.floor(Math.random() * jumpables.length)];
+          runnerMakeObstacle(second, x + 175 + Math.random() * 45);
+        }
       }
 
-      const baseGap = 620 - speedFactor * 170;
-      runnerNextObstacle = baseGap + Math.random() * 250;
+      if (Math.random() < 0.16 && runnerFerries.length < 1) {
+        runnerFerries.push({ x: RUNNER_W + 190, y: RUNNER_WATER_Y - 70, speedScale: 0.40 });
+      }
+
+      const baseGap = 840 - difficulty * 290;
+      runnerNextObstacle = baseGap + Math.random() * 260;
     }
 
     function runnerSpawnFlower() {
-      const yChoices = [RUNNER_WATER_Y - 76, RUNNER_WATER_Y - 112, RUNNER_WATER_Y - 145];
+      const yChoices = [RUNNER_WATER_Y - 78, RUNNER_WATER_Y - 115, RUNNER_WATER_Y - 150];
+      const difficulty = Math.min(1, runnerDistance / 1800);
+      const golden = runnerDistance > 220 && Math.random() < (0.075 + difficulty * 0.035);
+      const recentObstacle = runnerObstacles.length ? runnerObstacles[runnerObstacles.length - 1] : null;
+      let x = RUNNER_W + 55;
+      if (recentObstacle && recentObstacle.x > RUNNER_W - 120) x += 310;
+
       runnerRewards.push({
-        x: RUNNER_W + 50,
+        x,
         y: yChoices[Math.floor(Math.random() * yChoices.length)],
         collected: false,
+        golden,
         bob: Math.random() * Math.PI * 2
       });
-      runnerNextFlower = 900 + Math.random() * 750;
+      runnerNextFlower = 720 + Math.random() * 620;
     }
 
     function runnerUpdate(dt) {
-      runnerSpeed = Math.min(720, runnerSpeed + 8.2 * dt);
+      // Slower acceleration than the first version: difficulty now grows more from spacing/patterns than raw speed.
+      runnerSpeed = Math.min(560, runnerSpeed + 3.2 * dt);
       const dx = runnerSpeed * dt;
       runnerWorld += dx;
       runnerDistance += dx / 10;
@@ -2063,18 +2173,35 @@
       }
       for (const f of runnerFerries) f.x -= dx * f.speedScale;
 
-      runnerObstacles = runnerObstacles.filter(o => o.x > -120);
-      runnerRewards = runnerRewards.filter(r => r.x > -60 && !r.collected);
+      runnerObstacles = runnerObstacles.filter(o => o.x > -140);
+      runnerRewards = runnerRewards.filter(r => r.x > -70 && !r.collected);
       runnerFerries = runnerFerries.filter(f => f.x > -260);
 
+      if (runnerCombo > 0 && performance.now() - runnerLastFlowerAt > RUNNER_COMBO_WINDOW) {
+        runnerResetCombo();
+      }
+
       runnerCheckCollisions();
+      if (!runnerRunning) return;
 
       const landmarkIndex = Math.floor(runnerWorld / 900) % runnerLandmarks.length;
       runnerLandmarkEl.textContent = runnerLandmarks[landmarkIndex];
-      runnerScore = Math.floor(runnerDistance) + runnerFlowers * 100;
+
+      const skyState = runnerGetSkyState();
+      runnerSkyPhaseEl.textContent = skyState.label;
+
+      const milestone = Math.floor(runnerDistance / 500) * 500;
+      if (milestone >= 500 && milestone > runnerLastMilestone) {
+        runnerLastMilestone = milestone;
+        runnerPlayMilestone(milestone);
+        runnerMessage.textContent = '🔔 ' + milestone + ' harbour-distance milestone!';
+      }
+
+      runnerScore = Math.floor(runnerDistance) + runnerRewardBonus;
       runnerScoreEl.textContent = String(runnerScore);
       runnerDistanceEl.textContent = String(Math.floor(runnerDistance));
       runnerFlowersEl.textContent = String(runnerFlowers);
+      runnerGoldenFlowersEl.textContent = '★' + runnerGoldenFlowers;
       runnerSpeedEl.textContent = (runnerSpeed / 320).toFixed(1) + '×';
     }
 
@@ -2086,9 +2213,9 @@
     }
 
     function runnerObstacleBox(o) {
-      if (o.type === 'buoy') return { x: o.x + 6, y: RUNNER_WATER_Y - 42, w: 25, h: 40 };
-      if (o.type === 'wake') return { x: o.x + 2, y: RUNNER_WATER_Y - 19, w: 55, h: 18 };
-      if (o.type === 'sailboat') return { x: o.x + 9, y: RUNNER_WATER_Y - 53, w: 62, h: 50 };
+      if (o.type === 'buoy') return { x: o.x + 5, y: RUNNER_WATER_Y - 43, w: 29, h: 41 };
+      if (o.type === 'wake') return { x: o.x + 1, y: RUNNER_WATER_Y - 21, w: 60, h: 20 };
+      if (o.type === 'sailboat') return { x: o.x + 8, y: RUNNER_WATER_Y - 56, w: 68, h: 53 };
       return { x: o.x + 2, y: o.y + 2, w: 45, h: 20 };
     }
 
@@ -2105,21 +2232,48 @@
       for (const o of runnerObstacles) {
         if (runnerOverlap(pb, runnerObstacleBox(o), 5)) {
           runnerEnd(o.type === 'gull'
-            ? 'A low gull clipped Santa — duck next time!'
-            : 'Splash! Santa hit a harbour obstacle.');
+            ? 'A low gull clipped Santa — duck under the amber hazard marker!'
+            : 'Splash! Santa hit a harbour hazard.');
           return;
         }
       }
 
       for (const r of runnerRewards) {
         const ry = r.y + Math.sin(r.bob) * 5;
-        const rb = { x: r.x - 11, y: ry - 11, w: 22, h: 22 };
+        const size = r.golden ? 29 : 24;
+        const rb = { x: r.x - size/2, y: ry - size/2, w: size, h: size };
         if (runnerOverlap(pb, rb, 1)) {
           r.collected = true;
+          const now = performance.now();
+          runnerCombo = (runnerLastFlowerAt && now - runnerLastFlowerAt <= RUNNER_COMBO_WINDOW)
+            ? runnerCombo + 1 : 1;
+          runnerLastFlowerAt = now;
+          runnerMaxCombo = Math.max(runnerMaxCombo, runnerCombo);
           runnerFlowers += 1;
-          runnerMessage.textContent = '🌺 Pōhutukawa bonus +100!';
-          if (typeof confetti === 'function') {
-            confetti({ particleCount: 10, spread: 30, startVelocity: 12, origin: { x: .48, y: .62 }, colors: ['#C0362C','#D4AF37','#164839'] });
+          if (r.golden) runnerGoldenFlowers += 1;
+
+          const comboBonus = Math.min(100, Math.max(0, runnerCombo - 1) * 20);
+          const base = r.golden ? 300 : 100;
+          runnerRewardBonus += base + comboBonus;
+          runnerPlayCollect(r.golden);
+
+          if (runnerCombo >= 2) {
+            runnerComboBadge.textContent = 'COMBO ×' + runnerCombo + (comboBonus ? '  +' + comboBonus : '');
+            runnerComboBadge.classList.remove('hidden');
+          } else {
+            runnerComboBadge.classList.add('hidden');
+          }
+
+          if (r.golden) {
+            runnerMessage.textContent = '✦ Golden pōhutukawa! +' + (base + comboBonus);
+            if (typeof confetti === 'function') {
+              confetti({ particleCount: 28, spread: 45, startVelocity: 18, origin: { x: .48, y: .58 }, colors: ['#D4AF37','#FFF2A8','#F8C64E'] });
+            }
+          } else {
+            runnerMessage.textContent = '🌺 Pōhutukawa +' + (base + comboBonus) + (runnerCombo >= 2 ? ' · combo ×' + runnerCombo : '');
+            if (typeof confetti === 'function') {
+              confetti({ particleCount: 8, spread: 26, startVelocity: 10, origin: { x: .48, y: .62 }, colors: ['#C0362C','#D94A3E','#164839'] });
+            }
           }
         }
       }
@@ -2135,22 +2289,70 @@
       if (runnerRunning) runnerRaf = requestAnimationFrame(runnerLoop);
     }
 
+    function runnerMixHex(a,b,t) {
+      const pa = a.match(/\w\w/g).map(x=>parseInt(x,16));
+      const pb = b.match(/\w\w/g).map(x=>parseInt(x,16));
+      const pc = pa.map((v,i)=>Math.round(v+(pb[i]-v)*Math.max(0,Math.min(1,t))));
+      return '#' + pc.map(v=>v.toString(16).padStart(2,'0')).join('');
+    }
+
+    function runnerGetSkyState() {
+      let elapsed = 0;
+      if (runnerStartedAt) {
+        const end = runnerRunning ? performance.now() : (runnerEndedAt || performance.now());
+        elapsed = Math.max(0, end - runnerStartedAt);
+      }
+      const p = (elapsed % RUNNER_DAY_CYCLE_MS) / RUNNER_DAY_CYCLE_MS;
+      if (p < .23) {
+        const t = p / .23;
+        return {
+          label: t < .55 ? 'Day' : 'Late afternoon',
+          top: runnerMixHex('#DFF2F4','#F5A46C',t),
+          horizon: runnerMixHex('#F8F0DF','#FFD08A',t),
+          water: runnerMixHex('#62998E','#4E7F86',t),
+          night: 0
+        };
+      }
+      if (p < .40) {
+        const t = (p-.23)/.17;
+        return {
+          label: t < .55 ? 'Sunset' : 'Twilight',
+          top: runnerMixHex('#F5A46C','#101E3A',t),
+          horizon: runnerMixHex('#FFD08A','#314A68',t),
+          water: runnerMixHex('#4E7F86','#203F55',t),
+          night: t
+        };
+      }
+      if (p < .68) {
+        return {label:'Night',top:'#08162C',horizon:'#203750',water:'#173748',night:1};
+      }
+      const t = (p-.68)/.32;
+      return {
+        label: t < .45 ? 'Dawn' : 'Morning',
+        top: runnerMixHex('#08162C','#DFF2F4',t),
+        horizon: runnerMixHex('#203750','#F8F0DF',t),
+        water: runnerMixHex('#173748','#62998E',t),
+        night: 1-t
+      };
+    }
+
     function runnerDraw() {
       const ctx = runnerCtx;
       ctx.clearRect(0, 0, RUNNER_W, RUNNER_H);
 
+      const skyState = runnerGetSkyState();
       const sky = ctx.createLinearGradient(0, 0, 0, RUNNER_H);
-      sky.addColorStop(0, '#DFF2F4');
-      sky.addColorStop(.57, '#F8F0DF');
-      sky.addColorStop(.58, '#9BC6BE');
-      sky.addColorStop(1, '#62998E');
+      sky.addColorStop(0, skyState.top);
+      sky.addColorStop(.57, skyState.horizon);
+      sky.addColorStop(.58, skyState.water);
+      sky.addColorStop(1, runnerMixHex(skyState.water,'#244F4A',.35));
       ctx.fillStyle = sky;
       ctx.fillRect(0, 0, RUNNER_W, RUNNER_H);
 
-      runnerDrawSun(ctx);
-      runnerDrawBackground(ctx);
+      runnerDrawCelestial(ctx, skyState);
+      runnerDrawBackground(ctx, skyState);
       runnerDrawFerries(ctx);
-      runnerDrawWater(ctx);
+      runnerDrawWater(ctx, skyState);
       runnerDrawRewards(ctx);
       runnerDrawObstacles(ctx);
       runnerDrawSanta(ctx);
@@ -2162,37 +2364,65 @@
       }
     }
 
-    function runnerDrawSun(ctx) {
+    function runnerDrawCelestial(ctx, skyState) {
       ctx.save();
-      ctx.globalAlpha = .45;
-      ctx.fillStyle = '#F5C85D';
-      ctx.beginPath();
-      ctx.arc(820, 62, 27, 0, Math.PI * 2);
-      ctx.fill();
+      if (skyState.night > .08) {
+        ctx.globalAlpha = Math.min(.85, skyState.night);
+        ctx.fillStyle = '#FFFFFF';
+        for (const s of runnerStarField) {
+          ctx.beginPath();ctx.arc(s[0],s[1],s[2],0,Math.PI*2);ctx.fill();
+        }
+        ctx.globalAlpha = .55 + skyState.night*.35;
+        ctx.fillStyle = '#F4F0D9';
+        ctx.beginPath();ctx.arc(820,62,22,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle = skyState.top;
+        ctx.beginPath();ctx.arc(829,55,20,0,Math.PI*2);ctx.fill();
+      } else {
+        ctx.globalAlpha = .42;
+        ctx.fillStyle = '#F5C85D';
+        ctx.beginPath();ctx.arc(820,62,27,0,Math.PI*2);ctx.fill();
+      }
       ctx.restore();
     }
 
-    function runnerDrawBackground(ctx) {
+    function runnerDrawBackground(ctx, skyState) {
       const segment = 900;
       const offset = -(runnerWorld * .24 % segment);
       const baseIndex = Math.floor(runnerWorld * .24 / segment);
+      const alphaBoost = skyState.night > .5 ? .12 : 0;
 
       for (let i = -1; i <= 2; i++) {
         const x = offset + i * segment;
         const idx = ((baseIndex + i) % 4 + 4) % 4;
+        ctx.save();
+        ctx.globalAlpha = 1 - alphaBoost;
         if (idx === 0) runnerDrawCBD(ctx, x);
         else if (idx === 1) runnerDrawBridge(ctx, x);
         else if (idx === 2) runnerDrawDevonport(ctx, x);
         else runnerDrawRangitoto(ctx, x);
+        ctx.restore();
+      }
+
+      if (skyState.night > .35) {
+        ctx.save();
+        ctx.globalAlpha = Math.min(.8, skyState.night);
+        ctx.fillStyle = '#F6D36A';
+        const shift = -(runnerWorld*.24 % segment);
+        for(let k=0;k<5;k++){
+          const bx = shift + 120 + k*175;
+          ctx.fillRect(bx,205,3,3);
+          ctx.fillRect(bx+38,190,3,3);
+        }
+        ctx.restore();
       }
     }
 
     function runnerDrawCBD(ctx, x) {
       ctx.save();
-      ctx.fillStyle = 'rgba(13,48,37,.18)';
+      ctx.fillStyle = 'rgba(13,48,37,.22)';
       const buildings = [[30,70,55,85],[105,90,38,65],[165,52,64,103],[250,78,42,77],[318,65,70,90],[410,84,46,71],[515,60,70,95],[610,77,48,78],[710,66,72,89]];
       buildings.forEach(b => ctx.fillRect(x+b[0], RUNNER_WATER_Y-b[1], b[2], b[3]));
-      ctx.fillStyle = 'rgba(13,48,37,.30)';
+      ctx.fillStyle = 'rgba(13,48,37,.34)';
       ctx.fillRect(x+470, 62, 7, 116);
       ctx.beginPath(); ctx.arc(x+474, 92, 12, 0, Math.PI*2); ctx.fill();
       ctx.fillRect(x+468, 39, 12, 36);
@@ -2202,7 +2432,7 @@
 
     function runnerDrawBridge(ctx, x) {
       ctx.save();
-      ctx.strokeStyle = 'rgba(13,48,37,.24)';
+      ctx.strokeStyle = 'rgba(13,48,37,.29)';
       ctx.lineWidth = 6;
       ctx.beginPath(); ctx.moveTo(x+60,205); ctx.quadraticCurveTo(x+450,45,x+840,205); ctx.stroke();
       ctx.lineWidth = 4;
@@ -2214,9 +2444,9 @@
 
     function runnerDrawDevonport(ctx, x) {
       ctx.save();
-      ctx.fillStyle = 'rgba(13,48,37,.15)';
+      ctx.fillStyle = 'rgba(13,48,37,.18)';
       ctx.beginPath();ctx.moveTo(x,230);ctx.quadraticCurveTo(x+200,170,x+360,205);ctx.quadraticCurveTo(x+560,250,x+900,175);ctx.lineTo(x+900,255);ctx.lineTo(x,255);ctx.closePath();ctx.fill();
-      ctx.fillStyle = 'rgba(13,48,37,.24)';
+      ctx.fillStyle = 'rgba(13,48,37,.27)';
       ctx.fillRect(x+545,190,78,27);ctx.fillRect(x+660,184,100,31);
       ctx.beginPath();ctx.moveTo(x+532,190);ctx.lineTo(x+584,170);ctx.lineTo(x+635,190);ctx.closePath();ctx.fill();
       ctx.restore();
@@ -2224,16 +2454,16 @@
 
     function runnerDrawRangitoto(ctx, x) {
       ctx.save();
-      ctx.fillStyle = 'rgba(13,48,37,.20)';
+      ctx.fillStyle = 'rgba(13,48,37,.24)';
       ctx.beginPath();
       ctx.moveTo(x,238);ctx.quadraticCurveTo(x+250,228,x+370,205);ctx.quadraticCurveTo(x+440,190,x+490,145);ctx.quadraticCurveTo(x+540,188,x+620,205);ctx.quadraticCurveTo(x+760,228,x+900,236);
       ctx.lineTo(x+900,255);ctx.lineTo(x,255);ctx.closePath();ctx.fill();
       ctx.restore();
     }
 
-    function runnerDrawWater(ctx) {
+    function runnerDrawWater(ctx, skyState) {
       ctx.save();
-      ctx.strokeStyle = 'rgba(255,255,255,.52)';
+      ctx.strokeStyle = skyState.night > .55 ? 'rgba(160,205,222,.34)' : 'rgba(255,255,255,.52)';
       ctx.lineWidth = 2;
       const shift = -(runnerWorld * .7 % 90);
       for (let x = shift; x < RUNNER_W + 100; x += 90) {
@@ -2250,15 +2480,29 @@
       for (const f of runnerFerries) {
         ctx.save();
         ctx.translate(f.x, f.y);
-        ctx.fillStyle = 'rgba(255,255,255,.90)';
-        ctx.strokeStyle = 'rgba(13,48,37,.28)';
+        ctx.fillStyle = 'rgba(246,249,248,.94)';
+        ctx.strokeStyle = 'rgba(22,58,70,.52)';
         ctx.lineWidth = 2;
         ctx.beginPath();ctx.moveTo(0,28);ctx.lineTo(155,28);ctx.lineTo(137,54);ctx.lineTo(20,54);ctx.closePath();ctx.fill();ctx.stroke();
-        ctx.fillStyle = '#C0362C';ctx.fillRect(28,10,90,20);
-        ctx.fillStyle = 'rgba(13,48,37,.55)';for(let i=0;i<5;i++)ctx.fillRect(35+i*17,15,10,7);
-        ctx.fillStyle = '#D4AF37';ctx.fillRect(73,0,4,12);
+        ctx.fillStyle = '#2A6980';ctx.fillRect(28,10,90,20);
+        ctx.fillStyle = 'rgba(8,32,43,.72)';for(let i=0;i<5;i++)ctx.fillRect(35+i*17,15,10,7);
+        ctx.fillStyle = '#F0A23B';ctx.fillRect(73,0,4,12);
         ctx.restore();
       }
+    }
+
+    function runnerDrawHazardMarker(ctx, x, y) {
+      ctx.save();
+      ctx.translate(x,y);
+      ctx.fillStyle = '#F4A340';
+      ctx.strokeStyle = '#25333A';
+      ctx.lineWidth = 2;
+      ctx.beginPath();ctx.moveTo(0,-11);ctx.lineTo(11,9);ctx.lineTo(-11,9);ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.fillStyle = '#25333A';
+      ctx.font = '900 13px Outfit, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('!',0,6);
+      ctx.restore();
     }
 
     function runnerDrawObstacles(ctx) {
@@ -2271,53 +2515,79 @@
     }
 
     function runnerDrawBuoy(ctx,o) {
-      ctx.save();ctx.translate(o.x,RUNNER_WATER_Y-43);
-      ctx.fillStyle='#C0362C';ctx.beginPath();ctx.arc(18,22,14,0,Math.PI*2);ctx.fill();
-      ctx.fillStyle='#F3E5AB';ctx.fillRect(14,0,8,15);ctx.fillRect(10,6,16,4);
-      ctx.strokeStyle='rgba(13,48,37,.45)';ctx.lineWidth=2;ctx.strokeRect(14,0,8,15);
+      ctx.save();ctx.translate(o.x,RUNNER_WATER_Y-45);
+      ctx.fillStyle='#F28C28';ctx.strokeStyle='#27333A';ctx.lineWidth=3;
+      ctx.beginPath();ctx.arc(18,23,15,0,Math.PI*2);ctx.fill();ctx.stroke();
+      ctx.fillStyle='#27333A';ctx.fillRect(3,18,30,8);
+      ctx.fillStyle='#F7E2AE';ctx.fillRect(14,0,8,15);ctx.strokeRect(14,0,8,15);
       ctx.restore();
+      runnerDrawHazardMarker(ctx,o.x+18,RUNNER_WATER_Y-63);
     }
 
     function runnerDrawWake(ctx,o) {
-      ctx.save();ctx.strokeStyle='rgba(255,255,255,.92)';ctx.lineWidth=5;
-      ctx.beginPath();ctx.moveTo(o.x,RUNNER_WATER_Y-7);ctx.quadraticCurveTo(o.x+16,RUNNER_WATER_Y-28,o.x+32,RUNNER_WATER_Y-9);ctx.quadraticCurveTo(o.x+46,RUNNER_WATER_Y+2,o.x+60,RUNNER_WATER_Y-13);ctx.stroke();ctx.restore();
+      ctx.save();
+      ctx.strokeStyle='rgba(245,250,251,.95)';ctx.lineWidth=6;
+      ctx.shadowColor='rgba(20,43,51,.4)';ctx.shadowBlur=3;
+      ctx.beginPath();ctx.moveTo(o.x,RUNNER_WATER_Y-7);ctx.quadraticCurveTo(o.x+16,RUNNER_WATER_Y-29,o.x+32,RUNNER_WATER_Y-9);ctx.quadraticCurveTo(o.x+47,RUNNER_WATER_Y+2,o.x+62,RUNNER_WATER_Y-14);ctx.stroke();
+      ctx.restore();
+      runnerDrawHazardMarker(ctx,o.x+31,RUNNER_WATER_Y-46);
     }
 
     function runnerDrawSailboat(ctx,o) {
-      ctx.save();ctx.translate(o.x,RUNNER_WATER_Y-58);
-      ctx.fillStyle='#F9F7F0';ctx.strokeStyle='rgba(13,48,37,.35)';ctx.lineWidth=2;
+      ctx.save();ctx.translate(o.x,RUNNER_WATER_Y-59);
+      ctx.fillStyle='#F5F7F6';ctx.strokeStyle='#27333A';ctx.lineWidth=2.5;
       ctx.beginPath();ctx.moveTo(8,45);ctx.lineTo(80,45);ctx.lineTo(66,58);ctx.lineTo(18,58);ctx.closePath();ctx.fill();ctx.stroke();
-      ctx.strokeStyle='#0D3025';ctx.beginPath();ctx.moveTo(42,5);ctx.lineTo(42,46);ctx.stroke();
-      ctx.fillStyle='rgba(192,54,44,.82)';ctx.beginPath();ctx.moveTo(44,8);ctx.lineTo(72,41);ctx.lineTo(44,41);ctx.closePath();ctx.fill();
-      ctx.fillStyle='rgba(255,255,255,.95)';ctx.beginPath();ctx.moveTo(39,12);ctx.lineTo(16,41);ctx.lineTo(39,41);ctx.closePath();ctx.fill();
+      ctx.strokeStyle='#27333A';ctx.beginPath();ctx.moveTo(42,4);ctx.lineTo(42,46);ctx.stroke();
+      ctx.fillStyle='#2C6075';ctx.beginPath();ctx.moveTo(44,8);ctx.lineTo(73,41);ctx.lineTo(44,41);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#F2A23B';ctx.beginPath();ctx.moveTo(39,12);ctx.lineTo(16,41);ctx.lineTo(39,41);ctx.closePath();ctx.fill();
       ctx.restore();
+      runnerDrawHazardMarker(ctx,o.x+44,RUNNER_WATER_Y-75);
     }
 
     function runnerDrawGull(ctx,o) {
       const flap = Math.sin((runnerWorld+o.x)*.04)*6;
       ctx.save();ctx.translate(o.x,o.y);
-      ctx.strokeStyle='rgba(255,255,255,.96)';ctx.lineWidth=5;ctx.lineCap='round';
+      ctx.strokeStyle='#2B3940';ctx.lineWidth=6;ctx.lineCap='round';
       ctx.beginPath();ctx.moveTo(2,14);ctx.quadraticCurveTo(13,3+flap,24,13);ctx.quadraticCurveTo(35,3-flap,46,14);ctx.stroke();
-      ctx.strokeStyle='rgba(13,48,37,.25)';ctx.lineWidth=1.2;ctx.stroke();
+      ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=2.2;ctx.stroke();
       ctx.restore();
+      runnerDrawHazardMarker(ctx,o.x+24,o.y-14);
     }
 
     function runnerDrawRewards(ctx) {
       for (const r of runnerRewards) {
         const y = r.y + Math.sin(r.bob)*5;
-        runnerDrawPohutukawa(ctx,r.x,y);
+        runnerDrawPohutukawa(ctx,r.x,y,r.golden);
       }
     }
 
-    function runnerDrawPohutukawa(ctx,x,y) {
+    function runnerDrawPohutukawa(ctx,x,y,golden=false) {
       ctx.save();ctx.translate(x,y);
-      for(let i=0;i<6;i++){
-        const a=i*Math.PI/3;
-        ctx.fillStyle=i%2?'#C0362C':'#D94A3E';
-        ctx.beginPath();ctx.arc(Math.cos(a)*9,Math.sin(a)*9,7,0,Math.PI*2);ctx.fill();
+      ctx.shadowColor = golden ? 'rgba(255,214,74,.95)' : 'rgba(192,54,44,.55)';
+      ctx.shadowBlur = golden ? 20 : 11;
+
+      if (golden) {
+        ctx.fillStyle='rgba(255,236,139,.20)';
+        ctx.beginPath();ctx.arc(0,0,23,0,Math.PI*2);ctx.fill();
       }
-      ctx.fillStyle='#D4AF37';ctx.beginPath();ctx.arc(0,0,5,0,Math.PI*2);ctx.fill();
-      ctx.fillStyle='#164839';ctx.beginPath();ctx.ellipse(14,13,7,3,.6,0,Math.PI*2);ctx.fill();
+
+      for(let i=0;i<7;i++){
+        const a=i*Math.PI*2/7;
+        ctx.fillStyle=golden ? (i%2?'#FFD85A':'#FFF0A6') : (i%2?'#C0362C':'#E04B40');
+        ctx.beginPath();ctx.arc(Math.cos(a)*10,Math.sin(a)*10,7,0,Math.PI*2);ctx.fill();
+      }
+      ctx.shadowBlur=0;
+      ctx.fillStyle=golden?'#FFF7C2':'#D4AF37';ctx.beginPath();ctx.arc(0,0,5,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#164839';ctx.beginPath();ctx.ellipse(15,14,7,3,.6,0,Math.PI*2);ctx.fill();
+
+      if(golden){
+        ctx.fillStyle='#FFFFFF';ctx.font='900 13px Outfit, sans-serif';ctx.textAlign='center';ctx.fillText('★',0,4);
+        for(let k=0;k<4;k++){
+          const a=k*Math.PI/2 + runnerWorld*.01;
+          ctx.fillStyle='rgba(255,244,180,.9)';
+          ctx.beginPath();ctx.arc(Math.cos(a)*20,Math.sin(a)*20,2.2,0,Math.PI*2);ctx.fill();
+        }
+      }
       ctx.restore();
     }
 
@@ -2343,23 +2613,18 @@
       ctx.strokeStyle='#D4AF37';ctx.lineWidth=3;ctx.lineCap='round';
       ctx.beginPath();ctx.moveTo(43,bodyY+25);ctx.lineTo(18,16+paddle*12);ctx.stroke();
       ctx.beginPath();ctx.moveTo(44,bodyY+25);ctx.lineTo(73,45-paddle*10);ctx.stroke();
-
-      if (duck) {
-        ctx.fillStyle='rgba(255,255,255,.85)';
-        ctx.beginPath();ctx.arc(26,38,3,0,Math.PI*2);ctx.arc(60,39,3,0,Math.PI*2);ctx.fill();
-      }
       ctx.restore();
     }
 
     function runnerDrawStartHint(ctx) {
       ctx.save();
-      ctx.fillStyle='rgba(255,255,255,.82)';
-      ctx.fillRect(315,118,330,72);
-      ctx.strokeStyle='rgba(13,48,37,.12)';ctx.strokeRect(315,118,330,72);
+      ctx.fillStyle='rgba(255,255,255,.86)';
+      ctx.fillRect(300,116,360,78);
+      ctx.strokeStyle='rgba(13,48,37,.12)';ctx.strokeRect(300,116,360,78);
       ctx.fillStyle='#0D3025';ctx.textAlign='center';ctx.font='700 20px Outfit, sans-serif';
-      ctx.fillText('SPACE / TAP TO HOP',480,147);
+      ctx.fillText('SPACE / TAP TO HOP',480,145);
       ctx.font='500 13px Outfit, sans-serif';ctx.fillStyle='rgba(13,48,37,.68)';
-      ctx.fillText('Duck under gulls · Collect pōhutukawa',480,172);
+      ctx.fillText('⚠ avoid amber hazards · ✦ collect glowing blooms',480,172);
       ctx.restore();
     }
 
@@ -2381,10 +2646,12 @@
         const rank=Number(r.rank||i+1);
         const badge=rank<=3?medals[rank-1]:'<span class="font-bold text-pine/45">#'+rank+'</span>';
         const team=r.team?'<div class="text-[11px] text-pine/55 truncate">'+escapeHtml(r.team)+'</div>':'';
+        const gold=Number(r.goldenFlowers||0);
+        const combo=Number(r.maxCombo||0);
         return '<div class="grid grid-cols-[34px_1fr_auto] items-center gap-2 rounded-xl border border-pine/10 bg-[#FAFAF7] px-3 py-2.5">'+
           '<div class="text-center text-base">'+badge+'</div>'+
           '<div class="min-w-0"><div class="font-semibold text-sm text-pine truncate">'+escapeHtml(r.name)+'</div>'+team+
-          '<div class="text-[10px] text-pine/45">'+Number(r.flowers||0)+' blooms · '+Number(r.distance||0)+' distance</div></div>'+
+          '<div class="text-[10px] text-pine/45">'+Number(r.flowers||0)+' blooms'+(gold?' · ★'+gold:'')+(combo>1?' · combo ×'+combo:'')+' · '+Number(r.distance||0)+' distance</div></div>'+
           '<div class="font-serif font-bold text-cranberry tabular-nums">'+Number(r.score||0)+'</div></div>';
       }).join('');
     }
@@ -2420,7 +2687,7 @@
           headers:{'Content-Type':'application/json'},
           body:JSON.stringify({
             name,team,score:runnerScore,distance:Math.floor(runnerDistance),
-            flowers:runnerFlowers,durationMs
+            flowers:runnerFlowers,goldenFlowers:runnerGoldenFlowers,maxCombo:runnerMaxCombo,durationMs
           })
         });
         const data=await response.json().catch(()=>({}));
@@ -2437,6 +2704,15 @@
     }
 
     runnerStartBtn.addEventListener('click',runnerStart);
+    runnerSoundBtn.addEventListener('click',()=>{
+      runnerSoundEnabled=!runnerSoundEnabled;
+      runnerSoundBtn.setAttribute('aria-pressed',String(runnerSoundEnabled));
+      runnerSoundBtn.textContent=runnerSoundEnabled?'🔊 Sound':'🔇 Muted';
+      if(runnerSoundEnabled){
+        runnerEnsureAudio();
+        runnerTone(660,.08,'sine',.02,0);
+      }
+    });
     runnerHopBtn.addEventListener('click',runnerJump);
     runnerSaveBtn.addEventListener('click',runnerSaveScore);
     document.getElementById('runnerRefreshLeaderboard').addEventListener('click',runnerLoadLeaderboard);
