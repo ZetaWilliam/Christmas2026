@@ -274,6 +274,13 @@
       .santa-game-boat { transition: none; }
     }
 
+    /* Dino-style Auckland harbour runner */
+    #runnerCanvas {
+      background: linear-gradient(180deg, #dff1f3 0%, #f6f3e9 58%, #80b2aa 59%, #62998e 100%);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
   </style>
 </head>
 <body class="bg-holiday-pattern text-[#222222] font-sans antialiased selection:bg-cranberry selection:text-white relative">
@@ -673,113 +680,96 @@
     </div>
   </section>
 
-  <!-- Santa Harbour Dash: lightweight summer Christmas mini-game -->
+  <!-- Santa Harbour Dash: Auckland Christmas endless runner -->
   <section id="game" class="py-16 sm:py-20 bg-[#EEF3EF] border-y border-pine/10">
     <div class="max-w-6xl mx-auto px-4 sm:px-6">
-      <div class="text-center max-w-2xl mx-auto mb-8">
-        <div class="text-xs uppercase tracking-[0.2em] font-bold text-cranberry mb-2">Just for fun · 20 second challenge</div>
+      <div class="text-center max-w-3xl mx-auto mb-8">
+        <div class="text-xs uppercase tracking-[0.2em] font-bold text-cranberry mb-2">Just for fun · Auckland Christmas runner</div>
         <h2 class="font-serif text-3xl sm:text-4xl font-bold text-pine">Santa Harbour Dash</h2>
         <p class="text-sm sm:text-base text-pine/75 mt-2 leading-relaxed">
-          Help summer Santa paddle across Auckland Harbour. Alternate left and right strokes — a steady rhythm earns the best speed.
+          A little Chrome-Dino-style harbour run: Santa paddles automatically, the pace keeps rising, and one collision ends the run.
+          Hop over buoys, wakes and tiny sailboats, duck under low gulls, and collect pōhutukawa blooms for bonus points.
         </p>
       </div>
 
-      <div class="grid lg:grid-cols-[1.45fr_.75fr] gap-5 lg:gap-7 items-start">
+      <div class="grid lg:grid-cols-[1.5fr_.7fr] gap-5 lg:gap-7 items-start">
         <div class="rounded-3xl border border-pine/15 bg-white p-4 sm:p-6 shadow-sm">
           <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <div class="flex items-center gap-4">
-              <div>
-                <div class="text-[10px] uppercase font-bold tracking-wider text-pine/50">Time</div>
-                <div id="gameTimer" class="font-serif text-2xl font-bold text-pine tabular-nums">20.0</div>
-              </div>
+            <div class="grid grid-cols-4 gap-4 sm:gap-6 min-w-0">
               <div>
                 <div class="text-[10px] uppercase font-bold tracking-wider text-pine/50">Score</div>
-                <div id="gameScore" class="font-serif text-2xl font-bold text-cranberry tabular-nums">0</div>
+                <div id="runnerScore" class="font-serif text-xl sm:text-2xl font-bold text-cranberry tabular-nums">0</div>
               </div>
               <div>
-                <div class="text-[10px] uppercase font-bold tracking-wider text-pine/50">Strokes</div>
-                <div id="gameStrokes" class="font-serif text-2xl font-bold text-pine tabular-nums">0</div>
+                <div class="text-[10px] uppercase font-bold tracking-wider text-pine/50">Distance</div>
+                <div id="runnerDistance" class="font-serif text-xl sm:text-2xl font-bold text-pine tabular-nums">0</div>
+              </div>
+              <div>
+                <div class="text-[10px] uppercase font-bold tracking-wider text-pine/50">Blooms</div>
+                <div id="runnerFlowers" class="font-serif text-xl sm:text-2xl font-bold text-pine tabular-nums">0</div>
+              </div>
+              <div>
+                <div class="text-[10px] uppercase font-bold tracking-wider text-pine/50">Speed</div>
+                <div id="runnerSpeed" class="font-serif text-xl sm:text-2xl font-bold text-pine tabular-nums">1.0×</div>
               </div>
             </div>
-            <button id="gameStartBtn" type="button" class="rounded-full bg-cranberry text-white px-5 py-2.5 text-sm font-bold hover:bg-cranberry-dark transition">
-              Start Dash
+            <button id="runnerStartBtn" type="button" class="rounded-full bg-cranberry text-white px-5 py-2.5 text-sm font-bold hover:bg-cranberry-dark transition">
+              Start Run
             </button>
           </div>
 
-          <div id="gameCourse" tabindex="0" aria-label="Santa Harbour Dash game course. Press A and L alternately to paddle." class="santa-game-course relative overflow-hidden rounded-2xl border border-pine/10 h-64 sm:h-72 outline-none focus:ring-2 focus:ring-gold">
-            <div class="absolute left-4 top-4 text-xs text-pine/65 bg-white/75 rounded-full px-3 py-1.5 border border-white/80">A / L keys or tap the paddles</div>
-            <div class="absolute right-4 top-4 flex items-center gap-2 text-xs font-bold text-pine bg-white/80 rounded-full px-3 py-1.5 border border-white/80">
-              <span id="gameLandmark">CBD · Sky Tower</span>
-              <span id="gameLap" class="text-pine/45">Loop 1</span>
+          <div class="relative rounded-2xl overflow-hidden border border-pine/10 bg-[#dff1f3]">
+            <canvas id="runnerCanvas" width="960" height="320" tabindex="0"
+              aria-label="Santa Harbour Dash. Press Space or Up to hop. Press Down or S to duck. On mobile use the Hop and Duck buttons."
+              class="block w-full aspect-[3/1] min-h-[230px] sm:min-h-0 outline-none focus:ring-2 focus:ring-inset focus:ring-gold touch-manipulation"></canvas>
+            <div class="absolute left-3 top-3 text-[10px] sm:text-xs text-pine/70 bg-white/80 rounded-full px-3 py-1.5 border border-white">
+              Space / ↑ = Hop · ↓ / S = Duck · Tap the water = Hop
             </div>
-
-            <div id="gameWorldTrack" class="game-world-track" aria-hidden="true">
-              <div class="game-world-scene"><span class="game-landmark-label">CBD · Sky Tower</span><svg viewBox="0 0 900 120" preserveAspectRatio="none" aria-hidden="true"><g fill="#0D3025" opacity=".20"><rect x="50" y="66" width="55" height="54"/><rect x="118" y="78" width="38" height="42"/><rect x="175" y="52" width="62" height="68"/><rect x="255" y="73" width="48" height="47"/><rect x="330" y="61" width="70" height="59"/><rect x="425" y="76" width="48" height="44"/><rect x="535" y="58" width="76" height="62"/><rect x="630" y="72" width="50" height="48"/><rect x="720" y="64" width="72" height="56"/></g><g fill="#0D3025" opacity=".30"><rect x="470" y="23" width="7" height="97"/><rect x="462" y="49" width="23" height="10" rx="4"/><path d="M468 23h11l-3-18h-5z"/><circle cx="474" cy="45" r="11"/></g></svg></div>
-<div class="game-world-scene"><span class="game-landmark-label">Waitematā · Harbour Bridge</span><svg viewBox="0 0 900 120" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#0D3025" opacity=".25"><path d="M70 93 Q450 2 830 93" stroke-width="7"/><path d="M70 93 H830" stroke-width="5"/><path d="M180 70 V111 M285 45 V111 M390 28 V111 M510 28 V111 M615 45 V111 M720 70 V111" stroke-width="3"/></g><rect x="55" y="92" width="790" height="8" fill="#0D3025" opacity=".18"/></svg></div>
-<div class="game-world-scene"><span class="game-landmark-label">Devonport · Ferry</span><svg viewBox="0 0 900 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0 112 Q170 70 315 90 Q455 105 580 73 Q730 45 900 91 V120 H0Z" fill="#0D3025" opacity=".17"/><g fill="#0D3025" opacity=".25"><rect x="505" y="70" width="65" height="25"/><path d="M496 70h83l-14-12h-57z"/><rect x="630" y="66" width="92" height="25" rx="3"/><path d="M646 66h62l-13-15h-36z"/></g><path d="M122 85 Q175 66 226 85" fill="none" stroke="#0D3025" stroke-width="3" opacity=".18"/></svg></div>
-<div class="game-world-scene"><span class="game-landmark-label">Rangitoto</span><svg viewBox="0 0 900 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0 112 Q180 105 315 94 Q390 88 442 66 Q492 35 535 66 Q600 95 900 108 V120 H0Z" fill="#0D3025" opacity=".22"/><path d="M390 84 Q445 48 492 84" fill="none" stroke="#0D3025" stroke-width="3" opacity=".20"/><circle cx="720" cy="82" r="6" fill="#C0362C" opacity=".6"/><path d="M720 88v15" stroke="#0D3025" stroke-width="2" opacity=".28"/></svg></div>
-<div class="game-world-scene"><span class="game-landmark-label">CBD · Sky Tower</span><svg viewBox="0 0 900 120" preserveAspectRatio="none" aria-hidden="true"><g fill="#0D3025" opacity=".20"><rect x="50" y="66" width="55" height="54"/><rect x="118" y="78" width="38" height="42"/><rect x="175" y="52" width="62" height="68"/><rect x="255" y="73" width="48" height="47"/><rect x="330" y="61" width="70" height="59"/><rect x="425" y="76" width="48" height="44"/><rect x="535" y="58" width="76" height="62"/><rect x="630" y="72" width="50" height="48"/><rect x="720" y="64" width="72" height="56"/></g><g fill="#0D3025" opacity=".30"><rect x="470" y="23" width="7" height="97"/><rect x="462" y="49" width="23" height="10" rx="4"/><path d="M468 23h11l-3-18h-5z"/><circle cx="474" cy="45" r="11"/></g></svg></div>
-<div class="game-world-scene"><span class="game-landmark-label">Waitematā · Harbour Bridge</span><svg viewBox="0 0 900 120" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#0D3025" opacity=".25"><path d="M70 93 Q450 2 830 93" stroke-width="7"/><path d="M70 93 H830" stroke-width="5"/><path d="M180 70 V111 M285 45 V111 M390 28 V111 M510 28 V111 M615 45 V111 M720 70 V111" stroke-width="3"/></g><rect x="55" y="92" width="790" height="8" fill="#0D3025" opacity=".18"/></svg></div>
-<div class="game-world-scene"><span class="game-landmark-label">Devonport · Ferry</span><svg viewBox="0 0 900 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0 112 Q170 70 315 90 Q455 105 580 73 Q730 45 900 91 V120 H0Z" fill="#0D3025" opacity=".17"/><g fill="#0D3025" opacity=".25"><rect x="505" y="70" width="65" height="25"/><path d="M496 70h83l-14-12h-57z"/><rect x="630" y="66" width="92" height="25" rx="3"/><path d="M646 66h62l-13-15h-36z"/></g><path d="M122 85 Q175 66 226 85" fill="none" stroke="#0D3025" stroke-width="3" opacity=".18"/></svg></div>
-<div class="game-world-scene"><span class="game-landmark-label">Rangitoto</span><svg viewBox="0 0 900 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0 112 Q180 105 315 94 Q390 88 442 66 Q492 35 535 66 Q600 95 900 108 V120 H0Z" fill="#0D3025" opacity=".22"/><path d="M390 84 Q445 48 492 84" fill="none" stroke="#0D3025" stroke-width="3" opacity=".20"/><circle cx="720" cy="82" r="6" fill="#C0362C" opacity=".6"/><path d="M720 88v15" stroke="#0D3025" stroke-width="2" opacity=".28"/></svg></div>
+            <div class="absolute right-3 top-3 text-[10px] sm:text-xs font-bold text-pine bg-white/80 rounded-full px-3 py-1.5 border border-white">
+              <span id="runnerLandmark">CBD · Sky Tower</span>
             </div>
-            <div class="santa-game-water" aria-hidden="true"></div>
-
-            <div id="gameBoat" class="santa-game-boat" aria-hidden="true">
-              <svg viewBox="0 0 160 90" fill="none">
-                <path d="M10,65 C45,72 120,72 155,62 C135,76 35,76 10,65 Z" fill="#C0362C"/>
-                <path d="M15,64 L150,62" stroke="#D4AF37" stroke-width="1.8"/>
-                <circle cx="85" cy="28" r="11" fill="#FFDFC4"/>
-                <path d="M75,26 C75,14 96,12 96,25 Z" fill="#C0362C"/>
-                <rect x="74" y="24" width="23" height="4" rx="2" fill="#FFFFFF"/>
-                <circle cx="98" cy="18" r="3.5" fill="#FFFFFF"/>
-                <path d="M78,32 C78,44 95,44 95,32 Z" fill="#FFFFFF"/>
-                <path d="M74,40 C74,56 96,56 96,40 Z" fill="#C0362C"/>
-                <g id="gamePaddleLeft" class="game-paddle-left">
-                  <line x1="80" y1="48" x2="32" y2="25" stroke="#D4AF37" stroke-width="3" stroke-linecap="round"/>
-                  <ellipse cx="29" cy="23" rx="8" ry="4" transform="rotate(28 29 23)" fill="#164839"/>
-                </g>
-                <g id="gamePaddleRight" class="game-paddle-right">
-                  <line x1="88" y1="48" x2="137" y2="69" stroke="#D4AF37" stroke-width="3" stroke-linecap="round"/>
-                  <ellipse cx="140" cy="71" rx="8" ry="4" transform="rotate(28 140 71)" fill="#164839"/>
-                </g>
-              </svg>
-            </div>
-
-            <div id="gameMessage" class="absolute left-1/2 -translate-x-1/2 bottom-3 rounded-full bg-white/85 border border-pine/10 px-4 py-2 text-xs font-semibold text-pine text-center min-w-[170px]" aria-live="polite">
-              Press Start Dash when you're ready.
+            <div id="runnerMessage" class="absolute left-1/2 -translate-x-1/2 bottom-3 max-w-[90%] rounded-full bg-white/88 border border-pine/10 px-4 py-2 text-xs font-semibold text-pine text-center" aria-live="polite">
+              Press Start Run — or Space — when you're ready.
             </div>
           </div>
 
           <div class="grid grid-cols-2 gap-3 mt-4">
-            <button id="gameLeftBtn" type="button" disabled class="min-h-14 rounded-2xl border border-pine/20 bg-sand text-pine font-bold text-base disabled:opacity-45 hover:bg-gold/15 active:scale-[.98] transition">
-              ← Left paddle <span class="hidden sm:inline">(A)</span>
+            <button id="runnerHopBtn" type="button" disabled class="min-h-14 rounded-2xl border border-pine/20 bg-sand text-pine font-bold text-base disabled:opacity-45 hover:bg-gold/15 active:scale-[.98] transition">
+              ↑ Hop
             </button>
-            <button id="gameRightBtn" type="button" disabled class="min-h-14 rounded-2xl border border-pine/20 bg-sand text-pine font-bold text-base disabled:opacity-45 hover:bg-gold/15 active:scale-[.98] transition">
-              Right paddle <span class="hidden sm:inline">(L)</span> →
+            <button id="runnerDuckBtn" type="button" disabled class="min-h-14 rounded-2xl border border-pine/20 bg-sand text-pine font-bold text-base disabled:opacity-45 hover:bg-gold/15 active:scale-[.98] transition">
+              ↓ Duck
             </button>
           </div>
 
-          <div id="gameSubmitPanel" class="hidden mt-5 rounded-2xl border border-pine/10 bg-[#F7F8F5] p-4">
-            <div class="font-serif text-lg font-bold text-pine">Save your score to the leaderboard</div>
+          <div class="flex flex-wrap gap-x-4 gap-y-2 mt-4 text-[11px] text-pine/65">
+            <span>🔴 Buoy — hop</span>
+            <span>⛵ Sailboat — hop</span>
+            <span>🪽 Low gull — duck</span>
+            <span>🌊 Ferry wake — hop</span>
+            <span>🌺 Pōhutukawa — collect</span>
+          </div>
+
+          <div id="runnerSubmitPanel" class="hidden mt-5 rounded-2xl border border-pine/10 bg-[#F7F8F5] p-4">
+            <div class="font-serif text-lg font-bold text-pine">Save your run to Harbour Heroes</div>
             <p class="text-xs text-pine/65 mt-1">Use any display name you like. Team name is optional. No email is collected for the game.</p>
             <div class="grid sm:grid-cols-2 gap-3 mt-3">
               <div>
-                <label for="gamePlayerName" class="block text-xs font-bold text-pine mb-1">Display Name</label>
-                <input id="gamePlayerName" maxlength="30" placeholder="e.g. Harbour Santa" class="w-full rounded-xl border border-pine/20 px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-gold">
+                <label for="runnerPlayerName" class="block text-xs font-bold text-pine mb-1">Display Name</label>
+                <input id="runnerPlayerName" maxlength="30" placeholder="e.g. Harbour Santa" class="w-full rounded-xl border border-pine/20 px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-gold">
               </div>
               <div>
-                <label for="gameTeamName" class="block text-xs font-bold text-pine mb-1">Team Name (Optional)</label>
-                <input id="gameTeamName" maxlength="60" placeholder="e.g. The Pharmacokinetics" class="w-full rounded-xl border border-pine/20 px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-gold">
+                <label for="runnerTeamName" class="block text-xs font-bold text-pine mb-1">Team Name (Optional)</label>
+                <input id="runnerTeamName" maxlength="60" placeholder="e.g. The Pharmacokinetics" class="w-full rounded-xl border border-pine/20 px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-gold">
               </div>
             </div>
-            <button id="gameSaveBtn" type="button" class="mt-3 w-full sm:w-auto rounded-xl bg-pine text-white px-5 py-2.5 text-sm font-bold hover:bg-pine-light transition">Submit Score</button>
-            <span id="gameSaveStatus" class="block sm:inline sm:ml-3 mt-2 sm:mt-0 text-xs text-pine/65" aria-live="polite"></span>
+            <button id="runnerSaveBtn" type="button" class="mt-3 w-full sm:w-auto rounded-xl bg-pine text-white px-5 py-2.5 text-sm font-bold hover:bg-pine-light transition">Submit Score</button>
+            <span id="runnerSaveStatus" class="block sm:inline sm:ml-3 mt-2 sm:mt-0 text-xs text-pine/65" aria-live="polite"></span>
           </div>
 
           <p class="text-[11px] text-pine/55 mt-4 leading-relaxed">
-            Just for fun — the leaderboard is not part of the escape-room competition or RSVP allocation.
-            The scrolling-world game structure is inspired by open-source browser endless-runner patterns; all Auckland harbour artwork here is custom for this event.
+            Just for fun — this leaderboard is separate from RSVP and the escape-room competition.
+            The gameplay structure is inspired by Chromium's open-source T‑Rex Runner (BSD‑3‑Clause); all Auckland harbour artwork and Christmas elements here are custom.
           </p>
         </div>
 
@@ -789,13 +779,13 @@
               <div class="text-[10px] uppercase tracking-wider font-bold text-cranberry">Live leaderboard</div>
               <h3 class="font-serif text-xl font-bold text-pine">Harbour Heroes</h3>
             </div>
-            <button type="button" id="gameRefreshLeaderboard" class="rounded-lg border border-pine/20 px-3 py-2 text-xs font-semibold text-pine hover:bg-sand">Refresh</button>
+            <button type="button" id="runnerRefreshLeaderboard" class="rounded-lg border border-pine/20 px-3 py-2 text-xs font-semibold text-pine hover:bg-sand">Refresh</button>
           </div>
-          <div id="gameLeaderboard" class="space-y-2" aria-live="polite">
+          <div id="runnerLeaderboard" class="space-y-2" aria-live="polite">
             <p class="text-sm text-pine/60">Loading leaderboard…</p>
           </div>
           <div class="mt-4 pt-3 border-t border-pine/10 text-[11px] leading-relaxed text-pine/55">
-            Only the best score for each display name appears. Nicknames and optional team names are public; emails are never used here.
+            Only each display name's best run appears. Public entries show the chosen nickname, optional team name, score and bloom count — never an RSVP email.
           </div>
         </aside>
       </div>
