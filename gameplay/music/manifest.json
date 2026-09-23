@@ -1,0 +1,28 @@
+[
+  {
+    "file": "bells-bright.mp3",
+    "title": "Jingle Bells",
+    "description": "Piano, glockenspiel and celesta arrangement",
+    "artist": "Kevin MacLeod",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "source": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100187",
+    "download": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Jingle%20Bells%203.mp3",
+    "bytes": 4186274,
+    "sha256": "cb029b223a6e42c60714263616a1400f1a81141e298c29c7b20895030cba843b",
+    "modifications": "Unmodified recording; playback gain and looping controlled by the game."
+  },
+  {
+    "file": "bells-ensemble.mp3",
+    "title": "Jingle Bells",
+    "description": "Piano and wind ensemble arrangement",
+    "artist": "Kevin MacLeod",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "source": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100187",
+    "download": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Jingle%20Bells.mp3",
+    "bytes": 5503168,
+    "sha256": "5f56f73694533c9f62eddc1473c8d96689d90b2d4e33a5c51507fa1ce45da9a1",
+    "modifications": "Unmodified recording; playback gain and looping controlled by the game."
+  }
+]
