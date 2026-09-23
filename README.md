@@ -33,3 +33,7 @@ This lightweight internal-event prototype does not verify ownership of an email 
 - The game leaderboard stores only a user-chosen public display name, optional team name, score, stroke count and duration. It does not use RSVP email addresses.
 - `api/game.js` exposes a public read/write leaderboard with server-side validation and rate limiting. Only the best score for each display name is shown.
 - The leaderboard is explicitly for fun and is separate from escape-room competition results and RSVP/team allocation.
+
+
+### Open-source inspiration
+The Santa Harbour Dash camera-follow / continuously scrolling world is inspired by common MIT-licensed browser endless-runner patterns, including Spike Sprint (https://github.com/shifulegend/spike-sprint). No third-party game art or assets are copied; the Auckland harbour route and SVG artwork in this project are custom.
