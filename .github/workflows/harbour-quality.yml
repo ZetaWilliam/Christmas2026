@@ -1,0 +1,26 @@
+name: Harbour quality checks
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test gameplay and site build
+        run: npm test
+      - name: Package source for reproducible review
+        if: always()
+        run: tar --exclude=.git -czf /tmp/harbour-source.tar.gz .
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: harbour-source
+          path: /tmp/harbour-source.tar.gz
+          retention-days: 3
