@@ -1,4 +1,4 @@
-name: Import classic Christmas recordings
+name: Import classic instrumental recordings
 on:
   workflow_dispatch:
   push:
@@ -14,53 +14,49 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main
-      - name: Download licensed recordings from the artist
+      - name: Download credited recordings from the artist
         shell: bash
         run: |
           python3 - <<'PY'
           import hashlib, json, pathlib, time, urllib.request, urllib.parse
           folder=pathlib.Path('gameplay/music'); folder.mkdir(exist_ok=True)
           tracks=[
-            ('jingle-bells.mp3','Jingle Bells',['Jingle Bells.mp3'],'https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100187'),
-            ('we-wish-you-a-merry-christmas.mp3','We Wish you a Merry Christmas',['We Wish You a Merry Christmas.mp3','We Wish You A Merry Christmas.mp3','We Wish you a Merry Christmas.mp3'],'https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100369')
+            ('bells-bright.mp3','Jingle Bells','Jingle Bells 3.mp3','Piano, glockenspiel and celesta arrangement'),
+            ('bells-ensemble.mp3','Jingle Bells','Jingle Bells.mp3','Piano and wind ensemble arrangement')
           ]
           entries=[]
-          for filename,title,candidates,source in tracks:
-            error=None
-            for candidate in candidates:
-              url='https://incompetech.com/music/royalty-free/mp3-royaltyfree/'+urllib.parse.quote(candidate)
+          for filename,title,original,description in tracks:
+            url='https://incompetech.com/music/royalty-free/mp3-royaltyfree/'+urllib.parse.quote(original)
+            for attempt in range(3):
               try:
                 req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0'})
-                with urllib.request.urlopen(req,timeout=60) as response:
-                  data=response.read(15000001)
+                with urllib.request.urlopen(req,timeout=60) as response: data=response.read(15000001)
                 if not 100000 < len(data) < 15000000: raise ValueError('Unexpected audio file size')
-                if not (data[:3]==b'ID3' or data[0]==255 and data[1]&224==224): raise ValueError('Response is not MP3 audio')
+                if not (data[:3]==b'ID3' or data[0]==255 and data[1]&224==224): raise ValueError('Not MP3 audio')
                 (folder/filename).write_bytes(data)
-                entries.append({'file':filename,'title':title,'artist':'Kevin MacLeod','license':'CC BY 4.0','licenseUrl':'https://creativecommons.org/licenses/by/4.0/','source':source,'download':url,'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest(),'modifications':'Unmodified recording; playback volume and looping controlled by the game.'})
-                print(title,len(data),hashlib.sha256(data).hexdigest())
-                break
-              except Exception as exc:
-                error=exc; print('Candidate unavailable:',candidate,type(exc).__name__)
-            else:
-              raise RuntimeError('No official recording found: '+title) from error
+                entries.append({'file':filename,'title':title,'description':description,'artist':'Kevin MacLeod','license':'CC BY 4.0','licenseUrl':'https://creativecommons.org/licenses/by/4.0/','source':'https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100187','download':url,'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest(),'modifications':'Unmodified recording; playback gain and looping controlled by the game.'})
+                print(filename,len(data),hashlib.sha256(data).hexdigest()); break
+              except Exception:
+                if attempt==2: raise
+                time.sleep(2*(attempt+1))
           (folder/'manifest.json').write_text(json.dumps(entries,ensure_ascii=False,indent=2)+'\n')
-          credits='# Classic Christmas recording credits\n\n'
+          credits='# Instrumental recording credits\n\n'
           for t in entries:
-            credits+=f'## {t["title"]}\n\nRecording / arrangement: Kevin MacLeod (incompetech.com).\nLicensed under Creative Commons Attribution 4.0 International.\n\nSource: {t["source"]}\nLicense: {t["licenseUrl"]}\nFile: `{t["file"]}`\nSHA-256: `{t["sha256"]}`\n\n{t["modifications"]}\n\n'
-          credits+='These credits concern the recordings, not merely the underlying traditional melodies. Do not remove attribution when reusing these audio files.\n'
+            credits+=f'## {t["title"]} — {t["description"]}\n\nRecording / arrangement: Kevin MacLeod (incompetech.com).\nLicensed under Creative Commons Attribution 4.0 International.\n\nSource: {t["source"]}\nLicense: {t["licenseUrl"]}\nOriginal recording: {t["download"]}\nFile: `{t["file"]}`\nSHA-256: `{t["sha256"]}`\n\n{t["modifications"]}\n\n'
+          credits+='The credits and license apply to these recordings, not merely the underlying melody. Retain attribution when reusing these files.\n'
           (folder/'CREDITS.md').write_text(credits)
           PY
-      - name: Commit only the imported music assets
+      - name: Commit only imported audio and its provenance
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- gameplay/music/jingle-bells.mp3 gameplay/music/we-wish-you-a-merry-christmas.mp3 gameplay/music/manifest.json gameplay/music/CREDITS.md
+          git add -- gameplay/music/bells-bright.mp3 gameplay/music/bells-ensemble.mp3 gameplay/music/manifest.json gameplay/music/CREDITS.md
           if ! git diff --cached --quiet; then
-            git commit -m 'Vendor Kevin MacLeod Christmas instrumentals with CC BY attribution'
+            git commit -m 'Add attributed Jingle Bells instrumental recordings'
             git pull --rebase origin main
             git push origin HEAD:main
           fi
-      - name: Package source and audio for playback verification
+      - name: Package source and audio for verification
         if: always()
         run: tar --exclude=.git -czf /tmp/harbour-classic-source.tar.gz .
       - uses: actions/upload-artifact@v4
