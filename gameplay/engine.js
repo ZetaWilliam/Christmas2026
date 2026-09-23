@@ -15,6 +15,10 @@
     launch(){this.player.duck=false;this.player.grounded=false;this.player.vy=C.jumpV;this.jumpUntil=-1;}
     duck(on){this.duckHeld=!!on;if(on)this.lastDuckTime=this.time;if(this.state==='running')this.player.duck=(this.duckHeld||this.time<this.resumeDuckUntil)&&this.player.grounded;}
     playerBoxes(){const y=C.water+this.player.jumpY;return [
+      {x:C.playerX+19,y:y-10,w:50,h:8},
+      {x:C.playerX+33,y:y-(this.player.duck?32:55),w:26,h:this.player.duck?22:44}
+    ];}
+    pickupBoxes(){const y=C.water+this.player.jumpY;return [
       {x:C.playerX+14,y:y-11,w:60,h:9},
       {x:C.playerX+31,y:y-(this.player.duck?34:58),w:30,h:this.player.duck?25:49}
     ];}
@@ -61,12 +65,12 @@
       if(this.combo&&this.time-this.lastFlower>C.comboWindow){this.combo=0;this.emit('comboEnd');}
       const boxes=this.playerBoxes();
       for(const o of this.obstacles)if(boxes.some(b=>overlap(b,this.obstacleBox(o),2))){this.end(o.type==='gull'?'Low gull — hold Duck to pass underneath.':'Harbour hazard — try hopping a little earlier.');return;}
-      for(const r of this.rewards){if(r.collected)continue;const y=r.y+Math.sin(r.bob)*3;const rewardBox={x:r.x-17,y:y-17,w:34,h:34};if(boxes.some(b=>overlap(b,rewardBox)))this.collect(r);else if(!r.missed&&r.x+17<C.playerX+14){r.missed=true;if(this.combo){this.combo=0;this.emit('comboEnd');}}}
+      for(const r of this.rewards){if(r.collected)continue;const y=r.y+Math.sin(r.bob)*3;const rewardBox={x:r.x-17,y:y-17,w:34,h:34};if(this.pickupBoxes().some(b=>overlap(b,rewardBox)))this.collect(r);else if(!r.missed&&r.x+17<C.playerX+14){r.missed=true;if(this.combo){this.combo=0;this.emit('comboEnd');}}}
       this.score=Math.floor(this.distance)+this.bonus;
       const m=Math.floor(this.distance/500)*500;if(m>this.milestone){this.milestone=m;this.emit('milestone',{distance:m});}
       if(this.time>=C.maxSeconds)this.end('Harbour marathon complete — brilliant paddling!');
     }
     snapshot(){return {state:this.state,time:this.time,speed:this.speed,world:this.world,score:this.score,distance:this.distance,flowers:this.flowers,goldenFlowers:this.goldenFlowers,combo:this.combo,maxCombo:this.maxCombo,player:{...this.player},obstacles:this.obstacles.map(o=>({...o})),rewards:this.rewards.map(r=>({...r})),reason:this.reason,result:this.result};}
   }
-  return Object.freeze({Engine,C,specs,overlap,rng,version:'2026.09.23-playtest.1'});
+  return Object.freeze({Engine,C,specs,overlap,rng,version:'2026.09.23-summer.2'});
 });
