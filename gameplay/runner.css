@@ -45,3 +45,15 @@
 #game #runnerSubmitPanel{background:#f7fbf9;}
 @media(max-width:639px){#game .runner-context{font-size:11px;}#game .runner-result{padding:15px;}#game .runner-result h3{font-size:21px;}#game .runner-result-score{font-size:36px;}#game .runner-result p{font-size:12px;}#game .runner-result-label{font-size:10px;}#game .runner-quiet-button{padding:7px 10px;font-size:11px;}#game .runner-track{font-size:10px;}}
 @media(prefers-reduced-motion:reduce){#game *{scroll-behavior:auto;transition:none!important;}}
+
+/* Result feedback is confined to the score card and respects reduced motion. */
+#game .runner-result-enter{animation:runner-result-arrive .38s ease-out both;}
+#game .runner-result[data-tier="cruiser"]{border-color:#9ECBD3;background:linear-gradient(135deg,#DCF0F3,#F5FBF7);}
+#game .runner-result[data-tier="skipper"]{border-color:#8EB7D1;background:linear-gradient(135deg,#E0ECF9,#EFF8F4);}
+#game .runner-result[data-tier="hero"]{box-shadow:0 3px 18px rgba(187,149,69,.12);}
+#game .runner-result[data-tier="legend"]{border-width:2px;box-shadow:0 4px 24px rgba(178,132,36,.18);}
+#game .runner-result[data-tier="legend"] .runner-result-label{color:#866013;}
+#game .runner-score-saved #runnerSaveBtn{background:#236147;box-shadow:0 0 0 3px rgba(75,145,105,.13);}
+#game #runnerMusicBtn[data-unavailable="true"]{border-color:#B77C45;}
+@keyframes runner-result-arrive{from{opacity:.3;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){#game .runner-result-enter{animation:none;}}
