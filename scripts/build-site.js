@@ -1,0 +1,24 @@
+'use strict';
+const fs=require('node:fs');
+const path=require('node:path');
+const vm=require('node:vm');
+const source=fs.readFileSync('index.html','utf8');
+const begin='    // Santa Harbour Dash — Dino-style Auckland endless runner';
+const end='    // 微粒动画';
+const start=source.indexOf(begin),finish=source.indexOf(end,start);
+if(start<0||finish<=start||source.indexOf(begin,start+begin.length)>=0)throw Error('Cannot isolate the legacy game block safely. Event template left unchanged.');
+const version=require(path.resolve('gameplay/engine.js')).version;
+let html=source.slice(0,start)+'    // The isolated Harbour Dash modules are loaded below.\n'+source.slice(finish);
+const css=`  <link rel="stylesheet" href="/gameplay/runner.css?v=${version}">\n`;
+const scripts=`  <script src="/gameplay/engine.js?v=${version}" defer></script>\n  <script src="/gameplay/runner.js?v=${version}" defer></script>\n`;
+if(!html.includes('</head>')||!html.includes('</body>'))throw Error('Incomplete event template.');
+html=html.replace('</head>',`  <meta name="harbour-build" content="${version}">\n${css}</head>`).replace('</body>',scripts+'</body>');
+// Parsing the complete remaining script also catches accidental damage to RSVP/organiser functions.
+for(const match of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi))if(match[1].trim())new vm.Script(match[1]);
+for(const file of ['engine.js','runner.js'])new vm.Script(fs.readFileSync('gameplay/'+file,'utf8'),{filename:file});
+for(const id of ['runnerCanvas','runnerStartBtn','runnerDuckBtn','runnerComboBadge','runnerLeaderboard','teamApproach','rsvpForm','rosterModal'])if(!html.includes(id))throw Error('Missing retained UI: '+id);
+if(html.includes('function runnerSpawnObstacle()'))throw Error('Legacy game would start twice.');
+fs.mkdirSync('public/gameplay',{recursive:true});
+fs.writeFileSync('public/index.html',html);
+for(const file of ['engine.js','runner.js','runner.css'])fs.copyFileSync('gameplay/'+file,'public/gameplay/'+file);
+console.log(`Built ${version}; removed only the legacy game script (${finish-start} characters). RSVP and organiser source retained.`);
