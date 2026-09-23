@@ -15,8 +15,33 @@
     toggleMusic(){this.musicOn=!this.musicOn;try{localStorage.setItem('harbour.music',this.musicOn?'on':'off');}catch(_){}if(this.playing){if(this.musicOn)this.start();else{this.stopTimer();if(this.ctx)this.music.gain.setTargetAtTime(.0001,this.ctx.currentTime,.03);}}return this.musicOn;}
     toggleEffects(){this.sfxOn=!this.sfxOn;try{localStorage.setItem('harbour.sound',this.sfxOn?'on':'off');}catch(_){}if(this.ctx)this.fx.gain.setTargetAtTime(this.sfxOn?.75:.0001,this.ctx.currentTime,.015);return this.sfxOn;}
     switchTrack(){this.track=1-this.track;this.step=0;try{localStorage.setItem('harbour.track',String(this.track));}catch(_){}if(this.playing)this.start();return this.track;}
-    effect(kind,tier=0){if(!this.sfxOn||!this.ensure())return;this.fx.gain.setTargetAtTime(.75,this.ctx.currentTime,.01);const at=this.ctx.currentTime,parts={hop:[[69,0,.07]],duck:[[52,0,.06]],flower:[[83,0,.08],[88,.05,.1]],gold:[[79,0,.11],[83,.06,.12],[88,.13,.19]],milestone:[[72,0,.1],[76,.08,.12],[79,.16,.24]],start:[[67,0,.09],[72,.08,.12]],splash:[[46,0,.12],[41,.08,.17]],result:tier<2?[[67,0,.12],[72,.13,.24]]:[[72,0,.12],[76,.11,.13],[79,.22,.14],[84,.34,.32]]};for(const [n,delay,d]of (parts[kind]||parts.flower))this.note(n,at+delay,d,.12,'bell',this.fx);}
-    diagnostic(){return{music:this.musicOn,effects:this.sfxOn,playing:this.playing,track:this.track,context:this.ctx?.state||'not-started',scheduledNodes:this.nodes.size};}
+    // Five distinct, short result cues. Celebration never plays over active gameplay.
+    effect(kind,tier=0,personalBest=false){
+      if(!this.sfxOn||!this.ensure())return;
+      this.fx.gain.setTargetAtTime(.68,this.ctx.currentTime,.01);
+      const at=this.ctx.currentTime;
+      const finishes=[
+        [[67,0,.10],[72,.13,.22]],
+        [[69,0,.10],[72,.10,.12],[76,.23,.24]],
+        [[72,0,.10],[76,.10,.12],[79,.21,.13],[84,.34,.26]],
+        [[72,0,.12],[76,.10,.14],[79,.20,.16],[83,.33,.18],[88,.48,.30]],
+        [[72,0,.12],[79,.10,.12],[84,.20,.15],[83,.31,.13],[86,.43,.15],[91,.58,.36]]
+      ];
+      const cues={hop:[[69,0,.07]],duck:[[52,0,.06]],
+        flower:[[83,0,.08],[88,.05,.10]],gold:[[79,0,.11],[83,.06,.12],[88,.13,.19]],
+        combo:[[81,0,.08],[86,.06,.09],[90,.14,.16]],
+        milestone:[[72,0,.10],[76,.08,.12],[79,.16,.24]],
+        start:[[67,0,.09],[72,.08,.12]],splash:[[46,0,.10],[41,.08,.14]],
+        saved:[[76,0,.10],[83,.10,.16]],
+        result:finishes[Math.max(0,Math.min(4,Math.floor(tier)||0))]};
+      for(const [n,delay,d]of (cues[kind]||cues.flower))this.note(n,at+delay,d,kind==='result'?.10:.09,'bell',this.fx);
+      if(kind==='result'&&personalBest){
+        this.note(88,at+1.0,.11,.065,'bell',this.fx);
+        this.note(95,at+1.14,.24,.06,'bell',this.fx);
+      }
+      this.lastEffect=kind;this.lastResultTier=kind==='result'?tier:this.lastResultTier;
+    }
+    diagnostic(){return{music:this.musicOn,effects:this.sfxOn,playing:this.playing,track:this.track,context:this.ctx?.state||'not-started',scheduledNodes:this.nodes.size,lastEffect:this.lastEffect||'',lastResultTier:this.lastResultTier??null};}
   }
   window.HarbourAudio=HarbourAudio;
 })();
