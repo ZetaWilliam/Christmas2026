@@ -202,6 +202,44 @@
       background-size: 140px 32px;
       animation: gameWaterDrift 8s linear infinite;
     }
+
+    .game-world-track {
+      position: absolute;
+      left: 0;
+      bottom: 42%;
+      width: 800%;
+      height: 108px;
+      display: flex;
+      pointer-events: none;
+      will-change: transform;
+    }
+    .game-world-scene {
+      position: relative;
+      flex: 0 0 12.5%;
+      height: 100%;
+      overflow: hidden;
+    }
+    .game-world-scene svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .game-landmark-label {
+      position: absolute;
+      left: 50%;
+      top: 8px;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      color: rgba(13,48,37,.72);
+      background: rgba(255,255,255,.72);
+      border: 1px solid rgba(13,48,37,.10);
+      z-index: 2;
+    }
     .santa-game-boat {
       position: absolute;
       left: 10px;
@@ -670,13 +708,21 @@
 
           <div id="gameCourse" tabindex="0" aria-label="Santa Harbour Dash game course. Press A and L alternately to paddle." class="santa-game-course relative overflow-hidden rounded-2xl border border-pine/10 h-64 sm:h-72 outline-none focus:ring-2 focus:ring-gold">
             <div class="absolute left-4 top-4 text-xs text-pine/65 bg-white/75 rounded-full px-3 py-1.5 border border-white/80">A / L keys or tap the paddles</div>
-            <div class="absolute right-4 top-4 text-xs font-bold text-pine bg-white/80 rounded-full px-3 py-1.5 border border-white/80">🏁 Rangitoto Finish</div>
+            <div class="absolute right-4 top-4 flex items-center gap-2 text-xs font-bold text-pine bg-white/80 rounded-full px-3 py-1.5 border border-white/80">
+              <span id="gameLandmark">CBD · Sky Tower</span>
+              <span id="gameLap" class="text-pine/45">Loop 1</span>
+            </div>
 
-            <svg aria-hidden="true" class="absolute inset-x-0 bottom-[43%] w-full h-24 text-pine/20" viewBox="0 0 1000 120" preserveAspectRatio="none">
-              <path d="M0 120V83h70V60h24v23h55V69h24v14h62V45h18v38h72V72h35v11h70V54h25v29h95V70h38v13h76V36h11v-21h10v21h11v47h50V64h32v19h76V48h20v35h73v37z" fill="currentColor"/>
-              <path d="M665 35 L681 6 L697 35 Z" fill="currentColor"/>
-            </svg>
-            <div class="absolute right-7 bottom-[37%] h-16 w-12 rounded-[50%_50%_45%_45%] bg-pine/15 border border-pine/10" aria-hidden="true"></div>
+            <div id="gameWorldTrack" class="game-world-track" aria-hidden="true">
+              <div class="game-world-scene"><span class="game-landmark-label">CBD · Sky Tower</span><svg viewBox="0 0 900 120" preserveAspectRatio="none" aria-hidden="true"><g fill="#0D3025" opacity=".20"><rect x="50" y="66" width="55" height="54"/><rect x="118" y="78" width="38" height="42"/><rect x="175" y="52" width="62" height="68"/><rect x="255" y="73" width="48" height="47"/><rect x="330" y="61" width="70" height="59"/><rect x="425" y="76" width="48" height="44"/><rect x="535" y="58" width="76" height="62"/><rect x="630" y="72" width="50" height="48"/><rect x="720" y="64" width="72" height="56"/></g><g fill="#0D3025" opacity=".30"><rect x="470" y="23" width="7" height="97"/><rect x="462" y="49" width="23" height="10" rx="4"/><path d="M468 23h11l-3-18h-5z"/><circle cx="474" cy="45" r="11"/></g></svg></div>
+<div class="game-world-scene"><span class="game-landmark-label">Waitematā · Harbour Bridge</span><svg viewBox="0 0 900 120" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#0D3025" opacity=".25"><path d="M70 93 Q450 2 830 93" stroke-width="7"/><path d="M70 93 H830" stroke-width="5"/><path d="M180 70 V111 M285 45 V111 M390 28 V111 M510 28 V111 M615 45 V111 M720 70 V111" stroke-width="3"/></g><rect x="55" y="92" width="790" height="8" fill="#0D3025" opacity=".18"/></svg></div>
+<div class="game-world-scene"><span class="game-landmark-label">Devonport · Ferry</span><svg viewBox="0 0 900 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0 112 Q170 70 315 90 Q455 105 580 73 Q730 45 900 91 V120 H0Z" fill="#0D3025" opacity=".17"/><g fill="#0D3025" opacity=".25"><rect x="505" y="70" width="65" height="25"/><path d="M496 70h83l-14-12h-57z"/><rect x="630" y="66" width="92" height="25" rx="3"/><path d="M646 66h62l-13-15h-36z"/></g><path d="M122 85 Q175 66 226 85" fill="none" stroke="#0D3025" stroke-width="3" opacity=".18"/></svg></div>
+<div class="game-world-scene"><span class="game-landmark-label">Rangitoto</span><svg viewBox="0 0 900 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0 112 Q180 105 315 94 Q390 88 442 66 Q492 35 535 66 Q600 95 900 108 V120 H0Z" fill="#0D3025" opacity=".22"/><path d="M390 84 Q445 48 492 84" fill="none" stroke="#0D3025" stroke-width="3" opacity=".20"/><circle cx="720" cy="82" r="6" fill="#C0362C" opacity=".6"/><path d="M720 88v15" stroke="#0D3025" stroke-width="2" opacity=".28"/></svg></div>
+<div class="game-world-scene"><span class="game-landmark-label">CBD · Sky Tower</span><svg viewBox="0 0 900 120" preserveAspectRatio="none" aria-hidden="true"><g fill="#0D3025" opacity=".20"><rect x="50" y="66" width="55" height="54"/><rect x="118" y="78" width="38" height="42"/><rect x="175" y="52" width="62" height="68"/><rect x="255" y="73" width="48" height="47"/><rect x="330" y="61" width="70" height="59"/><rect x="425" y="76" width="48" height="44"/><rect x="535" y="58" width="76" height="62"/><rect x="630" y="72" width="50" height="48"/><rect x="720" y="64" width="72" height="56"/></g><g fill="#0D3025" opacity=".30"><rect x="470" y="23" width="7" height="97"/><rect x="462" y="49" width="23" height="10" rx="4"/><path d="M468 23h11l-3-18h-5z"/><circle cx="474" cy="45" r="11"/></g></svg></div>
+<div class="game-world-scene"><span class="game-landmark-label">Waitematā · Harbour Bridge</span><svg viewBox="0 0 900 120" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="#0D3025" opacity=".25"><path d="M70 93 Q450 2 830 93" stroke-width="7"/><path d="M70 93 H830" stroke-width="5"/><path d="M180 70 V111 M285 45 V111 M390 28 V111 M510 28 V111 M615 45 V111 M720 70 V111" stroke-width="3"/></g><rect x="55" y="92" width="790" height="8" fill="#0D3025" opacity=".18"/></svg></div>
+<div class="game-world-scene"><span class="game-landmark-label">Devonport · Ferry</span><svg viewBox="0 0 900 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0 112 Q170 70 315 90 Q455 105 580 73 Q730 45 900 91 V120 H0Z" fill="#0D3025" opacity=".17"/><g fill="#0D3025" opacity=".25"><rect x="505" y="70" width="65" height="25"/><path d="M496 70h83l-14-12h-57z"/><rect x="630" y="66" width="92" height="25" rx="3"/><path d="M646 66h62l-13-15h-36z"/></g><path d="M122 85 Q175 66 226 85" fill="none" stroke="#0D3025" stroke-width="3" opacity=".18"/></svg></div>
+<div class="game-world-scene"><span class="game-landmark-label">Rangitoto</span><svg viewBox="0 0 900 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0 112 Q180 105 315 94 Q390 88 442 66 Q492 35 535 66 Q600 95 900 108 V120 H0Z" fill="#0D3025" opacity=".22"/><path d="M390 84 Q445 48 492 84" fill="none" stroke="#0D3025" stroke-width="3" opacity=".20"/><circle cx="720" cy="82" r="6" fill="#C0362C" opacity=".6"/><path d="M720 88v15" stroke="#0D3025" stroke-width="2" opacity=".28"/></svg></div>
+            </div>
             <div class="santa-game-water" aria-hidden="true"></div>
 
             <div id="gameBoat" class="santa-game-boat" aria-hidden="true">
@@ -731,8 +777,9 @@
             <span id="gameSaveStatus" class="block sm:inline sm:ml-3 mt-2 sm:mt-0 text-xs text-pine/65" aria-live="polite"></span>
           </div>
 
-          <p class="text-[11px] text-pine/55 mt-4">
+          <p class="text-[11px] text-pine/55 mt-4 leading-relaxed">
             Just for fun — the leaderboard is not part of the escape-room competition or RSVP allocation.
+            The scrolling-world game structure is inspired by open-source browser endless-runner patterns; all Auckland harbour artwork here is custom for this event.
           </p>
         </div>
 
