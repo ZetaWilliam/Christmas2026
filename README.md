@@ -15,9 +15,9 @@ Never commit their values or expose them to client-side JavaScript.
 ## RSVP and teams
 - One RSVP per email. Submitting the same email updates that RSVP, including its team choice.
 - Escape room attendees can create a team, join by 10-character invite code or ask organisers to allocate them.
-- Maximum 6 active teams × 6 attendees = 36 escape room places; lounge-only attendees remain separate.
+- Up to 12 provisional teams can be formed (maximum 6 participants per team), with 36 total escape-room places across six physical game rooms. Organisers may adjust or combine teams to balance numbers; lounge-only attendees remain separate.
 - Team creation, joining and organiser allocation are enforced atomically by PostgreSQL stored functions using an advisory transaction lock.
-- Invite-code lookup reveals only team name and headcount, not member emails or dietary requirements.
+- The public team directory shows only team names, headcounts and remaining places. Attendees can choose a listed team or use an invitation code. Public lookup never reveals member emails or dietary requirements.
 - Organiser Access shows live shared statistics, team cards and assignment controls, and can export attendee and team-allocation CSV files.
 - Existing RSVPs made before teams were introduced remain intact and await team allocation.
 
