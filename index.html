@@ -756,7 +756,7 @@
 
           <div>
             <label for="comments" class="block text-xs font-bold uppercase tracking-wider text-pine/80 mb-1">
-              Team Name, Teammate Preferences or Notes (Optional)
+              Teammate Preferences or Notes (Optional)
             </label>
             <textarea id="comments" rows="2" placeholder="Let us know if you have any questions or accessibility requests..." class="w-full px-3.5 py-2 rounded-xl border border-pine/20 text-xs focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent transition"></textarea>
           </div>
@@ -1012,6 +1012,7 @@
     let isAuthorized = false;
     let organiserPasscode = '';
     let cloudRoster = [];
+    let cloudTeams = [];
 
     async function fetchCloudRoster(passcode) {
       const response = await fetch('/api/rsvps', {
@@ -1027,9 +1028,13 @@
         escapeRoom: r.escape_room,
         dietary: r.dietary,
         comments: r.comments,
+        teamId: r.team_id,
+        teamName: r.team_name,
+        teamCode: r.team_code,
         createdAt: r.created_at,
         updatedAt: r.updated_at
       }));
+      cloudTeams = data.teams || [];
       return data;
     }
 
@@ -1078,6 +1083,7 @@
       isAuthorized = false;
       organiserPasscode = '';
       cloudRoster = [];
+      cloudTeams = [];
       closeRosterModal();
     }
 
@@ -1115,6 +1121,9 @@
               ${r.escapeRoom === 'Yes' ? '🕵️ Escape Room' : '🍕 Lounge'}
             </span>
           </td>
+          <td class="py-2.5 px-3 text-pine/75">
+            ${r.escapeRoom !== 'Yes' ? '—' : r.teamName ? escapeHtml(r.teamName) : '<span class="text-amber-700">Awaiting assignment</span>'}
+          </td>
           <td class="py-2.5 px-3">
             <div class="font-medium ${isDietSpecial ? 'text-cranberry' : 'text-pine/70'}">${escapeHtml(r.dietary || 'None')}</div>
             ${r.comments ? `<div class="text-[10px] text-pine/60 italic truncate max-w-xs">"${escapeHtml(r.comments)}"</div>` : ''}
@@ -1127,6 +1136,7 @@
       document.getElementById('statEscapeRooms').textContent = escapeCount;
       document.getElementById('statLoungeOnly').textContent = loungeCount;
       document.getElementById('statSpecialDiets').textContent = specialDietCount;
+      renderTeams();
     }
 
     function exportToCsv() {
@@ -1136,15 +1146,18 @@
         return;
       }
 
-      let csv = "Preferred Name,Full Name,Email,Affiliation,Escape Room,Dietary Requirements,Comments\r\n";
+      let csv = "Preferred Name,Full Name,Email,Affiliation,Escape Room,Team Name,Team Code,Team Status,Dietary Requirements,Comments\r\n";
       list.forEach(r => {
         const row = [
           `"${(r.preferredName || '').replace(/"/g, '""')}"`,
           `"${(r.fullName || '').replace(/"/g, '""')}"`,
           `"${(r.email || '').replace(/"/g, '""')}"`,
           `"${(r.affiliation || '').replace(/"/g, '""')}"`,
-          `"${(r.escapeRoom || '').replace(/"/g, '""')}"`,
-          `"${(r.dietary || '').replace(/"/g, '""')}"`,
+          csvCell(r.escapeRoom),
+          csvCell(r.teamName),
+          csvCell(r.teamCode),
+          csvCell(r.escapeRoom !== 'Yes' ? 'Lounge Only' : (r.teamId ? 'Assigned' : 'Awaiting Team')),
+          csvCell(r.dietary),
           `"${(r.comments || '').replace(/"/g, '""')}"`
         ];
         csv += row.join(",") + "\r\n";
