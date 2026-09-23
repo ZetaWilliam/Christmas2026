@@ -37,3 +37,12 @@ This lightweight internal-event prototype does not verify ownership of an email 
 
 ### Open-source inspiration
 The current Santa Harbour Dash gameplay is inspired by Chromium's open-source T-Rex Runner structure, as distributed in wayou/t-rex-runner (BSD-3-Clause): automatic forward motion, progressive speed, randomized obstacle gaps, collision game-over and instant replay. No T-Rex Runner sprites or other third-party game art are copied; the Auckland harbour scenery, Santa canoe, ferry, sailboat, buoy, gull and pōhutukawa artwork are custom for this event.
+
+
+### Runner gameplay notes
+- Speed progression is intentionally gradual: the run starts at 320 px/s, accelerates at 3.2 px/s², and caps at 560 px/s. Later difficulty comes mainly from denser, readable obstacle clusters rather than sudden speed spikes.
+- Harbour hazards use amber/dark maritime styling plus an exclamation marker and contain no Christmas-themed obstacle art. Current hazards are buoys, ferry wakes, sailboats and low gulls.
+- Rewards are visually separate glowing pōhutukawa blooms. Normal blooms build a 6-second combo; rare golden blooms award a larger bonus and have a gold halo/star treatment.
+- The harbour cycles through day, sunset, night and dawn while landmarks continue to scroll.
+- Milestone chimes are generated with the Web Audio API after a user gesture; players can mute them with the in-game Sound control.
+- Leaderboard rows can include total blooms, golden blooms and max combo in addition to distance and score.
