@@ -7,13 +7,13 @@
   function overlap(a,b,p=0){return a.x+p<b.x+b.w&&a.x+a.w-p>b.x&&a.y+p<b.y+b.h&&a.y+a.h-p>b.y;}
   class Engine{
     constructor(options={}){this.width=options.width||960;this.seed=options.seed===undefined?Math.floor(Math.random()*4294967295):options.seed;this.reset();}
-    reset(seed=this.seed){this.random=rng(seed);this.state='ready';this.time=0;this.world=0;this.distance=0;this.score=0;this.speed=C.startSpeed;this.bonus=0;this.flowers=0;this.goldenFlowers=0;this.combo=0;this.maxCombo=0;this.lastFlower=-Infinity;this.player={jumpY:0,vy:0,duck:false,grounded:true};this.duckHeld=false;this.jumpUntil=-1;this.accumulator=0;this.nextGroup=250;this.groupCount=0;this.groupId=0;this.lastRewardWorld=-Infinity;this.eligibleSinceGold=0;this.lastGoldTime=-Infinity;this.milestone=0;this.obstacles=[];this.rewards=[];this.ferries=[];this.events=[];this.reason='';this.result=null;}
+    reset(seed=this.seed){this.random=rng(seed);this.state='ready';this.time=0;this.world=0;this.distance=0;this.score=0;this.speed=C.startSpeed;this.bonus=0;this.flowers=0;this.goldenFlowers=0;this.combo=0;this.maxCombo=0;this.lastFlower=-Infinity;this.player={jumpY:0,vy:0,duck:false,grounded:true};this.duckHeld=false;this.lastDuckTime=-Infinity;this.resumeDuckUntil=-1;this.jumpUntil=-1;this.accumulator=0;this.nextGroup=250;this.groupCount=0;this.groupId=0;this.lastRewardWorld=-Infinity;this.eligibleSinceGold=0;this.lastGoldTime=-Infinity;this.milestone=0;this.obstacles=[];this.rewards=[];this.ferries=[];this.events=[];this.reason='';this.result=null;}
     start(seed=this.seed){this.reset(seed);this.state='running';}
-    pause(){if(this.state==='running'){this.state='paused';this.duckHeld=false;this.player.duck=false;this.jumpUntil=-1;this.accumulator=0;}}
-    resume(){if(this.state==='paused'){this.state='running';this.accumulator=0;}}
+    pause(){if(this.state==='running'){this.player.duck=this.player.grounded&&(this.player.duck||this.time-this.lastDuckTime<=C.step*2);this.state='paused';this.duckHeld=false;this.jumpUntil=-1;this.accumulator=0;}}
+    resume(){if(this.state==='paused'){this.resumeDuckUntil=this.player.duck?this.time+.20:-1;this.state='running';this.accumulator=0;}}
     hop(){if(this.state!=='running')return;this.jumpUntil=this.time+C.buffer;if(this.player.grounded)this.launch();}
     launch(){this.player.duck=false;this.player.grounded=false;this.player.vy=C.jumpV;this.jumpUntil=-1;}
-    duck(on){this.duckHeld=!!on;if(this.state==='running')this.player.duck=this.duckHeld&&this.player.grounded;}
+    duck(on){this.duckHeld=!!on;if(on)this.lastDuckTime=this.time;if(this.state==='running')this.player.duck=(this.duckHeld||this.time<this.resumeDuckUntil)&&this.player.grounded;}
     playerBoxes(){const y=C.water+this.player.jumpY;return [
       {x:C.playerX+14,y:y-11,w:60,h:9},
       {x:C.playerX+31,y:y-(this.player.duck?34:58),w:30,h:this.player.duck?25:49}
@@ -53,7 +53,7 @@
       }
     }
     collect(r){r.collected=true;this.combo=Math.min(100,this.time-this.lastFlower<=C.comboWindow?this.combo+1:1);this.lastFlower=this.time;this.maxCombo=Math.max(this.maxCombo,this.combo);this.flowers++;if(r.golden)this.goldenFlowers++;const points=(r.golden?300:100)+Math.min(100,(this.combo-1)*20);this.bonus+=points;this.emit('collect',{points,golden:r.golden,combo:this.combo});}
-    tick(dt){this.time+=dt;this.speed=Math.min(C.maxSpeed,C.startSpeed+Math.max(0,this.time-C.grace)*C.acceleration);const dx=this.speed*dt;this.world+=dx;this.distance+=dx/10;
+    tick(dt){this.time+=dt;if(this.duckHeld)this.lastDuckTime=this.time;if(this.player.grounded)this.player.duck=this.duckHeld||this.time<this.resumeDuckUntil;this.speed=Math.min(C.maxSpeed,C.startSpeed+Math.max(0,this.time-C.grace)*C.acceleration);const dx=this.speed*dt;this.world+=dx;this.distance+=dx/10;
       if(!this.player.grounded){this.player.jumpY+=this.player.vy*dt+.5*C.gravity*dt*dt;this.player.vy+=C.gravity*dt;if(this.player.jumpY>=0){this.player.jumpY=0;this.player.vy=0;this.player.grounded=true;this.player.duck=this.duckHeld;if(this.jumpUntil>=this.time)this.launch();}}
       this.nextGroup-=dx;if(this.nextGroup<=0)this.spawnGroup();
       for(const o of this.obstacles)o.x-=dx;for(const r of this.rewards){r.x-=dx;r.bob+=dt*3;}for(const f of this.ferries)f.x-=dx*f.speedScale;
