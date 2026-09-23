@@ -18,17 +18,19 @@ jobs:
         shell: bash
         run: |
           python3 - <<'PY'
-          import hashlib, json, pathlib, time, urllib.request
+          import hashlib, json, pathlib, time, urllib.request, urllib.parse
           folder=pathlib.Path('gameplay/music'); folder.mkdir(exist_ok=True)
           tracks=[
-            ('jingle-bells.mp3','Jingle Bells','https://incompetech.com/music/royalty-free/mp3-royaltyfree/Jingle%20Bells.mp3','https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100187'),
-            ('we-wish-you-a-merry-christmas.mp3','We Wish you a Merry Christmas','https://incompetech.com/music/royalty-free/mp3-royaltyfree/We%20Wish%20you%20a%20Merry%20Christmas.mp3','https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100369')
+            ('jingle-bells.mp3','Jingle Bells',['Jingle Bells.mp3'],'https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100187'),
+            ('we-wish-you-a-merry-christmas.mp3','We Wish you a Merry Christmas',['We Wish You a Merry Christmas.mp3','We Wish You A Merry Christmas.mp3','We Wish you a Merry Christmas.mp3'],'https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100369')
           ]
           entries=[]
-          for filename,title,url,source in tracks:
-            for attempt in range(3):
+          for filename,title,candidates,source in tracks:
+            error=None
+            for candidate in candidates:
+              url='https://incompetech.com/music/royalty-free/mp3-royaltyfree/'+urllib.parse.quote(candidate)
               try:
-                req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 (compatible; HarbourDash music asset import)'})
+                req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0'})
                 with urllib.request.urlopen(req,timeout=60) as response:
                   data=response.read(15000001)
                 if not 100000 < len(data) < 15000000: raise ValueError('Unexpected audio file size')
@@ -37,9 +39,10 @@ jobs:
                 entries.append({'file':filename,'title':title,'artist':'Kevin MacLeod','license':'CC BY 4.0','licenseUrl':'https://creativecommons.org/licenses/by/4.0/','source':source,'download':url,'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest(),'modifications':'Unmodified recording; playback volume and looping controlled by the game.'})
                 print(title,len(data),hashlib.sha256(data).hexdigest())
                 break
-              except Exception:
-                if attempt==2: raise
-                time.sleep(3*(attempt+1))
+              except Exception as exc:
+                error=exc; print('Candidate unavailable:',candidate,type(exc).__name__)
+            else:
+              raise RuntimeError('No official recording found: '+title) from error
           (folder/'manifest.json').write_text(json.dumps(entries,ensure_ascii=False,indent=2)+'\n')
           credits='# Classic Christmas recording credits\n\n'
           for t in entries:
@@ -58,8 +61,10 @@ jobs:
             git push origin HEAD:main
           fi
       - name: Package source and audio for playback verification
+        if: always()
         run: tar --exclude=.git -czf /tmp/harbour-classic-source.tar.gz .
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: harbour-classic-source
           path: /tmp/harbour-classic-source.tar.gz
