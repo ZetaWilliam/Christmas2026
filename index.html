@@ -1816,6 +1816,248 @@
         .replace(/'/g, "&#039;");
     }
 
+
+    // Santa Harbour Dash — lightweight 20 second rhythm game
+    const GAME_DURATION_MS = 20000;
+    let gameRunning = false;
+    let gameStartedAt = 0;
+    let gameEndedAt = 0;
+    let gameScoreValue = 0;
+    let gameStrokeCount = 0;
+    let gameLastSide = null;
+    let gameLastStrokeAt = 0;
+    let gameRhythmStreak = 0;
+    let gameRaf = null;
+
+    const gameTimerEl = document.getElementById('gameTimer');
+    const gameScoreEl = document.getElementById('gameScore');
+    const gameStrokesEl = document.getElementById('gameStrokes');
+    const gameStartBtn = document.getElementById('gameStartBtn');
+    const gameLeftBtn = document.getElementById('gameLeftBtn');
+    const gameRightBtn = document.getElementById('gameRightBtn');
+    const gameCourse = document.getElementById('gameCourse');
+    const gameBoat = document.getElementById('gameBoat');
+    const gameMessage = document.getElementById('gameMessage');
+    const gameSubmitPanel = document.getElementById('gameSubmitPanel');
+    const gameSaveBtn = document.getElementById('gameSaveBtn');
+    const gameSaveStatus = document.getElementById('gameSaveStatus');
+    const gameLeaderboardEl = document.getElementById('gameLeaderboard');
+
+    function setGameControls(enabled) {
+      gameLeftBtn.disabled = !enabled;
+      gameRightBtn.disabled = !enabled;
+    }
+
+    function resetGameVisuals() {
+      gameScoreValue = 0;
+      gameStrokeCount = 0;
+      gameLastSide = null;
+      gameLastStrokeAt = 0;
+      gameRhythmStreak = 0;
+      gameTimerEl.textContent = '20.0';
+      gameScoreEl.textContent = '0';
+      gameStrokesEl.textContent = '0';
+      gameBoat.style.transform = 'translateX(0px)';
+      gameMessage.textContent = 'Alternate left and right paddles for the best rhythm.';
+      gameSubmitPanel.classList.add('hidden');
+      gameSaveStatus.textContent = '';
+      gameSaveBtn.disabled = false;
+      gameSaveBtn.textContent = 'Submit Score';
+    }
+
+    function startSantaGame() {
+      if (gameRunning) return;
+      if (gameRaf) cancelAnimationFrame(gameRaf);
+      resetGameVisuals();
+      gameRunning = true;
+      gameStartedAt = performance.now();
+      gameEndedAt = 0;
+      gameStartBtn.disabled = true;
+      gameStartBtn.textContent = 'Paddling…';
+      setGameControls(true);
+      try { gameCourse.focus({preventScroll:true}); } catch (e) { gameCourse.focus(); }
+      gameRaf = requestAnimationFrame(gameTick);
+    }
+
+    function gameTick(now) {
+      if (!gameRunning) return;
+      const elapsed = now - gameStartedAt;
+      const remaining = Math.max(0, GAME_DURATION_MS - elapsed);
+      gameTimerEl.textContent = (remaining / 1000).toFixed(1);
+      if (remaining <= 0) {
+        finishSantaGame(now);
+        return;
+      }
+      gameRaf = requestAnimationFrame(gameTick);
+    }
+
+    function finishSantaGame(now) {
+      gameRunning = false;
+      gameEndedAt = now;
+      setGameControls(false);
+      gameStartBtn.disabled = false;
+      gameStartBtn.textContent = 'Play Again';
+      gameTimerEl.textContent = '0.0';
+      gameSubmitPanel.classList.remove('hidden');
+
+      if (gameScoreValue >= 650) {
+        gameMessage.textContent = '🏁 Harbour crossed! Brilliant paddling.';
+        if (typeof confetti === 'function') {
+          confetti({ particleCount: 70, spread: 62, origin: { y: 0.66 }, colors: ['#0D3025','#C0362C','#D4AF37','#ffffff'] });
+        }
+      } else if (gameScoreValue >= 430) {
+        gameMessage.textContent = '🌊 Great rhythm — Santa made excellent progress!';
+      } else if (gameScoreValue >= 220) {
+        gameMessage.textContent = '🎄 Nice run! Try again for a smoother rhythm.';
+      } else {
+        gameMessage.textContent = '☀️ Warm-up complete — alternate the paddles to go faster!';
+      }
+    }
+
+    function animateGamePaddle(side) {
+      const el = document.getElementById(side === 'left' ? 'gamePaddleLeft' : 'gamePaddleRight');
+      const cls = 'stroke';
+      el.classList.remove(cls);
+      void el.getBoundingClientRect();
+      el.classList.add(cls);
+      setTimeout(() => el.classList.remove(cls), 125);
+    }
+
+    function paddleSanta(side) {
+      if (!gameRunning) return;
+      const now = performance.now();
+      const interval = gameLastStrokeAt ? now - gameLastStrokeAt : 420;
+      const alternating = gameLastSide === null || gameLastSide !== side;
+      let points = 0;
+
+      if (!gameLastSide) {
+        points = 9;
+        gameRhythmStreak = 1;
+      } else if (alternating) {
+        if (interval >= 150 && interval <= 360) points = 18;
+        else if (interval <= 560) points = 16;
+        else if (interval <= 820) points = 12;
+        else points = 8;
+        gameRhythmStreak = interval <= 720 ? gameRhythmStreak + 1 : 1;
+        points += Math.min(2, Math.floor(gameRhythmStreak / 6));
+      } else {
+        points = 3;
+        gameRhythmStreak = 0;
+      }
+
+      gameLastSide = side;
+      gameLastStrokeAt = now;
+      gameStrokeCount += 1;
+      gameScoreValue = Math.min(2500, gameScoreValue + points);
+
+      gameScoreEl.textContent = String(gameScoreValue);
+      gameStrokesEl.textContent = String(gameStrokeCount);
+      animateGamePaddle(side);
+
+      const maxX = Math.max(0, gameCourse.clientWidth - gameBoat.offsetWidth - 30);
+      const progress = Math.min(0.96, gameScoreValue / 650);
+      gameBoat.style.transform = 'translateX(' + Math.round(maxX * progress) + 'px)';
+
+      if (!alternating) gameMessage.textContent = 'Use the other paddle next — keep Santa balanced!';
+      else if (points >= 18) gameMessage.textContent = 'Perfect rhythm! +' + points;
+      else if (points >= 14) gameMessage.textContent = 'Great stroke! +' + points;
+      else gameMessage.textContent = 'Keep alternating left and right.';
+    }
+
+    function renderGameLeaderboard(rows) {
+      if (!Array.isArray(rows) || !rows.length) {
+        gameLeaderboardEl.innerHTML = '<div class="rounded-xl border border-pine/10 bg-sand/50 p-4 text-sm text-pine/65">No scores yet — you could be the first Harbour Hero.</div>';
+        return;
+      }
+      const medals = ['🥇','🥈','🥉'];
+      gameLeaderboardEl.innerHTML = rows.map((r, i) => {
+        const rank = Number(r.rank || i + 1);
+        const badge = rank <= 3 ? medals[rank - 1] : '<span class="font-bold text-pine/45">#' + rank + '</span>';
+        const team = r.team ? '<div class="text-[11px] text-pine/55 truncate">' + escapeHtml(r.team) + '</div>' : '';
+        return '<div class="grid grid-cols-[34px_1fr_auto] items-center gap-2 rounded-xl border border-pine/10 bg-[#FAFAF7] px-3 py-2.5">' +
+          '<div class="text-center text-base">' + badge + '</div>' +
+          '<div class="min-w-0"><div class="font-semibold text-sm text-pine truncate">' + escapeHtml(r.name) + '</div>' + team + '</div>' +
+          '<div class="font-serif font-bold text-cranberry tabular-nums">' + Number(r.score || 0) + '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    async function loadGameLeaderboard() {
+      gameLeaderboardEl.innerHTML = '<p class="text-sm text-pine/60">Loading leaderboard…</p>';
+      try {
+        const response = await fetch('/api/game', {cache:'no-store'});
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Leaderboard unavailable.');
+        renderGameLeaderboard(data.leaderboard || []);
+      } catch (error) {
+        gameLeaderboardEl.innerHTML = '<p class="text-sm text-cranberry">Leaderboard is temporarily unavailable. Please try Refresh.</p>';
+      }
+    }
+
+    async function saveGameScore() {
+      if (gameRunning || gameEndedAt === 0) return;
+      const name = document.getElementById('gamePlayerName').value.trim();
+      const team = document.getElementById('gameTeamName').value.trim();
+      if (name.length < 2) {
+        gameSaveStatus.textContent = 'Please choose a display name (at least 2 characters).';
+        document.getElementById('gamePlayerName').focus();
+        return;
+      }
+
+      const measured = Math.round(gameEndedAt - gameStartedAt);
+      const durationMs = Math.max(18000, Math.min(23000, measured));
+      gameSaveBtn.disabled = true;
+      gameSaveBtn.textContent = 'Saving…';
+      gameSaveStatus.textContent = '';
+
+      try {
+        const response = await fetch('/api/game', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+            name,
+            team,
+            score: gameScoreValue,
+            strokes: gameStrokeCount,
+            durationMs
+          })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Could not save score.');
+        renderGameLeaderboard(data.leaderboard || []);
+        const place = (data.leaderboard || []).find(r => String(r.name).toLowerCase() === name.toLowerCase());
+        gameSaveStatus.textContent = place ? 'Saved — currently #' + place.rank + ' on the leaderboard!' : 'Score saved!';
+        gameSaveBtn.textContent = 'Score Saved';
+        if (typeof confetti === 'function' && place && place.rank <= 3) {
+          confetti({ particleCount: 45, spread: 50, origin: { y: 0.72 }, colors: ['#0D3025','#C0362C','#D4AF37'] });
+        }
+      } catch (error) {
+        gameSaveBtn.disabled = false;
+        gameSaveBtn.textContent = 'Submit Score';
+        gameSaveStatus.textContent = error.message;
+      }
+    }
+
+    gameStartBtn.addEventListener('click', startSantaGame);
+    gameLeftBtn.addEventListener('click', () => paddleSanta('left'));
+    gameRightBtn.addEventListener('click', () => paddleSanta('right'));
+    gameSaveBtn.addEventListener('click', saveGameScore);
+    document.getElementById('gameRefreshLeaderboard').addEventListener('click', loadGameLeaderboard);
+
+    document.addEventListener('keydown', (event) => {
+      if (!gameRunning) return;
+      const tag = event.target && event.target.tagName ? event.target.tagName.toLowerCase() : '';
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+      const key = event.key.toLowerCase();
+      if (key === 'a' || key === 'l') {
+        event.preventDefault();
+        paddleSanta(key === 'a' ? 'left' : 'right');
+      }
+    });
+
+    resetGameVisuals();
+    loadGameLeaderboard();
+
     // 微粒动画
     const canvas = document.getElementById('particle-canvas');
     const ctx = canvas.getContext('2d');
