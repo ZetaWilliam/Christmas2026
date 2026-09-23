@@ -17,10 +17,10 @@ module.exports = async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       const rows = await sql`
-        SELECT display_name, team_name, score, distance, flowers, created_at
+        SELECT display_name, team_name, score, distance, flowers, golden_flowers, max_combo, created_at
         FROM (
           SELECT DISTINCT ON (lower(display_name))
-            display_name, team_name, score, distance, flowers, created_at
+            display_name, team_name, score, distance, flowers, golden_flowers, max_combo, created_at
           FROM runner_scores
           ORDER BY lower(display_name), score DESC, created_at ASC
         ) best
@@ -35,7 +35,9 @@ module.exports = async function handler(req, res) {
           team: r.team_name,
           score: r.score,
           distance: r.distance,
-          flowers: r.flowers
+          flowers: r.flowers,
+          goldenFlowers: r.golden_flowers,
+          maxCombo: r.max_combo
         }))
       });
     }
@@ -47,20 +49,24 @@ module.exports = async function handler(req, res) {
       const score = Number(body.score);
       const distance = Number(body.distance);
       const flowers = Number(body.flowers);
+      const goldenFlowers = Number(body.goldenFlowers || 0);
+      const maxCombo = Number(body.maxCombo || 0);
       const durationMs = Number(body.durationMs);
 
       if (name.length < 2) return send(res, 400, { error: 'Please choose a display name with at least 2 characters.' });
-      if (![score, distance, flowers, durationMs].every(Number.isInteger)) {
+      if (![score, distance, flowers, goldenFlowers, maxCombo, durationMs].every(Number.isInteger)) {
         return send(res, 400, { error: 'Invalid game result.' });
       }
       if (score < 0 || score > 100000 || distance < 0 || distance > 100000 ||
-          flowers < 0 || flowers > 200 || durationMs < 1000 || durationMs > 600000) {
+          flowers < 0 || flowers > 200 || goldenFlowers < 0 || goldenFlowers > flowers ||
+          maxCombo < 0 || maxCombo > 100 || durationMs < 1000 || durationMs > 600000) {
         return send(res, 400, { error: 'That run could not be verified.' });
       }
 
       const seconds = durationMs / 1000;
       const maxDistance = Math.floor(seconds * 100 + 250);
-      const expectedScoreCeiling = distance + flowers * 110 + 250;
+      const normalFlowers = flowers - goldenFlowers;
+      const expectedScoreCeiling = distance + normalFlowers * 205 + goldenFlowers * 405 + 350;
       if (distance > maxDistance || score > expectedScoreCeiling) {
         return send(res, 400, { error: 'That run could not be verified.' });
       }
@@ -74,15 +80,15 @@ module.exports = async function handler(req, res) {
       if (recent.length) return send(res, 429, { error: 'Please wait a few seconds before submitting again.' });
 
       await sql`
-        INSERT INTO runner_scores(display_name, team_name, score, distance, flowers, duration_ms)
-        VALUES (${name}, ${team}, ${score}, ${distance}, ${flowers}, ${durationMs})
+        INSERT INTO runner_scores(display_name, team_name, score, distance, flowers, golden_flowers, max_combo, duration_ms)
+        VALUES (${name}, ${team}, ${score}, ${distance}, ${flowers}, ${goldenFlowers}, ${maxCombo}, ${durationMs})
       `;
 
       const rows = await sql`
         SELECT display_name, team_name, score, distance, flowers
         FROM (
           SELECT DISTINCT ON (lower(display_name))
-            display_name, team_name, score, distance, flowers, created_at
+            display_name, team_name, score, distance, flowers, golden_flowers, max_combo, created_at
           FROM runner_scores
           ORDER BY lower(display_name), score DESC, created_at ASC
         ) best
@@ -97,7 +103,9 @@ module.exports = async function handler(req, res) {
           team: r.team_name,
           score: r.score,
           distance: r.distance,
-          flowers: r.flowers
+          flowers: r.flowers,
+          goldenFlowers: r.golden_flowers,
+          maxCombo: r.max_combo
         }))
       });
     }
