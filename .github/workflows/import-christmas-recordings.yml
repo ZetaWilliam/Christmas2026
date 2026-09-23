@@ -1,0 +1,66 @@
+name: Import classic Christmas recordings
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/import-christmas-recordings.yml']
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Download licensed recordings from the artist
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, pathlib, time, urllib.request
+          folder=pathlib.Path('gameplay/music'); folder.mkdir(exist_ok=True)
+          tracks=[
+            ('jingle-bells.mp3','Jingle Bells','https://incompetech.com/music/royalty-free/mp3-royaltyfree/Jingle%20Bells.mp3','https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100187'),
+            ('we-wish-you-a-merry-christmas.mp3','We Wish you a Merry Christmas','https://incompetech.com/music/royalty-free/mp3-royaltyfree/We%20Wish%20you%20a%20Merry%20Christmas.mp3','https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100369')
+          ]
+          entries=[]
+          for filename,title,url,source in tracks:
+            for attempt in range(3):
+              try:
+                req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 (compatible; HarbourDash music asset import)'})
+                with urllib.request.urlopen(req,timeout=60) as response:
+                  data=response.read(15000001)
+                if not 100000 < len(data) < 15000000: raise ValueError('Unexpected audio file size')
+                if not (data[:3]==b'ID3' or data[0]==255 and data[1]&224==224): raise ValueError('Response is not MP3 audio')
+                (folder/filename).write_bytes(data)
+                entries.append({'file':filename,'title':title,'artist':'Kevin MacLeod','license':'CC BY 4.0','licenseUrl':'https://creativecommons.org/licenses/by/4.0/','source':source,'download':url,'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest(),'modifications':'Unmodified recording; playback volume and looping controlled by the game.'})
+                print(title,len(data),hashlib.sha256(data).hexdigest())
+                break
+              except Exception:
+                if attempt==2: raise
+                time.sleep(3*(attempt+1))
+          (folder/'manifest.json').write_text(json.dumps(entries,ensure_ascii=False,indent=2)+'\n')
+          credits='# Classic Christmas recording credits\n\n'
+          for t in entries:
+            credits+=f'## {t["title"]}\n\nRecording / arrangement: Kevin MacLeod (incompetech.com).\nLicensed under Creative Commons Attribution 4.0 International.\n\nSource: {t["source"]}\nLicense: {t["licenseUrl"]}\nFile: `{t["file"]}`\nSHA-256: `{t["sha256"]}`\n\n{t["modifications"]}\n\n'
+          credits+='These credits concern the recordings, not merely the underlying traditional melodies. Do not remove attribution when reusing these audio files.\n'
+          (folder/'CREDITS.md').write_text(credits)
+          PY
+      - name: Commit only the imported music assets
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- gameplay/music/jingle-bells.mp3 gameplay/music/we-wish-you-a-merry-christmas.mp3 gameplay/music/manifest.json gameplay/music/CREDITS.md
+          if ! git diff --cached --quiet; then
+            git commit -m 'Vendor Kevin MacLeod Christmas instrumentals with CC BY attribution'
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
+      - name: Package source and audio for playback verification
+        run: tar --exclude=.git -czf /tmp/harbour-classic-source.tar.gz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: harbour-classic-source
+          path: /tmp/harbour-classic-source.tar.gz
+          retention-days: 3
