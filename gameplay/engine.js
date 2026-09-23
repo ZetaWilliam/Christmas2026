@@ -1,7 +1,7 @@
 /* Santa Harbour Dash physics. No DOM, clocks or network: identical logic is tested in Node and browsers. */
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.HarbourEngine=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
-  const C=Object.freeze({step:1/120,water:254,playerX:132,gravity:1550,jumpV:-620,startSpeed:300,maxSpeed:480,acceleration:2.0,grace:12,buffer:.12,comboWindow:6,maxSeconds:600});
+  const C=Object.freeze({step:1/120,water:254,playerX:132,gravity:1550,jumpV:-620,startSpeed:312,maxSpeed:492,acceleration:2.2,grace:9.5,buffer:.12,comboWindow:6,maxSeconds:600});
   const specs=Object.freeze({buoy:{w:32,h:40},wake:{w:56,h:20},sailboat:{w:70,h:54},gull:{w:46,h:16}});
   function rng(seed){let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
   function overlap(a,b,p=0){return a.x+p<b.x+b.w&&a.x+a.w-p>b.x&&a.y+p<b.y+b.h&&a.y+a.h-p>b.y;}
