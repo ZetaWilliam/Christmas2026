@@ -1,13 +1,30 @@
-'use strict';const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),assert=require('node:assert/strict'),{execFileSync}=require('node:child_process');
+'use strict';
+const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),assert=require('node:assert/strict'),{execFileSync}=require('node:child_process');
 const root=path.resolve(__dirname,'..'),tmp=fs.mkdtempSync(path.join(os.tmpdir(),'harbour-build-'));
 try{
- fs.mkdirSync(path.join(tmp,'gameplay'));for(const f of ['engine.js','runner.js','runner.css'])fs.copyFileSync(path.join(root,'gameplay',f),path.join(tmp,'gameplay',f));
- const prefix='<!doctype html><html><head></head><body><!-- rsvpForm rosterModal teamApproach runnerCanvas runnerStartBtn runnerDuckBtn runnerComboBadge runnerLeaderboard --><script>\nfunction handleFormSubmit(){return "unchanged";}\n';
- const legacy='    // Santa Harbour Dash — Dino-style Auckland endless runner\nfunction runnerSpawnObstacle(){return "old";}\n';
- const suffix='    // 微粒动画\nfunction animateSparkles(){return "unchanged";}\n</script></body></html>';
- fs.writeFileSync(path.join(tmp,'index.html'),prefix+legacy+suffix);
+ fs.cpSync(path.join(root,'gameplay'),path.join(tmp,'gameplay'),{recursive:true});
+ const source=fs.readFileSync(path.join(root,'index.html'),'utf8');fs.writeFileSync(path.join(tmp,'index.html'),source);
  execFileSync(process.execPath,[path.join(root,'scripts/build-site.js')],{cwd:tmp});
  const h=fs.readFileSync(path.join(tmp,'public/index.html'),'utf8');
- assert(h.includes('function handleFormSubmit(){return "unchanged";}'));assert(h.includes('function animateSparkles(){return "unchanged";}'));assert(!h.includes('function runnerSpawnObstacle'));assert(h.includes('/gameplay/engine.js'));assert(h.includes('/gameplay/runner.js'));assert.equal(fs.readFileSync(path.join(tmp,'index.html'),'utf8'),prefix+legacy+suffix);
- console.log('Build isolation assertions passed: source template and non-game code preserved.');
+ const formStart='  <!-- 报名表单 -->',formEnd='  <!-- 报名成功弹窗与电子票 -->',game='  <!-- Santa Harbour Dash: Auckland Christmas endless runner -->';
+ const originalForm=source.slice(source.indexOf(formStart),source.indexOf(formEnd));
+ assert(h.includes(originalForm),'The RSVP form must be byte-for-byte unchanged');
+ assert(h.indexOf('id="rsvp"')<h.indexOf('id="game"'),'Game must follow registration');
+ assert(!h.includes('A little Chrome-Dino-style harbour run:'),'Remove long game intro');
+ assert(!h.includes('Just for fun — this leaderboard is separate from RSVP'),'Remove long development credit paragraph');
+ assert(!h.includes('function runnerSpawnObstacle'),'Legacy runner must not run twice');
+ for(const file of ['engine.js','audio.js','renderer.js','runner.js','runner.css']){
+  assert(h.includes('/gameplay/'+file));
+  assert.equal(fs.readFileSync(path.join(tmp,'public/gameplay',file),'utf8'),fs.readFileSync(path.join(root,'gameplay',file),'utf8'));
+ }
+ const art=fs.readFileSync(path.join(tmp,'public/gameplay/art/atlas.webp'));
+ assert.equal(art.toString('ascii',0,4),'RIFF');assert.equal(art.toString('ascii',8,12),'WEBP');
+ const authStart='    let isAuthorized = false;',legacy='    // Santa Harbour Dash — Dino-style Auckland endless runner';
+ const originalNonGame=source.slice(source.indexOf(authStart),source.indexOf(legacy));
+ assert(h.includes(originalNonGame),'Cloud RSVP, teams, organiser code must be unchanged');
+ assert.equal(fs.readFileSync(path.join(tmp,'index.html'),'utf8'),source,'Build never modifies source template');
+ const {Engine}=require('../gameplay/engine.js'),e=new Engine();
+ const hitArea=e.playerBoxes().reduce((n,b)=>n+b.w*b.h,0),pickupArea=e.pickupBoxes().reduce((n,b)=>n+b.w*b.h,0);
+ assert(hitArea<pickupArea*.8,'Hazard collision should be smaller without reducing reward pickup');
+ console.log('Summer build checks passed: RSVP/cloud source unchanged, game after form, art/audio complete, reduced hitbox.');
 }finally{fs.rmSync(tmp,{recursive:true,force:true});}
