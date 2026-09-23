@@ -13,7 +13,7 @@ try{
  assert(!h.includes('A little Chrome-Dino-style harbour run:'),'Remove long game intro');
  assert(!h.includes('Just for fun — this leaderboard is separate from RSVP'),'Remove long development credit paragraph');
  assert(!h.includes('function runnerSpawnObstacle'),'Legacy runner must not run twice');
- for(const file of ['engine.js','audio.js','renderer.js','polish.js','recorded-audio.js','runner.js','runner.css']){
+ for(const file of ['engine.js','audio.js','renderer.js','polish.js','coastline.js','recorded-audio.js','runner.js','runner.css']){
   assert(h.includes('/gameplay/'+file));
   let expected=fs.readFileSync(path.join(root,'gameplay',file),'utf8');
   if(file==='polish.js')expected=expected.replaceAll("'Christmas Bells'","'Instrumental 1'").replaceAll("'Christmas Bossa'","'Instrumental 2'").replaceAll('Switch original Christmas instrumental','Switch instrumental background music');
@@ -33,7 +33,9 @@ try{
  const visible=(prose.match(/>([^<]*)</g)||[]).join(' ');
  assert(!/\b(?:Santa|Christmas|Xmas)\b/i.test(visible),'Neutral authored page wording');
  for(const value of prose.matchAll(/(?:aria-label|title|placeholder)="([^"]*)"/g))assert(!/\b(?:Santa|Christmas|Xmas)\b/i.test(value[1]),'Neutral accessible labels');
- assert(prose.includes('Harbour Dash'));assert(prose.includes('View Escapade Event Info'));
+ assert(h.indexOf('/gameplay/polish.js')<h.indexOf('/gameplay/coastline.js'));
+ assert(h.indexOf('/gameplay/coastline.js')<h.indexOf('/gameplay/runner.js'));
+ assert(h.includes('Harbour Dash'));assert(h.includes('View Escapade Event Info'));
  for(const file of ['bells-bright.mp3','bells-ensemble.mp3','CREDITS.md'])assert(fs.existsSync(path.join(tmp,'public/gameplay/music',file)));
  console.log('Summer build checks passed: RSVP/cloud source unchanged, game after form, art/audio complete, reduced hitbox.');
 }finally{fs.rmSync(tmp,{recursive:true,force:true});}
