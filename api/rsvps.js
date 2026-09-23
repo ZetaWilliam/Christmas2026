@@ -10,7 +10,7 @@ function errorResponse(res, error) {
   const message = String(error?.message || '');
   const known = [
     ['ESCAPE_FULL', 409, 'Escape room places are full (36/36). Please choose Lounge Only.'],
-    ['SIX_TEAMS_FULL', 409, 'Six active teams are already formed. Please join an existing team or choose organiser assignment.'],
+    ['TWELVE_TEAMS_FULL', 409, 'Twelve preliminary teams are already formed. Please join an existing team or choose organiser assignment.'],
     ['TEAM_FULL', 409, 'This team already has six members. Please choose another team.'],
     ['TEAM_NOT_FOUND', 404, 'That team code was not found. Please check the invitation code.'],
     ['INVALID_TEAM_NAME', 400, 'Please use a team name between 2 and 60 characters.'],
@@ -43,6 +43,9 @@ module.exports = async function handler(req, res) {
       const teamMode = escapeRoom === 'Yes' ? String(b.teamMode || 'match').trim() : 'none';
       const teamName = String(b.teamName || '').trim();
       const teamCode = String(b.teamCode || '').trim().toUpperCase();
+      const requestedTeamId = b.selectedTeamId === null || b.selectedTeamId === undefined || b.selectedTeamId === ''
+        ? null : Number(b.selectedTeamId);
+      const publicTeamSelected = teamMode === 'join' && requestedTeamId !== null;
 
       if (!preferredName || !fullName || !email || !affiliation ||
           !['Yes', 'Lounge Only'].includes(escapeRoom)) {
@@ -60,17 +63,21 @@ module.exports = async function handler(req, res) {
         if (teamMode === 'create' && (teamName.length < 2 || teamName.length > 60)) {
           return reply(res, 400, { error: 'Team names must be between 2 and 60 characters.' });
         }
-        if (teamMode === 'join' && !/^[A-Z0-9]{10}$/.test(teamCode)) {
+        if (teamMode === 'join' &&
+            !(publicTeamSelected && Number.isSafeInteger(requestedTeamId) && requestedTeamId > 0) &&
+            !/^[A-Z0-9]{10}$/.test(teamCode)) {
           return reply(res, 400, { error: 'Please enter the 10-character team invitation code.' });
         }
       }
 
+      const joinReference = publicTeamSelected && Number.isSafeInteger(requestedTeamId) && requestedTeamId > 0
+        ? '#' + requestedTeamId : teamCode;
       const newCode = randomBytes(5).toString('hex').toUpperCase();
       const [rsvp] = await sql`
         SELECT register_gathering_rsvp(
           ${email}, ${preferredName}, ${fullName}, ${affiliation},
           ${escapeRoom}, ${dietary}, ${comments},
-          ${teamMode}, ${teamName}, ${teamCode}, ${newCode}
+          ${teamMode}, ${teamName}, ${joinReference}, ${newCode}
         ) AS result
       `;
       return reply(res, 200, { ok: true, rsvp: rsvp.result });
@@ -109,7 +116,7 @@ module.exports = async function handler(req, res) {
         return s;
       }, { total: 0, escapeRooms: 0, loungeOnly: 0, specialDiets: 0, awaitingTeam: 0 });
       stats.teamsFormed = teams.length;
-      return reply(res, 200, { ok: true, rows, teams, stats, escapeCapacity: 36, teamCapacity: 6 });
+      return reply(res, 200, { ok: true, rows, teams, stats, escapeCapacity: 36, teamCapacity: 6, maxTeams: 12 });
     }
 
     res.setHeader('Allow', 'GET, POST');
