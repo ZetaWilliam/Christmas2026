@@ -1327,6 +1327,79 @@
       }
     }
 
+
+    let selectedTeamId = null;
+    let publicTeams = [];
+
+    async function refreshPublicTeams() {
+      const countLabel = document.getElementById('publicTeamCount');
+      const listElement = document.getElementById('publicTeamList');
+      try {
+        const response = await fetch('/api/teams?list=1', {cache: 'no-store'});
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !Array.isArray(data.teams)) {
+          throw new Error(data.error || 'Teams are temporarily unavailable.');
+        }
+        publicTeams = data.teams;
+        countLabel.textContent = publicTeams.length + '/12 preliminary teams · 6 members maximum per team';
+        if (!publicTeams.length) {
+          listElement.innerHTML = '<p class="text-xs text-pine/65 sm:col-span-2 rounded-xl bg-white border border-pine/10 p-3">No teams have been created yet. You can create the first one or choose organiser assignment.</p>';
+        } else {
+          listElement.innerHTML = publicTeams.map(t => {
+            const id = Number(t.id);
+            const count = Number(t.memberCount);
+            const full = t.full || count >= 6;
+            const selected = selectedTeamId === id;
+            const button = full
+              ? '<span class="text-xs font-semibold text-pine/45">Full</span>'
+              : '<button type="button" onclick="selectExistingTeam(' + id + ')" class="rounded-lg border border-pine/25 bg-pine text-white text-xs px-3 py-1.5 font-semibold hover:bg-pine-light">' + (selected ? 'Selected' : 'Join team') + '</button>';
+            return '<div class="rounded-xl border ' + (selected ? 'border-pine bg-pine/5' : 'border-pine/10 bg-white') + ' px-3 py-3 flex items-center justify-between gap-2">' +
+              '<div class="min-w-0"><strong class="block text-sm text-pine break-words">' + escapeHtml(t.name) + '</strong>' +
+              '<span class="block text-xs text-pine/65 mt-1">' + count + '/6 members</span></div>' + button + '</div>';
+          }).join('');
+        }
+        if (selectedTeamId !== null) {
+          const selected = publicTeams.find(t => Number(t.id) === selectedTeamId);
+          if (!selected || selected.full) {
+            selectedTeamId = null;
+            document.getElementById('selectedTeamNotice').classList.add('hidden');
+            updateTeamModeUI();
+          }
+        }
+      } catch (error) {
+        countLabel.textContent = 'Unable to load current teams';
+        listElement.innerHTML = '<p class="text-xs text-cranberry sm:col-span-2">Please press Refresh to try again.</p>';
+      }
+    }
+
+    function selectExistingTeam(id) {
+      const team = publicTeams.find(t => Number(t.id) === id);
+      if (!team || team.full) return;
+      selectedTeamId = id;
+      document.querySelector('input[name="escapeRoom"][value="Yes"]').checked = true;
+      document.querySelector('input[name="teamMode"][value="join"]').checked = true;
+      document.getElementById('teamCode').value = '';
+      const notice = document.getElementById('selectedTeamNotice');
+      notice.textContent = 'Selected team: ' + team.name + ' (' + team.memberCount + '/6).';
+      notice.classList.remove('hidden');
+      document.getElementById('teamLookupResult').textContent = 'The team will be joined when you confirm your RSVP.';
+      updateTeamModeUI();
+      refreshPublicTeams();
+    }
+
+    document.getElementById('teamCode').addEventListener('input', () => {
+      selectedTeamId = null;
+      document.getElementById('selectedTeamNotice').classList.add('hidden');
+      updateTeamModeUI();
+    });
+
+    refreshPublicTeams();
+    setInterval(() => {
+      if (!document.getElementById('teamChoices').classList.contains('hidden')) {
+        refreshPublicTeams();
+      }
+    }, 30000);
+
     function updateTeamModeUI() {
       const isEscape = document.querySelector('input[name="escapeRoom"]:checked')?.value === 'Yes';
       const mode = document.querySelector('input[name="teamMode"]:checked')?.value || 'match';
@@ -1335,7 +1408,7 @@
       document.getElementById('joinTeamFields').classList.toggle('hidden', !isEscape || mode !== 'join');
       document.getElementById('teamMatchMessage').classList.toggle('hidden', !isEscape || mode !== 'match');
       document.getElementById('teamName').required = isEscape && mode === 'create';
-      document.getElementById('teamCode').required = isEscape && mode === 'join';
+      document.getElementById('teamCode').required = isEscape && mode === 'join' && selectedTeamId === null;
     }
 
     async function checkTeamCode() {
@@ -1422,6 +1495,7 @@
         document.querySelector('input[name="teamMode"]:checked')?.value || 'match' : 'none';
       const teamName = document.getElementById('teamName').value.trim();
       const teamCode = document.getElementById('teamCode').value.trim().toUpperCase();
+      const selectedTeamForSubmit = escapeRoom === 'Yes' && teamMode === 'join' ? selectedTeamId : null;
 
       const record = {
         preferredName,
@@ -1434,6 +1508,7 @@
         teamMode,
         teamName,
         teamCode,
+        selectedTeamId: selectedTeamForSubmit,
         timestamp: new Date().toISOString()
       };
 
@@ -1496,7 +1571,10 @@
       modal.classList.add('flex');
 
       document.getElementById('rsvpForm').reset();
+      selectedTeamId = null;
+      document.getElementById('selectedTeamNotice').classList.add('hidden');
       updateTeamModeUI();
+      refreshPublicTeams();
     }
 
     function closeSuccessModal() {
