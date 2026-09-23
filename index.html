@@ -1854,272 +1854,597 @@
     }
 
 
-    // Santa Harbour Dash — lightweight 20 second rhythm game
-    const GAME_DURATION_MS = 20000;
-    let gameRunning = false;
-    let gameStartedAt = 0;
-    let gameEndedAt = 0;
-    let gameScoreValue = 0;
-    let gameDistanceValue = 0;
-    let gameStrokeCount = 0;
-    let gameLastSide = null;
-    let gameLastStrokeAt = 0;
-    let gameRhythmStreak = 0;
-    let gameRaf = null;
+    // Santa Harbour Dash — Dino-style Auckland endless runner
+    const runnerCanvas = document.getElementById('runnerCanvas');
+    const runnerCtx = runnerCanvas.getContext('2d');
+    const runnerStartBtn = document.getElementById('runnerStartBtn');
+    const runnerHopBtn = document.getElementById('runnerHopBtn');
+    const runnerDuckBtn = document.getElementById('runnerDuckBtn');
+    const runnerMessage = document.getElementById('runnerMessage');
+    const runnerScoreEl = document.getElementById('runnerScore');
+    const runnerDistanceEl = document.getElementById('runnerDistance');
+    const runnerFlowersEl = document.getElementById('runnerFlowers');
+    const runnerSpeedEl = document.getElementById('runnerSpeed');
+    const runnerLandmarkEl = document.getElementById('runnerLandmark');
+    const runnerSubmitPanel = document.getElementById('runnerSubmitPanel');
+    const runnerSaveBtn = document.getElementById('runnerSaveBtn');
+    const runnerSaveStatus = document.getElementById('runnerSaveStatus');
+    const runnerLeaderboardEl = document.getElementById('runnerLeaderboard');
 
-    const gameTimerEl = document.getElementById('gameTimer');
-    const gameScoreEl = document.getElementById('gameScore');
-    const gameStrokesEl = document.getElementById('gameStrokes');
-    const gameStartBtn = document.getElementById('gameStartBtn');
-    const gameLeftBtn = document.getElementById('gameLeftBtn');
-    const gameRightBtn = document.getElementById('gameRightBtn');
-    const gameCourse = document.getElementById('gameCourse');
-    const gameBoat = document.getElementById('gameBoat');
-    const gameWorldTrack = document.getElementById('gameWorldTrack');
-    const gameLandmark = document.getElementById('gameLandmark');
-    const gameLap = document.getElementById('gameLap');
-    const gameMessage = document.getElementById('gameMessage');
-    const gameSubmitPanel = document.getElementById('gameSubmitPanel');
-    const gameSaveBtn = document.getElementById('gameSaveBtn');
-    const gameSaveStatus = document.getElementById('gameSaveStatus');
-    const gameLeaderboardEl = document.getElementById('gameLeaderboard');
+    const RUNNER_W = 960;
+    const RUNNER_H = 320;
+    const RUNNER_WATER_Y = 254;
+    const RUNNER_PLAYER_X = 132;
+    const RUNNER_GRAVITY = 1550;
+    const RUNNER_JUMP_V = -610;
 
-    function setGameControls(enabled) {
-      gameLeftBtn.disabled = !enabled;
-      gameRightBtn.disabled = !enabled;
+    let runnerRunning = false;
+    let runnerCrashed = false;
+    let runnerStartedAt = 0;
+    let runnerEndedAt = 0;
+    let runnerLastFrame = 0;
+    let runnerRaf = 0;
+    let runnerScore = 0;
+    let runnerDistance = 0;
+    let runnerFlowers = 0;
+    let runnerSpeed = 320;
+    let runnerWorld = 0;
+    let runnerNextObstacle = 760;
+    let runnerNextFlower = 980;
+    let runnerObstacles = [];
+    let runnerRewards = [];
+    let runnerFerries = [];
+    let runnerPlayer = { jumpY: 0, vy: 0, duck: false, grounded: true };
+    let runnerPaddlePhase = 0;
+
+    const runnerLandmarks = ['CBD · Sky Tower', 'Waitematā · Harbour Bridge', 'Devonport · Ferry Terminal', 'Rangitoto'];
+
+    function runnerSetControls(enabled) {
+      runnerHopBtn.disabled = !enabled;
+      runnerDuckBtn.disabled = !enabled;
     }
 
-    function resetGameVisuals() {
-      gameScoreValue = 0;
-      gameDistanceValue = 0;
-      gameStrokeCount = 0;
-      gameLastSide = null;
-      gameLastStrokeAt = 0;
-      gameRhythmStreak = 0;
-      gameTimerEl.textContent = '20.0';
-      gameScoreEl.textContent = '0';
-      gameStrokesEl.textContent = '0';
-      gameBoat.style.transform = 'translateX(0px)';
-      gameWorldTrack.style.transform = 'translateX(0px)';
-      gameLandmark.textContent = 'CBD · Sky Tower';
-      gameLap.textContent = 'Loop 1';
-      gameMessage.textContent = 'Alternate left and right paddles — the harbour keeps scrolling as Santa goes.';
-      gameSubmitPanel.classList.add('hidden');
-      gameSaveStatus.textContent = '';
-      gameSaveBtn.disabled = false;
-      gameSaveBtn.textContent = 'Submit Score';
+    function runnerReset() {
+      runnerRunning = false;
+      runnerCrashed = false;
+      runnerScore = 0;
+      runnerDistance = 0;
+      runnerFlowers = 0;
+      runnerSpeed = 320;
+      runnerWorld = 0;
+      runnerNextObstacle = 760;
+      runnerNextFlower = 980;
+      runnerObstacles = [];
+      runnerRewards = [];
+      runnerFerries = [];
+      runnerPlayer = { jumpY: 0, vy: 0, duck: false, grounded: true };
+      runnerPaddlePhase = 0;
+      runnerScoreEl.textContent = '0';
+      runnerDistanceEl.textContent = '0';
+      runnerFlowersEl.textContent = '0';
+      runnerSpeedEl.textContent = '1.0×';
+      runnerLandmarkEl.textContent = runnerLandmarks[0];
+      runnerMessage.textContent = 'Press Start Run — or Space — when you\'re ready.';
+      runnerSubmitPanel.classList.add('hidden');
+      runnerSaveStatus.textContent = '';
+      runnerSaveBtn.disabled = false;
+      runnerSaveBtn.textContent = 'Submit Score';
+      runnerSetControls(false);
+      runnerDraw();
     }
 
-    function startSantaGame() {
-      if (gameRunning) return;
-      if (gameRaf) cancelAnimationFrame(gameRaf);
-      resetGameVisuals();
-      gameRunning = true;
-      gameStartedAt = performance.now();
-      gameEndedAt = 0;
-      gameStartBtn.disabled = true;
-      gameStartBtn.textContent = 'Paddling…';
-      setGameControls(true);
-      try { gameCourse.focus({preventScroll:true}); } catch (e) { gameCourse.focus(); }
-      gameRaf = requestAnimationFrame(gameTick);
+    function runnerStart() {
+      if (runnerRunning) return;
+      if (runnerRaf) cancelAnimationFrame(runnerRaf);
+      runnerReset();
+      runnerRunning = true;
+      runnerCrashed = false;
+      runnerStartedAt = performance.now();
+      runnerLastFrame = runnerStartedAt;
+      runnerStartBtn.textContent = 'Running…';
+      runnerStartBtn.disabled = true;
+      runnerSetControls(true);
+      runnerMessage.textContent = 'Hop, duck, collect blooms — the harbour gets faster!';
+      try { runnerCanvas.focus({preventScroll:true}); } catch (e) { runnerCanvas.focus(); }
+      runnerRaf = requestAnimationFrame(runnerLoop);
     }
 
-    function gameTick(now) {
-      if (!gameRunning) return;
-      const elapsed = now - gameStartedAt;
-      const remaining = Math.max(0, GAME_DURATION_MS - elapsed);
-      gameTimerEl.textContent = (remaining / 1000).toFixed(1);
-      if (remaining <= 0) {
-        finishSantaGame(now);
-        return;
+    function runnerEnd(reason) {
+      if (!runnerRunning) return;
+      runnerRunning = false;
+      runnerCrashed = true;
+      runnerEndedAt = performance.now();
+      runnerSetControls(false);
+      runnerStartBtn.disabled = false;
+      runnerStartBtn.textContent = 'Run Again';
+      runnerSubmitPanel.classList.remove('hidden');
+      runnerMessage.textContent = reason || 'Splash! Run over — press Space or Run Again.';
+      if (typeof confetti === 'function' && runnerScore >= 1200) {
+        confetti({ particleCount: 45, spread: 55, origin: { y: 0.72 }, colors: ['#0D3025','#C0362C','#D4AF37'] });
       }
-      gameRaf = requestAnimationFrame(gameTick);
     }
 
-    function finishSantaGame(now) {
-      gameRunning = false;
-      gameEndedAt = now;
-      setGameControls(false);
-      gameStartBtn.disabled = false;
-      gameStartBtn.textContent = 'Play Again';
-      gameTimerEl.textContent = '0.0';
-      gameSubmitPanel.classList.remove('hidden');
+    function runnerJump() {
+      if (!runnerRunning || !runnerPlayer.grounded) return;
+      runnerPlayer.duck = false;
+      runnerPlayer.grounded = false;
+      runnerPlayer.vy = RUNNER_JUMP_V;
+      runnerMessage.textContent = 'Hop!';
+    }
 
-      if (gameScoreValue >= 650) {
-        gameMessage.textContent = '🌊 Harbour Hero! Santa kept moving across Tāmaki Makaurau.';
-        if (typeof confetti === 'function') {
-          confetti({ particleCount: 70, spread: 62, origin: { y: 0.66 }, colors: ['#0D3025','#C0362C','#D4AF37','#ffffff'] });
+    function runnerSetDuck(on) {
+      if (!runnerRunning) return;
+      runnerPlayer.duck = !!on && runnerPlayer.grounded;
+      if (runnerPlayer.duck) runnerMessage.textContent = 'Duck!';
+    }
+
+    function runnerSpawnObstacle() {
+      const speedFactor = Math.min(1, (runnerSpeed - 320) / 400);
+      const roll = Math.random();
+      let type;
+      if (roll < 0.30) type = 'buoy';
+      else if (roll < 0.54) type = 'wake';
+      else if (roll < 0.77) type = 'sailboat';
+      else type = 'gull';
+
+      const obstacle = { type, x: RUNNER_W + 40, passed: false };
+      if (type === 'gull') obstacle.y = RUNNER_WATER_Y - 88 - Math.random() * 5;
+      runnerObstacles.push(obstacle);
+
+      if (Math.random() < 0.18 && runnerFerries.length < 1) {
+        runnerFerries.push({ x: RUNNER_W + 180, y: RUNNER_WATER_Y - 70, speedScale: 0.42 });
+      }
+
+      const baseGap = 620 - speedFactor * 170;
+      runnerNextObstacle = baseGap + Math.random() * 250;
+    }
+
+    function runnerSpawnFlower() {
+      const yChoices = [RUNNER_WATER_Y - 76, RUNNER_WATER_Y - 112, RUNNER_WATER_Y - 145];
+      runnerRewards.push({
+        x: RUNNER_W + 50,
+        y: yChoices[Math.floor(Math.random() * yChoices.length)],
+        collected: false,
+        bob: Math.random() * Math.PI * 2
+      });
+      runnerNextFlower = 900 + Math.random() * 750;
+    }
+
+    function runnerUpdate(dt) {
+      runnerSpeed = Math.min(720, runnerSpeed + 8.2 * dt);
+      const dx = runnerSpeed * dt;
+      runnerWorld += dx;
+      runnerDistance += dx / 10;
+      runnerPaddlePhase += dt * 8;
+
+      if (!runnerPlayer.grounded) {
+        runnerPlayer.vy += RUNNER_GRAVITY * dt;
+        runnerPlayer.jumpY += runnerPlayer.vy * dt;
+        if (runnerPlayer.jumpY >= 0) {
+          runnerPlayer.jumpY = 0;
+          runnerPlayer.vy = 0;
+          runnerPlayer.grounded = true;
         }
-      } else if (gameScoreValue >= 430) {
-        gameMessage.textContent = '⛵ Great rhythm — another Auckland harbour loop complete!';
-      } else if (gameScoreValue >= 220) {
-        gameMessage.textContent = '🎄 Nice run! Try again for a smoother endless paddle.';
-      } else {
-        gameMessage.textContent = '☀️ Warm-up complete — alternate the paddles to go faster!';
+      }
+
+      runnerNextObstacle -= dx;
+      runnerNextFlower -= dx;
+      if (runnerNextObstacle <= 0) runnerSpawnObstacle();
+      if (runnerNextFlower <= 0) runnerSpawnFlower();
+
+      for (const o of runnerObstacles) o.x -= dx;
+      for (const r of runnerRewards) {
+        r.x -= dx;
+        r.bob += dt * 4;
+      }
+      for (const f of runnerFerries) f.x -= dx * f.speedScale;
+
+      runnerObstacles = runnerObstacles.filter(o => o.x > -120);
+      runnerRewards = runnerRewards.filter(r => r.x > -60 && !r.collected);
+      runnerFerries = runnerFerries.filter(f => f.x > -260);
+
+      runnerCheckCollisions();
+
+      const landmarkIndex = Math.floor(runnerWorld / 900) % runnerLandmarks.length;
+      runnerLandmarkEl.textContent = runnerLandmarks[landmarkIndex];
+      runnerScore = Math.floor(runnerDistance) + runnerFlowers * 100;
+      runnerScoreEl.textContent = String(runnerScore);
+      runnerDistanceEl.textContent = String(Math.floor(runnerDistance));
+      runnerFlowersEl.textContent = String(runnerFlowers);
+      runnerSpeedEl.textContent = (runnerSpeed / 320).toFixed(1) + '×';
+    }
+
+    function runnerPlayerBox() {
+      const duck = runnerPlayer.duck && runnerPlayer.grounded;
+      const x = RUNNER_PLAYER_X + 13;
+      const y = RUNNER_WATER_Y - (duck ? 43 : 67) + runnerPlayer.jumpY;
+      return { x, y, w: 66, h: duck ? 35 : 58 };
+    }
+
+    function runnerObstacleBox(o) {
+      if (o.type === 'buoy') return { x: o.x + 6, y: RUNNER_WATER_Y - 42, w: 25, h: 40 };
+      if (o.type === 'wake') return { x: o.x + 2, y: RUNNER_WATER_Y - 19, w: 55, h: 18 };
+      if (o.type === 'sailboat') return { x: o.x + 9, y: RUNNER_WATER_Y - 53, w: 62, h: 50 };
+      return { x: o.x + 2, y: o.y + 2, w: 45, h: 20 };
+    }
+
+    function runnerOverlap(a, b, pad=0) {
+      return a.x + pad < b.x + b.w &&
+        a.x + a.w - pad > b.x &&
+        a.y + pad < b.y + b.h &&
+        a.y + a.h - pad > b.y;
+    }
+
+    function runnerCheckCollisions() {
+      const pb = runnerPlayerBox();
+
+      for (const o of runnerObstacles) {
+        if (runnerOverlap(pb, runnerObstacleBox(o), 5)) {
+          runnerEnd(o.type === 'gull'
+            ? 'A low gull clipped Santa — duck next time!'
+            : 'Splash! Santa hit a harbour obstacle.');
+          return;
+        }
+      }
+
+      for (const r of runnerRewards) {
+        const ry = r.y + Math.sin(r.bob) * 5;
+        const rb = { x: r.x - 11, y: ry - 11, w: 22, h: 22 };
+        if (runnerOverlap(pb, rb, 1)) {
+          r.collected = true;
+          runnerFlowers += 1;
+          runnerMessage.textContent = '🌺 Pōhutukawa bonus +100!';
+          if (typeof confetti === 'function') {
+            confetti({ particleCount: 10, spread: 30, startVelocity: 12, origin: { x: .48, y: .62 }, colors: ['#C0362C','#D4AF37','#164839'] });
+          }
+        }
       }
     }
 
-    function updateSantaCamera() {
-      const width = Math.max(1, gameCourse.clientWidth);
-      const maxBoatX = Math.max(0, Math.min(width * 0.44, width - gameBoat.offsetWidth - 24));
-      const cameraThreshold = 260;
-      const boatProgress = Math.min(1, gameDistanceValue / cameraThreshold);
-      gameBoat.style.transform = 'translateX(' + Math.round(maxBoatX * boatProgress) + 'px)';
-
-      const sceneProgress = Math.max(0, (gameDistanceValue - cameraThreshold) / 250);
-      const loopWidth = width * 4;
-      const worldOffset = (sceneProgress * width) % loopWidth;
-      gameWorldTrack.style.transform = 'translateX(-' + Math.round(worldOffset) + 'px)';
-
-      const landmarks = ['CBD · Sky Tower', 'Waitematā · Harbour Bridge', 'Devonport · Ferry', 'Rangitoto'];
-      const sceneIndex = Math.floor(sceneProgress) % landmarks.length;
-      const loopNumber = Math.floor(sceneProgress / landmarks.length) + 1;
-      gameLandmark.textContent = landmarks[sceneIndex];
-      gameLap.textContent = 'Loop ' + loopNumber;
+    function runnerLoop(now) {
+      if (!runnerRunning) return;
+      let dt = (now - runnerLastFrame) / 1000;
+      runnerLastFrame = now;
+      dt = Math.min(dt, 0.035);
+      runnerUpdate(dt);
+      runnerDraw();
+      if (runnerRunning) runnerRaf = requestAnimationFrame(runnerLoop);
     }
 
-    function animateGamePaddle(side) {
-      const el = document.getElementById(side === 'left' ? 'gamePaddleLeft' : 'gamePaddleRight');
-      const cls = 'stroke';
-      el.classList.remove(cls);
-      void el.getBoundingClientRect();
-      el.classList.add(cls);
-      setTimeout(() => el.classList.remove(cls), 125);
-    }
+    function runnerDraw() {
+      const ctx = runnerCtx;
+      ctx.clearRect(0, 0, RUNNER_W, RUNNER_H);
 
-    function paddleSanta(side) {
-      if (!gameRunning) return;
-      const now = performance.now();
-      const interval = gameLastStrokeAt ? now - gameLastStrokeAt : 420;
-      const alternating = gameLastSide === null || gameLastSide !== side;
-      let points = 0;
+      const sky = ctx.createLinearGradient(0, 0, 0, RUNNER_H);
+      sky.addColorStop(0, '#DFF2F4');
+      sky.addColorStop(.57, '#F8F0DF');
+      sky.addColorStop(.58, '#9BC6BE');
+      sky.addColorStop(1, '#62998E');
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, RUNNER_W, RUNNER_H);
 
-      if (!gameLastSide) {
-        points = 9;
-        gameRhythmStreak = 1;
-      } else if (alternating) {
-        if (interval >= 150 && interval <= 360) points = 18;
-        else if (interval <= 560) points = 16;
-        else if (interval <= 820) points = 12;
-        else points = 8;
-        gameRhythmStreak = interval <= 720 ? gameRhythmStreak + 1 : 1;
-        points += Math.min(2, Math.floor(gameRhythmStreak / 6));
-      } else {
-        points = 3;
-        gameRhythmStreak = 0;
+      runnerDrawSun(ctx);
+      runnerDrawBackground(ctx);
+      runnerDrawFerries(ctx);
+      runnerDrawWater(ctx);
+      runnerDrawRewards(ctx);
+      runnerDrawObstacles(ctx);
+      runnerDrawSanta(ctx);
+
+      if (!runnerRunning && !runnerCrashed) {
+        runnerDrawStartHint(ctx);
+      } else if (runnerCrashed) {
+        runnerDrawCrashHint(ctx);
       }
-
-      gameLastSide = side;
-      gameLastStrokeAt = now;
-      gameStrokeCount += 1;
-      gameDistanceValue += points;
-      gameScoreValue = Math.min(2500, gameScoreValue + points);
-
-      gameScoreEl.textContent = String(gameScoreValue);
-      gameStrokesEl.textContent = String(gameStrokeCount);
-      animateGamePaddle(side);
-
-      updateSantaCamera();
-
-      if (!alternating) gameMessage.textContent = 'Use the other paddle next — keep Santa balanced!';
-      else if (points >= 18) gameMessage.textContent = 'Perfect rhythm! +' + points;
-      else if (points >= 14) gameMessage.textContent = 'Great stroke! +' + points;
-      else gameMessage.textContent = 'Keep alternating left and right.';
     }
 
-    function renderGameLeaderboard(rows) {
+    function runnerDrawSun(ctx) {
+      ctx.save();
+      ctx.globalAlpha = .45;
+      ctx.fillStyle = '#F5C85D';
+      ctx.beginPath();
+      ctx.arc(820, 62, 27, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function runnerDrawBackground(ctx) {
+      const segment = 900;
+      const offset = -(runnerWorld * .24 % segment);
+      const baseIndex = Math.floor(runnerWorld * .24 / segment);
+
+      for (let i = -1; i <= 2; i++) {
+        const x = offset + i * segment;
+        const idx = ((baseIndex + i) % 4 + 4) % 4;
+        if (idx === 0) runnerDrawCBD(ctx, x);
+        else if (idx === 1) runnerDrawBridge(ctx, x);
+        else if (idx === 2) runnerDrawDevonport(ctx, x);
+        else runnerDrawRangitoto(ctx, x);
+      }
+    }
+
+    function runnerDrawCBD(ctx, x) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(13,48,37,.18)';
+      const buildings = [[30,70,55,85],[105,90,38,65],[165,52,64,103],[250,78,42,77],[318,65,70,90],[410,84,46,71],[515,60,70,95],[610,77,48,78],[710,66,72,89]];
+      buildings.forEach(b => ctx.fillRect(x+b[0], RUNNER_WATER_Y-b[1], b[2], b[3]));
+      ctx.fillStyle = 'rgba(13,48,37,.30)';
+      ctx.fillRect(x+470, 62, 7, 116);
+      ctx.beginPath(); ctx.arc(x+474, 92, 12, 0, Math.PI*2); ctx.fill();
+      ctx.fillRect(x+468, 39, 12, 36);
+      ctx.beginPath(); ctx.moveTo(x+470,39);ctx.lineTo(x+477,12);ctx.lineTo(x+480,39);ctx.closePath();ctx.fill();
+      ctx.restore();
+    }
+
+    function runnerDrawBridge(ctx, x) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(13,48,37,.24)';
+      ctx.lineWidth = 6;
+      ctx.beginPath(); ctx.moveTo(x+60,205); ctx.quadraticCurveTo(x+450,45,x+840,205); ctx.stroke();
+      ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(x+60,205); ctx.lineTo(x+840,205); ctx.stroke();
+      ctx.lineWidth = 2;
+      [170,275,385,515,625,735].forEach(px=>{ctx.beginPath();ctx.moveTo(x+px,150);ctx.lineTo(x+px,235);ctx.stroke();});
+      ctx.restore();
+    }
+
+    function runnerDrawDevonport(ctx, x) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(13,48,37,.15)';
+      ctx.beginPath();ctx.moveTo(x,230);ctx.quadraticCurveTo(x+200,170,x+360,205);ctx.quadraticCurveTo(x+560,250,x+900,175);ctx.lineTo(x+900,255);ctx.lineTo(x,255);ctx.closePath();ctx.fill();
+      ctx.fillStyle = 'rgba(13,48,37,.24)';
+      ctx.fillRect(x+545,190,78,27);ctx.fillRect(x+660,184,100,31);
+      ctx.beginPath();ctx.moveTo(x+532,190);ctx.lineTo(x+584,170);ctx.lineTo(x+635,190);ctx.closePath();ctx.fill();
+      ctx.restore();
+    }
+
+    function runnerDrawRangitoto(ctx, x) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(13,48,37,.20)';
+      ctx.beginPath();
+      ctx.moveTo(x,238);ctx.quadraticCurveTo(x+250,228,x+370,205);ctx.quadraticCurveTo(x+440,190,x+490,145);ctx.quadraticCurveTo(x+540,188,x+620,205);ctx.quadraticCurveTo(x+760,228,x+900,236);
+      ctx.lineTo(x+900,255);ctx.lineTo(x,255);ctx.closePath();ctx.fill();
+      ctx.restore();
+    }
+
+    function runnerDrawWater(ctx) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,.52)';
+      ctx.lineWidth = 2;
+      const shift = -(runnerWorld * .7 % 90);
+      for (let x = shift; x < RUNNER_W + 100; x += 90) {
+        ctx.beginPath();
+        ctx.moveTo(x, RUNNER_WATER_Y + 18);
+        ctx.quadraticCurveTo(x+22,RUNNER_WATER_Y+12,x+44,RUNNER_WATER_Y+18);
+        ctx.quadraticCurveTo(x+66,RUNNER_WATER_Y+24,x+88,RUNNER_WATER_Y+18);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function runnerDrawFerries(ctx) {
+      for (const f of runnerFerries) {
+        ctx.save();
+        ctx.translate(f.x, f.y);
+        ctx.fillStyle = 'rgba(255,255,255,.90)';
+        ctx.strokeStyle = 'rgba(13,48,37,.28)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();ctx.moveTo(0,28);ctx.lineTo(155,28);ctx.lineTo(137,54);ctx.lineTo(20,54);ctx.closePath();ctx.fill();ctx.stroke();
+        ctx.fillStyle = '#C0362C';ctx.fillRect(28,10,90,20);
+        ctx.fillStyle = 'rgba(13,48,37,.55)';for(let i=0;i<5;i++)ctx.fillRect(35+i*17,15,10,7);
+        ctx.fillStyle = '#D4AF37';ctx.fillRect(73,0,4,12);
+        ctx.restore();
+      }
+    }
+
+    function runnerDrawObstacles(ctx) {
+      for (const o of runnerObstacles) {
+        if (o.type === 'buoy') runnerDrawBuoy(ctx,o);
+        else if (o.type === 'wake') runnerDrawWake(ctx,o);
+        else if (o.type === 'sailboat') runnerDrawSailboat(ctx,o);
+        else runnerDrawGull(ctx,o);
+      }
+    }
+
+    function runnerDrawBuoy(ctx,o) {
+      ctx.save();ctx.translate(o.x,RUNNER_WATER_Y-43);
+      ctx.fillStyle='#C0362C';ctx.beginPath();ctx.arc(18,22,14,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#F3E5AB';ctx.fillRect(14,0,8,15);ctx.fillRect(10,6,16,4);
+      ctx.strokeStyle='rgba(13,48,37,.45)';ctx.lineWidth=2;ctx.strokeRect(14,0,8,15);
+      ctx.restore();
+    }
+
+    function runnerDrawWake(ctx,o) {
+      ctx.save();ctx.strokeStyle='rgba(255,255,255,.92)';ctx.lineWidth=5;
+      ctx.beginPath();ctx.moveTo(o.x,RUNNER_WATER_Y-7);ctx.quadraticCurveTo(o.x+16,RUNNER_WATER_Y-28,o.x+32,RUNNER_WATER_Y-9);ctx.quadraticCurveTo(o.x+46,RUNNER_WATER_Y+2,o.x+60,RUNNER_WATER_Y-13);ctx.stroke();ctx.restore();
+    }
+
+    function runnerDrawSailboat(ctx,o) {
+      ctx.save();ctx.translate(o.x,RUNNER_WATER_Y-58);
+      ctx.fillStyle='#F9F7F0';ctx.strokeStyle='rgba(13,48,37,.35)';ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(8,45);ctx.lineTo(80,45);ctx.lineTo(66,58);ctx.lineTo(18,58);ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.strokeStyle='#0D3025';ctx.beginPath();ctx.moveTo(42,5);ctx.lineTo(42,46);ctx.stroke();
+      ctx.fillStyle='rgba(192,54,44,.82)';ctx.beginPath();ctx.moveTo(44,8);ctx.lineTo(72,41);ctx.lineTo(44,41);ctx.closePath();ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,.95)';ctx.beginPath();ctx.moveTo(39,12);ctx.lineTo(16,41);ctx.lineTo(39,41);ctx.closePath();ctx.fill();
+      ctx.restore();
+    }
+
+    function runnerDrawGull(ctx,o) {
+      const flap = Math.sin((runnerWorld+o.x)*.04)*6;
+      ctx.save();ctx.translate(o.x,o.y);
+      ctx.strokeStyle='rgba(255,255,255,.96)';ctx.lineWidth=5;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(2,14);ctx.quadraticCurveTo(13,3+flap,24,13);ctx.quadraticCurveTo(35,3-flap,46,14);ctx.stroke();
+      ctx.strokeStyle='rgba(13,48,37,.25)';ctx.lineWidth=1.2;ctx.stroke();
+      ctx.restore();
+    }
+
+    function runnerDrawRewards(ctx) {
+      for (const r of runnerRewards) {
+        const y = r.y + Math.sin(r.bob)*5;
+        runnerDrawPohutukawa(ctx,r.x,y);
+      }
+    }
+
+    function runnerDrawPohutukawa(ctx,x,y) {
+      ctx.save();ctx.translate(x,y);
+      for(let i=0;i<6;i++){
+        const a=i*Math.PI/3;
+        ctx.fillStyle=i%2?'#C0362C':'#D94A3E';
+        ctx.beginPath();ctx.arc(Math.cos(a)*9,Math.sin(a)*9,7,0,Math.PI*2);ctx.fill();
+      }
+      ctx.fillStyle='#D4AF37';ctx.beginPath();ctx.arc(0,0,5,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#164839';ctx.beginPath();ctx.ellipse(14,13,7,3,.6,0,Math.PI*2);ctx.fill();
+      ctx.restore();
+    }
+
+    function runnerDrawSanta(ctx) {
+      const duck = runnerPlayer.duck && runnerPlayer.grounded;
+      const y = RUNNER_WATER_Y - 48 + runnerPlayer.jumpY;
+      const bob = runnerPlayer.grounded ? Math.sin(runnerWorld*.035)*2 : 0;
+      ctx.save();
+      ctx.translate(RUNNER_PLAYER_X, y+bob);
+
+      ctx.fillStyle='#C0362C';
+      ctx.beginPath();ctx.moveTo(0,38);ctx.quadraticCurveTo(42,51,88,38);ctx.quadraticCurveTo(75,56,14,52);ctx.closePath();ctx.fill();
+      ctx.strokeStyle='#D4AF37';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(8,39);ctx.lineTo(82,39);ctx.stroke();
+
+      const bodyY = duck ? 18 : 4;
+      ctx.fillStyle='#C0362C';ctx.beginPath();ctx.ellipse(43,bodyY+25,16,16,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#FFDFC4';ctx.beginPath();ctx.arc(43,bodyY+4,10,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#FFFFFF';ctx.beginPath();ctx.arc(43,bodyY+10,11,0,Math.PI);ctx.fill();
+      ctx.fillStyle='#C0362C';ctx.beginPath();ctx.moveTo(32,bodyY+1);ctx.quadraticCurveTo(43,bodyY-13,57,bodyY+1);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#FFFFFF';ctx.fillRect(32,bodyY-1,25,4);
+
+      const paddle = Math.sin(runnerPaddlePhase)*.55;
+      ctx.strokeStyle='#D4AF37';ctx.lineWidth=3;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(43,bodyY+25);ctx.lineTo(18,16+paddle*12);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(44,bodyY+25);ctx.lineTo(73,45-paddle*10);ctx.stroke();
+
+      if (duck) {
+        ctx.fillStyle='rgba(255,255,255,.85)';
+        ctx.beginPath();ctx.arc(26,38,3,0,Math.PI*2);ctx.arc(60,39,3,0,Math.PI*2);ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function runnerDrawStartHint(ctx) {
+      ctx.save();
+      ctx.fillStyle='rgba(255,255,255,.82)';
+      ctx.fillRect(315,118,330,72);
+      ctx.strokeStyle='rgba(13,48,37,.12)';ctx.strokeRect(315,118,330,72);
+      ctx.fillStyle='#0D3025';ctx.textAlign='center';ctx.font='700 20px Outfit, sans-serif';
+      ctx.fillText('SPACE / TAP TO HOP',480,147);
+      ctx.font='500 13px Outfit, sans-serif';ctx.fillStyle='rgba(13,48,37,.68)';
+      ctx.fillText('Duck under gulls · Collect pōhutukawa',480,172);
+      ctx.restore();
+    }
+
+    function runnerDrawCrashHint(ctx) {
+      ctx.save();
+      ctx.fillStyle='rgba(13,48,37,.68)';ctx.fillRect(0,0,RUNNER_W,RUNNER_H);
+      ctx.fillStyle='#FFFFFF';ctx.textAlign='center';ctx.font='700 30px Playfair Display, serif';ctx.fillText('SPLASH!',480,137);
+      ctx.font='600 16px Outfit, sans-serif';ctx.fillText('Press Space or Run Again',480,170);
+      ctx.restore();
+    }
+
+    function runnerRenderLeaderboard(rows) {
       if (!Array.isArray(rows) || !rows.length) {
-        gameLeaderboardEl.innerHTML = '<div class="rounded-xl border border-pine/10 bg-sand/50 p-4 text-sm text-pine/65">No scores yet — you could be the first Harbour Hero.</div>';
+        runnerLeaderboardEl.innerHTML = '<div class="rounded-xl border border-pine/10 bg-sand/50 p-4 text-sm text-pine/65">No runner scores yet — set the first harbour record.</div>';
         return;
       }
-      const medals = ['🥇','🥈','🥉'];
-      gameLeaderboardEl.innerHTML = rows.map((r, i) => {
-        const rank = Number(r.rank || i + 1);
-        const badge = rank <= 3 ? medals[rank - 1] : '<span class="font-bold text-pine/45">#' + rank + '</span>';
-        const team = r.team ? '<div class="text-[11px] text-pine/55 truncate">' + escapeHtml(r.team) + '</div>' : '';
-        return '<div class="grid grid-cols-[34px_1fr_auto] items-center gap-2 rounded-xl border border-pine/10 bg-[#FAFAF7] px-3 py-2.5">' +
-          '<div class="text-center text-base">' + badge + '</div>' +
-          '<div class="min-w-0"><div class="font-semibold text-sm text-pine truncate">' + escapeHtml(r.name) + '</div>' + team + '</div>' +
-          '<div class="font-serif font-bold text-cranberry tabular-nums">' + Number(r.score || 0) + '</div>' +
-        '</div>';
+      const medals=['🥇','🥈','🥉'];
+      runnerLeaderboardEl.innerHTML=rows.map((r,i)=>{
+        const rank=Number(r.rank||i+1);
+        const badge=rank<=3?medals[rank-1]:'<span class="font-bold text-pine/45">#'+rank+'</span>';
+        const team=r.team?'<div class="text-[11px] text-pine/55 truncate">'+escapeHtml(r.team)+'</div>':'';
+        return '<div class="grid grid-cols-[34px_1fr_auto] items-center gap-2 rounded-xl border border-pine/10 bg-[#FAFAF7] px-3 py-2.5">'+
+          '<div class="text-center text-base">'+badge+'</div>'+
+          '<div class="min-w-0"><div class="font-semibold text-sm text-pine truncate">'+escapeHtml(r.name)+'</div>'+team+
+          '<div class="text-[10px] text-pine/45">'+Number(r.flowers||0)+' blooms · '+Number(r.distance||0)+' distance</div></div>'+
+          '<div class="font-serif font-bold text-cranberry tabular-nums">'+Number(r.score||0)+'</div></div>';
       }).join('');
     }
 
-    async function loadGameLeaderboard() {
-      gameLeaderboardEl.innerHTML = '<p class="text-sm text-pine/60">Loading leaderboard…</p>';
-      try {
-        const response = await fetch('/api/game', {cache:'no-store'});
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(data.error || 'Leaderboard unavailable.');
-        renderGameLeaderboard(data.leaderboard || []);
-      } catch (error) {
-        gameLeaderboardEl.innerHTML = '<p class="text-sm text-cranberry">Leaderboard is temporarily unavailable. Please try Refresh.</p>';
+    async function runnerLoadLeaderboard() {
+      runnerLeaderboardEl.innerHTML='<p class="text-sm text-pine/60">Loading leaderboard…</p>';
+      try{
+        const response=await fetch('/api/game',{cache:'no-store'});
+        const data=await response.json().catch(()=>({}));
+        if(!response.ok) throw new Error(data.error||'Leaderboard unavailable.');
+        runnerRenderLeaderboard(data.leaderboard||[]);
+      }catch(error){
+        runnerLeaderboardEl.innerHTML='<p class="text-sm text-cranberry">Leaderboard is temporarily unavailable. Please try Refresh.</p>';
       }
     }
 
-    async function saveGameScore() {
-      if (gameRunning || gameEndedAt === 0) return;
-      const name = document.getElementById('gamePlayerName').value.trim();
-      const team = document.getElementById('gameTeamName').value.trim();
-      if (name.length < 2) {
-        gameSaveStatus.textContent = 'Please choose a display name (at least 2 characters).';
-        document.getElementById('gamePlayerName').focus();
+    async function runnerSaveScore() {
+      if (runnerRunning || !runnerCrashed || runnerEndedAt===0) return;
+      const name=document.getElementById('runnerPlayerName').value.trim();
+      const team=document.getElementById('runnerTeamName').value.trim();
+      if(name.length<2){
+        runnerSaveStatus.textContent='Please choose a display name (at least 2 characters).';
+        document.getElementById('runnerPlayerName').focus();
         return;
       }
-
-      const measured = Math.round(gameEndedAt - gameStartedAt);
-      const durationMs = Math.max(18000, Math.min(23000, measured));
-      gameSaveBtn.disabled = true;
-      gameSaveBtn.textContent = 'Saving…';
-      gameSaveStatus.textContent = '';
-
-      try {
-        const response = await fetch('/api/game', {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({
-            name,
-            team,
-            score: gameScoreValue,
-            strokes: gameStrokeCount,
-            durationMs
+      const durationMs=Math.max(1000,Math.min(600000,Math.round(runnerEndedAt-runnerStartedAt)));
+      runnerSaveBtn.disabled=true;
+      runnerSaveBtn.textContent='Saving…';
+      runnerSaveStatus.textContent='';
+      try{
+        const response=await fetch('/api/game',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            name,team,score:runnerScore,distance:Math.floor(runnerDistance),
+            flowers:runnerFlowers,durationMs
           })
         });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(data.error || 'Could not save score.');
-        renderGameLeaderboard(data.leaderboard || []);
-        const place = (data.leaderboard || []).find(r => String(r.name).toLowerCase() === name.toLowerCase());
-        gameSaveStatus.textContent = place ? 'Saved — currently #' + place.rank + ' on the leaderboard!' : 'Score saved!';
-        gameSaveBtn.textContent = 'Score Saved';
-        if (typeof confetti === 'function' && place && place.rank <= 3) {
-          confetti({ particleCount: 45, spread: 50, origin: { y: 0.72 }, colors: ['#0D3025','#C0362C','#D4AF37'] });
-        }
-      } catch (error) {
-        gameSaveBtn.disabled = false;
-        gameSaveBtn.textContent = 'Submit Score';
-        gameSaveStatus.textContent = error.message;
+        const data=await response.json().catch(()=>({}));
+        if(!response.ok) throw new Error(data.error||'Could not save score.');
+        runnerRenderLeaderboard(data.leaderboard||[]);
+        const place=(data.leaderboard||[]).find(r=>String(r.name).toLowerCase()===name.toLowerCase());
+        runnerSaveStatus.textContent=place?'Saved — currently #'+place.rank+' on Harbour Heroes!':'Run saved!';
+        runnerSaveBtn.textContent='Score Saved';
+      }catch(error){
+        runnerSaveBtn.disabled=false;
+        runnerSaveBtn.textContent='Submit Score';
+        runnerSaveStatus.textContent=error.message;
       }
     }
 
-    gameStartBtn.addEventListener('click', startSantaGame);
-    gameLeftBtn.addEventListener('click', () => paddleSanta('left'));
-    gameRightBtn.addEventListener('click', () => paddleSanta('right'));
-    gameSaveBtn.addEventListener('click', saveGameScore);
-    document.getElementById('gameRefreshLeaderboard').addEventListener('click', loadGameLeaderboard);
+    runnerStartBtn.addEventListener('click',runnerStart);
+    runnerHopBtn.addEventListener('click',runnerJump);
+    runnerSaveBtn.addEventListener('click',runnerSaveScore);
+    document.getElementById('runnerRefreshLeaderboard').addEventListener('click',runnerLoadLeaderboard);
 
-    document.addEventListener('keydown', (event) => {
-      if (!gameRunning) return;
-      const tag = event.target && event.target.tagName ? event.target.tagName.toLowerCase() : '';
-      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
-      const key = event.key.toLowerCase();
-      if (key === 'a' || key === 'l') {
-        event.preventDefault();
-        paddleSanta(key === 'a' ? 'left' : 'right');
-      }
+    runnerCanvas.addEventListener('pointerdown',()=>{
+      if(!runnerRunning){ runnerStart(); return; }
+      runnerJump();
     });
 
-    resetGameVisuals();
-    loadGameLeaderboard();
+    runnerDuckBtn.addEventListener('pointerdown',(e)=>{e.preventDefault();runnerSetDuck(true);});
+    ['pointerup','pointercancel','pointerleave'].forEach(type=>runnerDuckBtn.addEventListener(type,()=>runnerSetDuck(false)));
+
+    document.addEventListener('keydown',(event)=>{
+      const tag=event.target&&event.target.tagName?event.target.tagName.toLowerCase():'';
+      if(tag==='input'||tag==='textarea'||tag==='select')return;
+      const key=event.key.toLowerCase();
+      if(key===' '||key==='arrowup'||key==='w'){
+        event.preventDefault();
+        if(!runnerRunning){runnerStart();return;}
+        runnerJump();
+      }else if(key==='arrowdown'||key==='s'){
+        event.preventDefault();
+        runnerSetDuck(true);
+      }
+    });
+    document.addEventListener('keyup',(event)=>{
+      const key=event.key.toLowerCase();
+      if(key==='arrowdown'||key==='s')runnerSetDuck(false);
+    });
+
+    runnerReset();
+    runnerLoadLeaderboard();
 
     // 微粒动画
     const canvas = document.getElementById('particle-canvas');
