@@ -1174,6 +1174,121 @@
     }
 
 
+
+    async function refreshRoster() {
+      if (!isAuthorized) return;
+      try {
+        await fetchCloudRoster(organiserPasscode);
+        renderRoster();
+      } catch (err) {
+        document.getElementById('teamOverviewLabel').textContent = err.message;
+      }
+    }
+
+    function renderTeams() {
+      const list = cloudRoster.filter(r => r.escapeRoom === 'Yes');
+      const waiting = list.filter(r => !r.teamId).length;
+      document.getElementById('teamOverviewLabel').textContent =
+        cloudTeams.length + '/6 teams · ' + waiting + ' awaiting assignment · ' +
+        list.length + '/36 escape room places';
+
+      const target = document.getElementById('organiserTeamCards');
+      target.innerHTML = cloudTeams.length ? cloudTeams.map(t => {
+        const members = list.filter(r => String(r.teamId) === String(t.id));
+        return '<div class="rounded-xl border border-pine/15 bg-white p-3">' +
+          '<div class="flex justify-between items-start gap-2"><strong class="text-sm text-pine">' +
+            escapeHtml(t.name) + '</strong><span class="text-xs font-bold text-pine whitespace-nowrap">' +
+            t.member_count + '/6</span></div>' +
+          '<div class="text-[11px] text-pine/65 mt-1">' +
+            members.map(m => escapeHtml(m.preferredName)).join(' · ') + '</div>' +
+          '<button type="button" class="text-[11px] underline text-pine mt-2" onclick="copyTeamCode(' +
+            JSON.stringify(t.invite_code) + ')">Copy code ' + escapeHtml(t.invite_code) + '</button>' +
+        '</div>';
+      }).join('') : '<p class="text-xs text-pine/65">No teams formed yet. Participants can create teams when they RSVP.</p>';
+
+      const allocation = document.getElementById('teamAllocation');
+      allocation.innerHTML = list.length ? list.map((r, i) => {
+        const options = [
+          '<option value="pending"' + (!r.teamId ? ' selected' : '') + '>Awaiting assignment</option>',
+          ...cloudTeams.filter(t => t.member_count < 6 || String(t.id) === String(r.teamId)).map(t =>
+            '<option value="' + String(t.id) + '"' +
+            (String(t.id) === String(r.teamId) ? ' selected' : '') + '>' +
+            escapeHtml(t.name) + ' (' + t.member_count + '/6)</option>'),
+          '<option value="new">＋ Create new team for this attendee</option>'
+        ].join('');
+        return '<div class="rounded-lg border border-pine/10 p-2.5 flex flex-col sm:flex-row sm:items-center gap-2">' +
+          '<div class="text-xs font-semibold text-pine sm:w-28 shrink-0">' + escapeHtml(r.preferredName) + '</div>' +
+          '<div class="flex-1 min-w-0"><select id="team-assign-' + i +
+          '" aria-label="Team for ' + escapeHtml(r.preferredName) +
+          '" class="w-full rounded-lg border border-pine/20 px-2 py-2 text-xs" onchange="toggleNewTeamInput(' +
+          i + ')">' + options + '</select>' +
+          '<input id="new-team-' + i + '" maxlength="60" placeholder="New team name (2–60 characters)" class="hidden mt-2 w-full rounded-lg border border-pine/20 px-2 py-2 text-xs"></div>' +
+          '<button type="button" class="rounded-lg bg-pine px-3 py-2 text-xs font-semibold text-white" onclick="assignAttendee(' +
+          i + ')">Save</button></div>';
+      }).join('') : '<p class="text-xs text-pine/65">No escape room RSVPs yet.</p>';
+    }
+
+    function toggleNewTeamInput(i) {
+      const select = document.getElementById('team-assign-' + i);
+      document.getElementById('new-team-' + i).classList.toggle('hidden', select.value !== 'new');
+    }
+
+    async function assignAttendee(i) {
+      const participant = cloudRoster.filter(r => r.escapeRoom === 'Yes')[i];
+      const choice = document.getElementById('team-assign-' + i).value;
+      const name = document.getElementById('new-team-' + i).value.trim();
+      if (choice === 'new' && (name.length < 2 || name.length > 60)) {
+        alert('Please enter a team name between 2 and 60 characters.');
+        return;
+      }
+      try {
+        const response = await fetch('/api/teams', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-passcode': organiserPasscode },
+          body: JSON.stringify({
+            email: participant.email,
+            teamId: choice === 'new' || choice === 'pending' ? null : Number(choice),
+            newTeamName: choice === 'new' ? name : ''
+          })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw Error(data.error || 'Could not save team allocation.');
+        await refreshRoster();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    function exportTeamCsv() {
+      if (!cloudRoster.length) { alert('No RSVPs to export.'); return; }
+      const header = ['Team Name','Team Code','Team Status','Preferred Name',
+        'Full Name','Email','Affiliation','Dietary Requirements','Notes'];
+      const rows = cloudRoster.slice().sort((a,b) =>
+        (a.teamName || 'zzz').localeCompare(b.teamName || 'zzz'));
+      const lines = [header.map(csvCell).join(',')].concat(rows.map(r => [
+        r.teamName || '', r.teamCode || '',
+        r.escapeRoom !== 'Yes' ? 'Lounge Only' : r.teamId ? 'Assigned' : 'Awaiting Team',
+        r.preferredName, r.fullName, r.email, r.affiliation, r.dietary, r.comments
+      ].map(csvCell).join(',')));
+      const blob = new Blob(['\ufeff' + lines.join('\r\n')], {type:'text/csv;charset=utf-8'});
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.href = url;
+      link.download = 'UoA_Gathering_Team_Allocation_2026.csv';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    // Poll the shared dashboard while open, without overwriting an edited selection.
+    setInterval(() => {
+      const modal = document.getElementById('rosterModal');
+      const allocation = document.getElementById('teamAllocation');
+      if (isAuthorized && !modal.classList.contains('hidden') &&
+          !allocation.contains(document.activeElement)) refreshRoster();
+    }, 20000);
+
     function csvCell(value) {
       const raw = String(value ?? '');
       const safe = /^[=+@\-\t\r]/.test(raw) ? "'" + raw : raw;
