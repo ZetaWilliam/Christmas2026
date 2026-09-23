@@ -1,10 +1,10 @@
 'use strict';
-const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
+const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),crypto=require('node:crypto');
 const source=fs.readFileSync('index.html','utf8');
 const begin='    // Santa Harbour Dash — Dino-style Auckland endless runner',end='    // 微粒动画';
 const start=source.indexOf(begin),finish=source.indexOf(end,start);
 if(start<0||finish<=start||source.indexOf(begin,start+begin.length)>=0)throw Error('Cannot isolate legacy game. Source left unchanged.');
-const version=require(path.resolve('gameplay/engine.js')).version;
+const version='2026.09.23-clean.3';
 let html=source.slice(0,start)+'    // The isolated Harbour Dash modules are loaded below.\n'+source.slice(finish);
 const gameMarker='  <!-- Santa Harbour Dash: Auckland Christmas endless runner -->',rsvpMarker='  <!-- 报名表单 -->',modalMarker='  <!-- 报名成功弹窗与电子票 -->';
 const a=html.indexOf(gameMarker),b=html.indexOf(rsvpMarker),c=html.indexOf(modalMarker);
@@ -17,7 +17,7 @@ if(a>=0){
  game=game.replace('Just for fun · Auckland Christmas runner','Auckland · Summer 2026');
  html=html.slice(0,a)+html.slice(b,c)+game+html.slice(c);
 }
-const files=['engine.js','audio.js','renderer.js','runner.js'];
+const files=['engine.js','audio.js','renderer.js','polish.js','runner.js'];
 html=html.replace('</head>',`  <meta name="harbour-build" content="${version}">\n  <link rel="stylesheet" href="/gameplay/runner.css?v=${version}">\n</head>`)
  .replace('</body>',files.map(f=>`  <script src="/gameplay/${f}?v=${version}" defer></script>`).join('\n')+'\n</body>');
 for(const m of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi))if(m[1].trim())new vm.Script(m[1]);
@@ -30,4 +30,8 @@ for(const file of [...files,'runner.css'])fs.copyFileSync('gameplay/'+file,'publ
 const parts=Array.from({length:5},(_,i)=>`gameplay/art/atlas.${i}.b64`);
 if(parts.every(f=>fs.existsSync(f))){const atlas=Buffer.from(parts.map(f=>fs.readFileSync(f,'utf8').trim()).join(''),'base64');if(atlas.toString('ascii',0,4)!=='RIFF'||atlas.toString('ascii',8,12)!=='WEBP')throw Error('Artwork is not a valid WebP');fs.writeFileSync('public/gameplay/art/atlas.webp',atlas);}
 else if(a>=0)throw Error('Production artwork incomplete.');
-console.log(`Built ${version}: original RSVP and APIs retained; game follows RSVP; original instrumental audio and illustrated assets included.`);
+const coast=Buffer.from(fs.readFileSync('gameplay/art/coast.b64','utf8').trim(),'base64');
+if(coast.toString('ascii',0,4)!=='RIFF'||coast.toString('ascii',8,12)!=='WEBP')throw Error('Invalid coast artwork');
+if(crypto.createHash('sha256').update(coast).digest('hex')!=='dd14f17cb595a37a5ea03fdd0173554ee195e7a4e4629ce042f024df137fcdc9')throw Error('Coast artwork integrity check failed');
+fs.writeFileSync('public/gameplay/art/coast.webp',coast);
+console.log(`Built ${version}: original RSVP and APIs retained; game follows RSVP; transparent sprites, illustrated coast and Christmas instrumentals included.`);
