@@ -25,3 +25,11 @@ Database objects: `rsvps.team_id`, `escape_teams`, `register_gathering_rsvp`, an
 
 ## Operational note
 This lightweight internal-event prototype does not verify ownership of an email address: anyone who enters an existing email could update its RSVP. Organisers should review unexpected changes before relying on allocations. For a wider public launch, add email verification or a secure edit link. Rotate the admin passcode and any database credential previously shared outside Vercel.
+
+
+## Santa Harbour Dash
+- A 20-second summer-Christmas paddling mini-game is embedded on the event page.
+- Desktop players alternate A / L; touch users use the left/right paddle buttons.
+- The game leaderboard stores only a user-chosen public display name, optional team name, score, stroke count and duration. It does not use RSVP email addresses.
+- `api/game.js` exposes a public read/write leaderboard with server-side validation and rate limiting. Only the best score for each display name is shown.
+- The leaderboard is explicitly for fun and is separate from escape-room competition results and RSVP/team allocation.
