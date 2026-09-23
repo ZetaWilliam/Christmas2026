@@ -13,9 +13,12 @@ try{
  assert(!h.includes('A little Chrome-Dino-style harbour run:'),'Remove long game intro');
  assert(!h.includes('Just for fun — this leaderboard is separate from RSVP'),'Remove long development credit paragraph');
  assert(!h.includes('function runnerSpawnObstacle'),'Legacy runner must not run twice');
- for(const file of ['engine.js','audio.js','renderer.js','runner.js','runner.css']){
+ for(const file of ['engine.js','audio.js','renderer.js','polish.js','recorded-audio.js','runner.js','runner.css']){
   assert(h.includes('/gameplay/'+file));
-  assert.equal(fs.readFileSync(path.join(tmp,'public/gameplay',file),'utf8'),fs.readFileSync(path.join(root,'gameplay',file),'utf8'));
+  let expected=fs.readFileSync(path.join(root,'gameplay',file),'utf8');
+  if(file==='polish.js')expected=expected.replaceAll("'Christmas Bells'","'Instrumental 1'").replaceAll("'Christmas Bossa'","'Instrumental 2'").replaceAll('Switch original Christmas instrumental','Switch instrumental background music');
+  if(file==='runner.js')expected=expected.replaceAll("'Harbour Pop ↻'","'Instrumental 1 ↻'").replaceAll("'Summer Bossa ↻'","'Instrumental 2 ↻'");
+  assert.equal(fs.readFileSync(path.join(tmp,'public/gameplay',file),'utf8'),expected);
  }
  const art=fs.readFileSync(path.join(tmp,'public/gameplay/art/atlas.webp'));
  assert.equal(art.toString('ascii',0,4),'RIFF');assert.equal(art.toString('ascii',8,12),'WEBP');
@@ -26,5 +29,11 @@ try{
  const {Engine}=require('../gameplay/engine.js'),e=new Engine();
  const hitArea=e.playerBoxes().reduce((n,b)=>n+b.w*b.h,0),pickupArea=e.pickupBoxes().reduce((n,b)=>n+b.w*b.h,0);
  assert(hitArea<pickupArea*.8,'Hazard collision should be smaller without reducing reward pickup');
+ const prose=h.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'').replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi,'').replace(/<!--[\s\S]*?-->/g,'');
+ const visible=(prose.match(/>([^<]*)</g)||[]).join(' ');
+ assert(!/\b(?:Santa|Christmas|Xmas)\b/i.test(visible),'Neutral authored page wording');
+ for(const value of prose.matchAll(/(?:aria-label|title|placeholder)="([^"]*)"/g))assert(!/\b(?:Santa|Christmas|Xmas)\b/i.test(value[1]),'Neutral accessible labels');
+ assert(prose.includes('Harbour Dash'));assert(prose.includes('View Escapade Event Info'));
+ for(const file of ['bells-bright.mp3','bells-ensemble.mp3','CREDITS.md'])assert(fs.existsSync(path.join(tmp,'public/gameplay/music',file)));
  console.log('Summer build checks passed: RSVP/cloud source unchanged, game after form, art/audio complete, reduced hitbox.');
 }finally{fs.rmSync(tmp,{recursive:true,force:true});}
