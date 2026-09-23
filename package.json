@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "node scripts/build-site.js",
-    "test": "node tests/engine.test.js && node tests/game-api.test.js && node tests/build.test.js"
+    "test": "node tests/engine.test.js && node tests/game-api.test.js && node tests/audio-feedback.test.js && node tests/build.test.js"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.1"
