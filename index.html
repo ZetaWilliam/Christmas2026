@@ -331,7 +331,7 @@
         Join us for escape rooms, pizza, and time to celebrate another productive year together across our department!
       </p>
       <p class="max-w-2xl mx-auto text-sm sm:text-base text-pine/80 leading-relaxed mb-7">
-        Arrive at <strong>10:45am</strong>. Taking on an escape room? Come with a <strong>team of 6 and a team name</strong> — compete to be the fastest team to complete the challenge!
+        Arrive at <strong>10:45am</strong>. Come with a team or meet yours on the day! Teams of up to six will compete to complete the escape room challenge. If you already have a team, bring your team name; otherwise, we'll happily arrange one for you.
       </p>
 
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 max-w-3xl mx-auto mb-10 text-left">
@@ -418,7 +418,7 @@
           <div class="bg-white p-4 sm:p-5 rounded-xl border border-pine/10 shadow-sm group-hover:border-gold transition">
             <h3 class="font-serif font-bold text-pine text-base sm:text-lg">Arrival, Check-in & Team Briefing</h3>
             <p class="text-sm text-pine/80 leading-relaxed mt-1">
-              Please arrive at 10:45am at Escapade NZ (Level 1). Store your belongings in the complimentary secure lockers and join the team briefing. Come prepared with a team of 6 members and a team name. Compete to be the fastest team to complete the challenge!
+              Please arrive at 10:45am at Escapade NZ (Level 1). Store your belongings in the complimentary secure lockers and join the briefing. Come with a team or meet yours on the day! Teams of up to six will compete to be the fastest to complete the challenge. If you have a team in mind, bring your team name; otherwise, we'll happily arrange one for you.
             </p>
           </div>
         </div>
@@ -678,62 +678,74 @@
             </div>
           </div>
 
-          <!-- Optional lightweight escape-room team builder -->
+          <!-- Inclusive escape-room registration: a team is optional -->
           <div id="teamChoices" class="rounded-2xl border border-pine/15 bg-[#F5F7F3] p-4 sm:p-5 space-y-3">
-            <div class="flex items-center justify-between gap-3">
+            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
               <div>
-                <h3 class="font-serif text-lg font-bold text-pine">Build Your Escape Team</h3>
-                <p class="text-xs text-pine/70 mt-1">Six people per team. Everyone submits their own RSVP.</p>
+                <h3 class="font-serif text-lg font-bold text-pine">Your Escape Room Team</h3>
+                <p class="text-xs text-pine/70 mt-1">Everyone is welcome! We'll make sure every participant has a team.</p>
               </div>
-              <span class="shrink-0 text-[10px] font-bold rounded-full bg-white border border-pine/15 px-2 py-1 text-pine">Up to 12 teams · 36 places</span>
+              <span class="self-start shrink-0 text-[10px] font-bold rounded-full bg-white border border-pine/15 px-2 py-1 text-pine">Up to 12 teams · 36 places</span>
             </div>
+
             <fieldset class="space-y-2">
-              <legend class="sr-only">How would you like to join an escape team?</legend>
-              <label class="block cursor-pointer rounded-xl bg-white border border-pine/15 px-3 py-2.5 has-[:checked]:border-pine has-[:checked]:bg-pine/5">
-                <input type="radio" name="teamMode" value="match" checked class="accent-[#0D3025] mr-2">
-                <span class="text-sm font-semibold text-pine">Find me a team</span>
-                <span class="block pl-6 text-xs text-pine/65">The organisers will help place me with other participants.</span>
+              <legend class="sr-only">Your team arrangements</legend>
+              <label class="block cursor-pointer rounded-xl bg-white border border-pine/15 px-3 py-3 has-[:checked]:border-pine has-[:checked]:bg-pine/5">
+                <input type="radio" name="teamApproach" value="flexible" checked class="accent-[#0D3025] mr-2">
+                <span class="text-sm font-semibold text-pine">I'm happy to join any team</span>
+                <span class="block pl-6 text-xs text-pine/65">The organisers will arrange a team for me.</span>
               </label>
-              <label class="block cursor-pointer rounded-xl bg-white border border-pine/15 px-3 py-2.5 has-[:checked]:border-pine has-[:checked]:bg-pine/5">
-                <input type="radio" name="teamMode" value="create" class="accent-[#0D3025] mr-2">
-                <span class="text-sm font-semibold text-pine">Create a team</span>
-                <span class="block pl-6 text-xs text-pine/65">Choose a name and share your invitation link with colleagues.</span>
-              </label>
-              <label class="block cursor-pointer rounded-xl bg-white border border-pine/15 px-3 py-2.5 has-[:checked]:border-pine has-[:checked]:bg-pine/5">
-                <input type="radio" name="teamMode" value="join" class="accent-[#0D3025] mr-2">
-                <span class="text-sm font-semibold text-pine">Join a team</span>
-                <span class="block pl-6 text-xs text-pine/65">Choose an existing team below or enter an invitation code.</span>
+              <label class="block cursor-pointer rounded-xl bg-white border border-pine/15 px-3 py-3 has-[:checked]:border-pine has-[:checked]:bg-pine/5">
+                <input type="radio" name="teamApproach" value="group" class="accent-[#0D3025] mr-2">
+                <span class="text-sm font-semibold text-pine">I already have a team in mind</span>
+                <span class="block pl-6 text-xs text-pine/65">I'd like to create or join a team with colleagues.</span>
               </label>
             </fieldset>
-            <div id="createTeamFields" class="hidden space-y-1">
-              <label for="teamName" class="block text-xs font-bold text-pine">Your Team Name</label>
-              <input id="teamName" maxlength="60" minlength="2" placeholder="e.g. The Pharmacokinetics" class="w-full px-3.5 py-2.5 rounded-xl border border-pine/20 text-sm focus:outline-none focus:ring-2 focus:ring-gold">
-              <p class="text-xs text-pine/60">Your own RSVP will count as the first member (1/6).</p>
-            </div>
-            <div id="joinTeamFields" class="hidden space-y-2">
-              <div id="selectedTeamNotice" class="hidden rounded-lg border border-pine/20 bg-white px-3 py-2 text-xs text-pine" role="status"></div>
-              <label for="teamCode" class="block text-xs font-bold text-pine">Or enter a team invitation code</label>
-              <div class="flex flex-col sm:flex-row gap-2">
-                <input id="teamCode" maxlength="10" autocapitalize="characters" autocomplete="off" placeholder="10-character code" class="min-w-0 flex-1 px-3.5 py-2.5 rounded-xl border border-pine/20 text-sm uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-gold">
-                <button type="button" onclick="checkTeamCode()" class="rounded-xl border border-pine/25 px-4 py-2.5 text-xs font-semibold text-pine hover:bg-pine/5">Check team</button>
+
+            <div id="teamGroupFields" class="hidden space-y-3 border-t border-pine/15 pt-3">
+              <fieldset class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <legend class="text-xs font-bold text-pine mb-2">Your preferred arrangement</legend>
+                <label class="cursor-pointer bg-white border border-pine/15 rounded-lg px-3 py-2.5 has-[:checked]:border-pine has-[:checked]:bg-pine/5">
+                  <input type="radio" name="teamMode" value="create" checked class="accent-[#0D3025] mr-1">
+                  <span class="text-sm font-semibold text-pine">Create a team</span>
+                </label>
+                <label class="cursor-pointer bg-white border border-pine/15 rounded-lg px-3 py-2.5 has-[:checked]:border-pine has-[:checked]:bg-pine/5">
+                  <input type="radio" name="teamMode" value="join" class="accent-[#0D3025] mr-1">
+                  <span class="text-sm font-semibold text-pine">Join a team</span>
+                </label>
+              </fieldset>
+
+              <div id="createTeamFields" class="space-y-1">
+                <label for="teamName" class="block text-xs font-bold text-pine">Your Team Name</label>
+                <input id="teamName" maxlength="60" minlength="2" placeholder="e.g. The Pharmacokinetics" class="w-full px-3.5 py-2.5 rounded-xl border border-pine/20 text-sm focus:outline-none focus:ring-2 focus:ring-gold">
+                <p class="text-xs text-pine/60">Your own RSVP will count as the first member (1/6).</p>
               </div>
-              <p id="teamLookupResult" class="text-xs text-pine/70" role="status" aria-live="polite">Select an existing team, or use a code or link from your teammate.</p>
-            </div>
-            <p id="teamMatchMessage" class="text-xs text-pine/70">No team yet? We'll arrange one before the event.</p>
-            <div class="border-t border-pine/15 pt-3 mt-3 space-y-2">
-              <div class="flex items-center justify-between gap-3">
-                <div>
-                  <h4 class="text-xs font-bold uppercase tracking-wide text-pine">Current Teams</h4>
-                  <p id="publicTeamCount" class="text-xs text-pine/65 mt-0.5" aria-live="polite">Loading teams…</p>
+              <div id="joinTeamFields" class="hidden space-y-2">
+                <div id="selectedTeamNotice" class="hidden rounded-lg border border-pine/20 bg-white px-3 py-2 text-xs text-pine" role="status"></div>
+                <label for="teamCode" class="block text-xs font-bold text-pine">Or enter a team invitation code</label>
+                <div class="flex flex-col sm:flex-row gap-2">
+                  <input id="teamCode" maxlength="10" autocapitalize="characters" autocomplete="off" placeholder="10-character code" class="min-w-0 flex-1 px-3.5 py-2.5 rounded-xl border border-pine/20 text-sm uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-gold">
+                  <button type="button" onclick="checkTeamCode()" class="rounded-xl border border-pine/25 px-4 py-2.5 text-xs font-semibold text-pine hover:bg-pine/5">Check team</button>
                 </div>
-                <button type="button" onclick="refreshPublicTeams()" class="shrink-0 rounded-lg border border-pine/20 bg-white px-3 py-1.5 text-xs font-semibold text-pine hover:bg-sand">Refresh</button>
+                <p id="teamLookupResult" class="text-xs text-pine/70" role="status" aria-live="polite">Select an existing team, or use a code or link from your teammate.</p>
               </div>
-              <div id="publicTeamList" class="grid grid-cols-1 sm:grid-cols-2 gap-2" aria-live="polite">
-                <p class="text-xs text-pine/65">Loading existing teams…</p>
+
+              <div class="border-t border-pine/15 pt-3 mt-3 space-y-2">
+                <div class="flex items-center justify-between gap-3">
+                  <div>
+                    <h4 class="text-xs font-bold uppercase tracking-wide text-pine">Current Teams</h4>
+                    <p id="publicTeamCount" class="text-xs text-pine/65 mt-0.5" aria-live="polite">Loading teams…</p>
+                  </div>
+                  <button type="button" onclick="refreshPublicTeams()" class="shrink-0 rounded-lg border border-pine/20 bg-white px-3 py-1.5 text-xs font-semibold text-pine hover:bg-sand">Refresh</button>
+                </div>
+                <div id="publicTeamList" class="grid grid-cols-1 sm:grid-cols-2 gap-2" aria-live="polite">
+                  <p class="text-xs text-pine/65">Loading existing teams…</p>
+                </div>
               </div>
             </div>
+
             <p class="rounded-lg bg-white/80 border border-pine/10 p-3 text-xs leading-relaxed text-pine/70">
-              <strong>Team arrangements are provisional.</strong> The organisers may adjust or combine teams to balance numbers and fit the six available escape rooms. Each person must submit their own RSVP.
+              <strong>Teams will be finalised by the organisers.</strong> We may adjust or combine provisional groups to balance numbers and fit the six available escape rooms. Everyone submits their own RSVP.
             </p>
           </div>
 
@@ -799,9 +811,9 @@
         <div class="w-14 h-14 bg-[#164839]/10 text-pine-light rounded-full flex items-center justify-center text-3xl mx-auto mb-3">
           🎉
         </div>
-        <h3 class="font-serif text-2xl sm:text-3xl font-bold text-pine">Reservation Confirmed!</h3>
+        <h3 class="font-serif text-2xl sm:text-3xl font-bold text-pine">You're all set!</h3>
         <p class="text-xs text-pine/70 mt-1">
-          Thank you! Your spot for the 2026 Pharmacology End of Year Gathering is saved.
+          Your place at the 2026 Pharmacology End of Year Gathering is confirmed. Looking forward to seeing you on 9 December!
         </p>
       </div>
 
@@ -836,7 +848,7 @@
       </div>
 
       <div id="teamReceipt" class="hidden mb-5 rounded-2xl border border-pine/15 bg-[#F5F7F3] p-4 text-left">
-        <div class="text-xs uppercase font-bold tracking-wide text-pine/65 mb-1">Your Escape Team</div>
+        <div class="text-xs uppercase font-bold tracking-wide text-pine/65 mb-1">Your Escape Room Plans</div>
         <div id="receiptTeamName" class="font-serif text-lg font-bold text-pine"></div>
         <p id="receiptTeamCount" class="text-xs text-pine/70 mt-1"></p>
         <div id="teamInviteControls" class="hidden mt-3 space-y-2">
@@ -1592,7 +1604,7 @@
         "BEGIN:VEVENT",
         "UID:uoa-pharm-xmas-2026@auckland.ac.nz",
         "SUMMARY:UoA Pharmacology End of Year Gathering",
-        "DESCRIPTION:Join the Department of Pharmacology and Clinical Pharmacology for escape rooms, pizza, and holiday celebrations! Please arrive at 10:45 AM with your team of 6 and a team name for check-in and briefing.",
+        "DESCRIPTION:Join the Department of Pharmacology and Clinical Pharmacology for escape rooms, pizza, and holiday celebrations! Please arrive at 10:45 AM for check-in and briefing. Come with a team or meet yours on the day! We can arrange a team for you.",
         "LOCATION:Escapade NZ, Level 1, 23 Victoria Street East, Auckland CBD 1010",
         "DTSTART:20261208T214500Z",
         "DTEND:20261209T010000Z",
