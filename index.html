@@ -1389,6 +1389,7 @@
       if (!team || team.full) return;
       selectedTeamId = id;
       document.querySelector('input[name="escapeRoom"][value="Yes"]').checked = true;
+      document.querySelector('input[name="teamApproach"][value="group"]').checked = true;
       document.querySelector('input[name="teamMode"][value="join"]').checked = true;
       document.getElementById('teamCode').value = '';
       const notice = document.getElementById('selectedTeamNotice');
@@ -1414,13 +1415,15 @@
 
     function updateTeamModeUI() {
       const isEscape = document.querySelector('input[name="escapeRoom"]:checked')?.value === 'Yes';
-      const mode = document.querySelector('input[name="teamMode"]:checked')?.value || 'match';
+      const groupChosen = document.querySelector('input[name="teamApproach"]:checked')?.value === 'group';
+      const groupActive = isEscape && groupChosen;
+      const mode = document.querySelector('input[name="teamMode"]:checked')?.value || 'create';
       document.getElementById('teamChoices').classList.toggle('hidden', !isEscape);
-      document.getElementById('createTeamFields').classList.toggle('hidden', !isEscape || mode !== 'create');
-      document.getElementById('joinTeamFields').classList.toggle('hidden', !isEscape || mode !== 'join');
-      document.getElementById('teamMatchMessage').classList.toggle('hidden', !isEscape || mode !== 'match');
-      document.getElementById('teamName').required = isEscape && mode === 'create';
-      document.getElementById('teamCode').required = isEscape && mode === 'join' && selectedTeamId === null;
+      document.getElementById('teamGroupFields').classList.toggle('hidden', !groupActive);
+      document.getElementById('createTeamFields').classList.toggle('hidden', !groupActive || mode !== 'create');
+      document.getElementById('joinTeamFields').classList.toggle('hidden', !groupActive || mode !== 'join');
+      document.getElementById('teamName').required = groupActive && mode === 'create';
+      document.getElementById('teamCode').required = groupActive && mode === 'join' && selectedTeamId === null;
     }
 
     async function checkTeamCode() {
@@ -1467,19 +1470,24 @@
         document.getElementById('teamShareUrl').value = teamLink(saved.team_code);
         controls.classList.remove('hidden');
       } else {
-        document.getElementById('receiptTeamName').textContent = 'Awaiting team allocation';
+        document.getElementById('receiptTeamName').textContent = 'Your escape room place is confirmed';
         document.getElementById('receiptTeamCount').textContent =
-          'The organising team will help place you before the event.';
+          "We'll arrange your team and share final details closer to the event.";
         controls.classList.add('hidden');
       }
     }
 
-    document.querySelectorAll('input[name="escapeRoom"], input[name="teamMode"]').forEach(el =>
+    document.querySelectorAll('input[name="escapeRoom"], input[name="teamApproach"], input[name="teamMode"]').forEach(el =>
       el.addEventListener('change', updateTeamModeUI));
+    document.querySelectorAll('input[name="teamApproach"]').forEach(el =>
+      el.addEventListener('change', () => {
+        if (el.checked && el.value === 'group') refreshPublicTeams();
+      }));
     updateTeamModeUI();
     const invitedCode = new URLSearchParams(window.location.search).get('team');
     if (invitedCode && /^[A-Z0-9]{10}$/i.test(invitedCode)) {
       document.querySelector('input[name="escapeRoom"][value="Yes"]').checked = true;
+      document.querySelector('input[name="teamApproach"][value="group"]').checked = true;
       document.querySelector('input[name="teamMode"][value="join"]').checked = true;
       document.getElementById('teamCode').value = invitedCode.toUpperCase();
       updateTeamModeUI();
@@ -1503,8 +1511,10 @@
       const dietary = selectedDiets.length ? selectedDiets.join(", ") : "None";
 
       const comments = document.getElementById('comments').value.trim();
-      const teamMode = escapeRoom === 'Yes' ?
-        document.querySelector('input[name="teamMode"]:checked')?.value || 'match' : 'none';
+      const teamMode = escapeRoom !== 'Yes' ? 'none' :
+        document.querySelector('input[name="teamApproach"]:checked')?.value === 'group'
+          ? document.querySelector('input[name="teamMode"]:checked')?.value || 'create'
+          : 'match';
       const teamName = document.getElementById('teamName').value.trim();
       const teamCode = document.getElementById('teamCode').value.trim().toUpperCase();
       const selectedTeamForSubmit = escapeRoom === 'Yes' && teamMode === 'join' ? selectedTeamId : null;
