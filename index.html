@@ -687,8 +687,8 @@
         <div class="text-xs uppercase tracking-[0.2em] font-bold text-cranberry mb-2">Just for fun · Auckland Christmas runner</div>
         <h2 class="font-serif text-3xl sm:text-4xl font-bold text-pine">Santa Harbour Dash</h2>
         <p class="text-sm sm:text-base text-pine/75 mt-2 leading-relaxed">
-          A little Chrome-Dino-style harbour run: Santa paddles automatically, the pace keeps rising, and one collision ends the run.
-          Hop over buoys, wakes and tiny sailboats, duck under low gulls, and collect pōhutukawa blooms for bonus points.
+          A little Chrome-Dino-style harbour run: Santa paddles automatically, the pace rises gradually, and one collision ends the run.
+          Avoid clearly marked harbour hazards, collect pōhutukawa blooms to build a combo, and watch the Waitematā shift from day to sunset and night.
         </p>
       </div>
 
@@ -706,16 +706,24 @@
               </div>
               <div>
                 <div class="text-[10px] uppercase font-bold tracking-wider text-pine/50">Blooms</div>
-                <div id="runnerFlowers" class="font-serif text-xl sm:text-2xl font-bold text-pine tabular-nums">0</div>
+                <div class="flex items-baseline gap-1.5">
+                  <div id="runnerFlowers" class="font-serif text-xl sm:text-2xl font-bold text-pine tabular-nums">0</div>
+                  <div id="runnerGoldenFlowers" class="text-[10px] sm:text-xs font-bold text-gold">★0</div>
+                </div>
               </div>
               <div>
                 <div class="text-[10px] uppercase font-bold tracking-wider text-pine/50">Speed</div>
                 <div id="runnerSpeed" class="font-serif text-xl sm:text-2xl font-bold text-pine tabular-nums">1.0×</div>
               </div>
             </div>
-            <button id="runnerStartBtn" type="button" class="rounded-full bg-cranberry text-white px-5 py-2.5 text-sm font-bold hover:bg-cranberry-dark transition">
-              Start Run
-            </button>
+            <div class="flex items-center gap-2">
+              <button id="runnerSoundBtn" type="button" class="rounded-full border border-pine/20 bg-white text-pine px-3 py-2.5 text-xs font-bold hover:bg-sand transition" aria-pressed="true" title="Toggle game sounds">
+                🔊 Sound
+              </button>
+              <button id="runnerStartBtn" type="button" class="rounded-full bg-cranberry text-white px-5 py-2.5 text-sm font-bold hover:bg-cranberry-dark transition">
+                Start Run
+              </button>
+            </div>
           </div>
 
           <div class="relative rounded-2xl overflow-hidden border border-pine/10 bg-[#dff1f3]">
@@ -727,6 +735,11 @@
             </div>
             <div class="absolute right-3 top-3 text-[10px] sm:text-xs font-bold text-pine bg-white/80 rounded-full px-3 py-1.5 border border-white">
               <span id="runnerLandmark">CBD · Sky Tower</span>
+              <span class="mx-1 text-pine/35">·</span>
+              <span id="runnerSkyPhase" class="text-pine/60">Day</span>
+            </div>
+            <div id="runnerComboBadge" class="hidden absolute left-1/2 -translate-x-1/2 top-14 rounded-full bg-cranberry text-white px-4 py-1.5 text-xs sm:text-sm font-extrabold shadow-lg border border-white/50" aria-live="polite">
+              COMBO ×2
             </div>
             <div id="runnerMessage" class="absolute left-1/2 -translate-x-1/2 bottom-3 max-w-[90%] rounded-full bg-white/88 border border-pine/10 px-4 py-2 text-xs font-semibold text-pine text-center" aria-live="polite">
               Press Start Run — or Space — when you're ready.
@@ -742,12 +755,23 @@
             </button>
           </div>
 
-          <div class="flex flex-wrap gap-x-4 gap-y-2 mt-4 text-[11px] text-pine/65">
-            <span>🔴 Buoy — hop</span>
-            <span>⛵ Sailboat — hop</span>
-            <span>🪽 Low gull — duck</span>
-            <span>🌊 Ferry wake — hop</span>
-            <span>🌺 Pōhutukawa — collect</span>
+          <div class="grid sm:grid-cols-2 gap-3 mt-4 text-[11px]">
+            <div class="rounded-xl border-2 border-amber-500/55 bg-amber-50 p-3 text-slate-700">
+              <div class="font-extrabold uppercase tracking-wider text-amber-700 mb-1.5">⚠ Hazards — avoid these</div>
+              <div class="flex flex-wrap gap-x-3 gap-y-1">
+                <span>Buoy — hop</span>
+                <span>Sailboat — hop</span>
+                <span>Low gull — duck</span>
+                <span>Ferry wake — hop</span>
+              </div>
+            </div>
+            <div class="rounded-xl border-2 border-cranberry/30 bg-cranberry/5 p-3 text-pine/75">
+              <div class="font-extrabold uppercase tracking-wider text-cranberry mb-1.5">✦ Rewards — collect these</div>
+              <div class="flex flex-wrap gap-x-3 gap-y-1">
+                <span>🌺 Pōhutukawa — bonus + combo</span>
+                <span class="text-amber-700 font-bold">✦ Golden bloom — rare super bonus</span>
+              </div>
+            </div>
           </div>
 
           <div id="runnerSubmitPanel" class="hidden mt-5 rounded-2xl border border-pine/10 bg-[#F7F8F5] p-4">
