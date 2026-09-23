@@ -1173,6 +1173,101 @@
       document.body.removeChild(link);
     }
 
+
+    function csvCell(value) {
+      const raw = String(value ?? '');
+      const safe = /^[=+@\-\t\r]/.test(raw) ? "'" + raw : raw;
+      return '"' + safe.replace(/"/g, '""') + '"';
+    }
+
+    function teamLink(code) {
+      return window.location.origin + window.location.pathname +
+        '?team=' + encodeURIComponent(code) + '#rsvp';
+    }
+
+    async function copyTeamCode(code) {
+      try {
+        await navigator.clipboard.writeText(code);
+        alert('Team code copied.');
+      } catch (e) {
+        window.prompt('Copy this team code:', code);
+      }
+    }
+
+    function updateTeamModeUI() {
+      const isEscape = document.querySelector('input[name="escapeRoom"]:checked')?.value === 'Yes';
+      const mode = document.querySelector('input[name="teamMode"]:checked')?.value || 'match';
+      document.getElementById('teamChoices').classList.toggle('hidden', !isEscape);
+      document.getElementById('createTeamFields').classList.toggle('hidden', !isEscape || mode !== 'create');
+      document.getElementById('joinTeamFields').classList.toggle('hidden', !isEscape || mode !== 'join');
+      document.getElementById('teamMatchMessage').classList.toggle('hidden', !isEscape || mode !== 'match');
+      document.getElementById('teamName').required = isEscape && mode === 'create';
+      document.getElementById('teamCode').required = isEscape && mode === 'join';
+    }
+
+    async function checkTeamCode() {
+      const field = document.getElementById('teamCode');
+      const result = document.getElementById('teamLookupResult');
+      const code = field.value.trim().toUpperCase();
+      field.value = code;
+      result.textContent = 'Checking team…';
+      if (!/^[A-Z0-9]{10}$/.test(code)) {
+        result.textContent = 'Please enter the 10-character invitation code.';
+        return;
+      }
+      try {
+        const response = await fetch('/api/teams?code=' + encodeURIComponent(code), {cache:'no-store'});
+        const data = await response.json();
+        if (!response.ok) throw Error(data.error || 'Could not find team.');
+        result.textContent = data.name + ' · ' + data.memberCount + '/6 members · ' +
+          (data.full ? 'Full — please choose another team.' : data.remaining + ' places remaining');
+      } catch (err) { result.textContent = err.message; }
+    }
+
+    async function copyTeamLink() {
+      const field = document.getElementById('teamShareUrl');
+      try {
+        await navigator.clipboard.writeText(field.value);
+        const button = document.querySelector('#teamInviteControls button');
+        button.textContent = 'Copied! Share with your teammates';
+        setTimeout(() => { button.textContent = 'Copy team invitation link'; }, 2500);
+      } catch (err) {
+        field.focus(); field.select();
+        alert('Please copy the selected invitation link.');
+      }
+    }
+
+    function showTeamReceipt(saved) {
+      const receipt = document.getElementById('teamReceipt');
+      const controls = document.getElementById('teamInviteControls');
+      receipt.classList.toggle('hidden', saved.escape_room === 'Lounge Only');
+      if (saved.escape_room === 'Lounge Only') return;
+      if (saved.team_status === 'assigned') {
+        document.getElementById('receiptTeamName').textContent = saved.team_name;
+        document.getElementById('receiptTeamCount').textContent = saved.team_count + '/6 members joined';
+        document.getElementById('receiptTeamCode').textContent = saved.team_code;
+        document.getElementById('teamShareUrl').value = teamLink(saved.team_code);
+        controls.classList.remove('hidden');
+      } else {
+        document.getElementById('receiptTeamName').textContent = 'Awaiting team allocation';
+        document.getElementById('receiptTeamCount').textContent =
+          'The organising team will help place you before the event.';
+        controls.classList.add('hidden');
+      }
+    }
+
+    document.querySelectorAll('input[name="escapeRoom"], input[name="teamMode"]').forEach(el =>
+      el.addEventListener('change', updateTeamModeUI));
+    updateTeamModeUI();
+    const invitedCode = new URLSearchParams(window.location.search).get('team');
+    if (invitedCode && /^[A-Z0-9]{10}$/i.test(invitedCode)) {
+      document.querySelector('input[name="escapeRoom"][value="Yes"]').checked = true;
+      document.querySelector('input[name="teamMode"][value="join"]').checked = true;
+      document.getElementById('teamCode').value = invitedCode.toUpperCase();
+      updateTeamModeUI();
+      checkTeamCode();
+    }
+
     let latestRegistration = null;
 
     async function handleFormSubmit(e) {
