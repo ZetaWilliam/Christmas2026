@@ -185,6 +185,57 @@
       }
     }
 
+    /* Santa Harbour Dash mini-game */
+    .santa-game-course {
+      background:
+        radial-gradient(circle at 18% 22%, rgba(255,255,255,.92) 0 3%, transparent 3.5%),
+        radial-gradient(circle at 76% 14%, rgba(255,255,255,.78) 0 2.5%, transparent 3%),
+        linear-gradient(180deg, #dff1f3 0%, #f4f5ed 54%, #b9d7d1 55%, #7aaea2 100%);
+    }
+    .santa-game-water {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 44%;
+      opacity: .46;
+      background:
+        radial-gradient(70px 14px at 35px 12px, rgba(255,255,255,.62) 98%, transparent 100%) repeat-x;
+      background-size: 140px 32px;
+      animation: gameWaterDrift 8s linear infinite;
+    }
+    .santa-game-boat {
+      position: absolute;
+      left: 10px;
+      bottom: 36px;
+      width: 118px;
+      transition: transform 120ms ease-out;
+      will-change: transform;
+    }
+    .santa-game-boat > svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      filter: drop-shadow(0 5px 4px rgba(13,48,37,.16));
+      animation: gameBoatBob 1.8s ease-in-out infinite;
+    }
+    .game-paddle-left, .game-paddle-right {
+      transform-origin: 81px 49px;
+      transition: transform 120ms ease-out;
+    }
+    .game-paddle-left.stroke { transform: rotate(-24deg); }
+    .game-paddle-right.stroke { transform: rotate(24deg); }
+    @keyframes gameWaterDrift {
+      from { background-position-x: 0; }
+      to { background-position-x: -140px; }
+    }
+    @keyframes gameBoatBob {
+      0%,100% { transform: translateY(0) rotate(-.8deg); }
+      50% { transform: translateY(4px) rotate(.8deg); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .santa-game-water, .santa-game-boat > svg { animation: none !important; }
+      .santa-game-boat { transition: none; }
+    }
+
   </style>
 </head>
 <body class="bg-holiday-pattern text-[#222222] font-sans antialiased selection:bg-cranberry selection:text-white relative">
@@ -225,6 +276,7 @@
         <a href="#about" class="text-white/80 hover:text-gold transition">About</a>
         <a href="#schedule" class="text-white/80 hover:text-gold transition">Schedule</a>
         <a href="#venue" class="text-white/80 hover:text-gold transition">Venue & Guidelines</a>
+        <a href="#game" class="text-white/80 hover:text-gold transition">Santa Dash</a>
         <a href="#rsvp" class="text-white/80 hover:text-gold transition">RSVP</a>
       </nav>
 
@@ -579,6 +631,126 @@
             No intense physical exertion required &mdash; purely observation & puzzle solving!
           </div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Santa Harbour Dash: lightweight summer Christmas mini-game -->
+  <section id="game" class="py-16 sm:py-20 bg-[#EEF3EF] border-y border-pine/10">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="text-center max-w-2xl mx-auto mb-8">
+        <div class="text-xs uppercase tracking-[0.2em] font-bold text-cranberry mb-2">Just for fun · 20 second challenge</div>
+        <h2 class="font-serif text-3xl sm:text-4xl font-bold text-pine">Santa Harbour Dash</h2>
+        <p class="text-sm sm:text-base text-pine/75 mt-2 leading-relaxed">
+          Help summer Santa paddle across Auckland Harbour. Alternate left and right strokes — a steady rhythm earns the best speed.
+        </p>
+      </div>
+
+      <div class="grid lg:grid-cols-[1.45fr_.75fr] gap-5 lg:gap-7 items-start">
+        <div class="rounded-3xl border border-pine/15 bg-white p-4 sm:p-6 shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div class="flex items-center gap-4">
+              <div>
+                <div class="text-[10px] uppercase font-bold tracking-wider text-pine/50">Time</div>
+                <div id="gameTimer" class="font-serif text-2xl font-bold text-pine tabular-nums">20.0</div>
+              </div>
+              <div>
+                <div class="text-[10px] uppercase font-bold tracking-wider text-pine/50">Score</div>
+                <div id="gameScore" class="font-serif text-2xl font-bold text-cranberry tabular-nums">0</div>
+              </div>
+              <div>
+                <div class="text-[10px] uppercase font-bold tracking-wider text-pine/50">Strokes</div>
+                <div id="gameStrokes" class="font-serif text-2xl font-bold text-pine tabular-nums">0</div>
+              </div>
+            </div>
+            <button id="gameStartBtn" type="button" class="rounded-full bg-cranberry text-white px-5 py-2.5 text-sm font-bold hover:bg-cranberry-dark transition">
+              Start Dash
+            </button>
+          </div>
+
+          <div id="gameCourse" tabindex="0" aria-label="Santa Harbour Dash game course. Press A and L alternately to paddle." class="santa-game-course relative overflow-hidden rounded-2xl border border-pine/10 h-64 sm:h-72 outline-none focus:ring-2 focus:ring-gold">
+            <div class="absolute left-4 top-4 text-xs text-pine/65 bg-white/75 rounded-full px-3 py-1.5 border border-white/80">A / L keys or tap the paddles</div>
+            <div class="absolute right-4 top-4 text-xs font-bold text-pine bg-white/80 rounded-full px-3 py-1.5 border border-white/80">🏁 Rangitoto Finish</div>
+
+            <svg aria-hidden="true" class="absolute inset-x-0 bottom-[43%] w-full h-24 text-pine/20" viewBox="0 0 1000 120" preserveAspectRatio="none">
+              <path d="M0 120V83h70V60h24v23h55V69h24v14h62V45h18v38h72V72h35v11h70V54h25v29h95V70h38v13h76V36h11v-21h10v21h11v47h50V64h32v19h76V48h20v35h73v37z" fill="currentColor"/>
+              <path d="M665 35 L681 6 L697 35 Z" fill="currentColor"/>
+            </svg>
+            <div class="absolute right-7 bottom-[37%] h-16 w-12 rounded-[50%_50%_45%_45%] bg-pine/15 border border-pine/10" aria-hidden="true"></div>
+            <div class="santa-game-water" aria-hidden="true"></div>
+
+            <div id="gameBoat" class="santa-game-boat" aria-hidden="true">
+              <svg viewBox="0 0 160 90" fill="none">
+                <path d="M10,65 C45,72 120,72 155,62 C135,76 35,76 10,65 Z" fill="#C0362C"/>
+                <path d="M15,64 L150,62" stroke="#D4AF37" stroke-width="1.8"/>
+                <circle cx="85" cy="28" r="11" fill="#FFDFC4"/>
+                <path d="M75,26 C75,14 96,12 96,25 Z" fill="#C0362C"/>
+                <rect x="74" y="24" width="23" height="4" rx="2" fill="#FFFFFF"/>
+                <circle cx="98" cy="18" r="3.5" fill="#FFFFFF"/>
+                <path d="M78,32 C78,44 95,44 95,32 Z" fill="#FFFFFF"/>
+                <path d="M74,40 C74,56 96,56 96,40 Z" fill="#C0362C"/>
+                <g id="gamePaddleLeft" class="game-paddle-left">
+                  <line x1="80" y1="48" x2="32" y2="25" stroke="#D4AF37" stroke-width="3" stroke-linecap="round"/>
+                  <ellipse cx="29" cy="23" rx="8" ry="4" transform="rotate(28 29 23)" fill="#164839"/>
+                </g>
+                <g id="gamePaddleRight" class="game-paddle-right">
+                  <line x1="88" y1="48" x2="137" y2="69" stroke="#D4AF37" stroke-width="3" stroke-linecap="round"/>
+                  <ellipse cx="140" cy="71" rx="8" ry="4" transform="rotate(28 140 71)" fill="#164839"/>
+                </g>
+              </svg>
+            </div>
+
+            <div id="gameMessage" class="absolute left-1/2 -translate-x-1/2 bottom-3 rounded-full bg-white/85 border border-pine/10 px-4 py-2 text-xs font-semibold text-pine text-center min-w-[170px]" aria-live="polite">
+              Press Start Dash when you're ready.
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 mt-4">
+            <button id="gameLeftBtn" type="button" disabled class="min-h-14 rounded-2xl border border-pine/20 bg-sand text-pine font-bold text-base disabled:opacity-45 hover:bg-gold/15 active:scale-[.98] transition">
+              ← Left paddle <span class="hidden sm:inline">(A)</span>
+            </button>
+            <button id="gameRightBtn" type="button" disabled class="min-h-14 rounded-2xl border border-pine/20 bg-sand text-pine font-bold text-base disabled:opacity-45 hover:bg-gold/15 active:scale-[.98] transition">
+              Right paddle <span class="hidden sm:inline">(L)</span> →
+            </button>
+          </div>
+
+          <div id="gameSubmitPanel" class="hidden mt-5 rounded-2xl border border-pine/10 bg-[#F7F8F5] p-4">
+            <div class="font-serif text-lg font-bold text-pine">Save your score to the leaderboard</div>
+            <p class="text-xs text-pine/65 mt-1">Use any display name you like. Team name is optional. No email is collected for the game.</p>
+            <div class="grid sm:grid-cols-2 gap-3 mt-3">
+              <div>
+                <label for="gamePlayerName" class="block text-xs font-bold text-pine mb-1">Display Name</label>
+                <input id="gamePlayerName" maxlength="30" placeholder="e.g. Harbour Santa" class="w-full rounded-xl border border-pine/20 px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-gold">
+              </div>
+              <div>
+                <label for="gameTeamName" class="block text-xs font-bold text-pine mb-1">Team Name (Optional)</label>
+                <input id="gameTeamName" maxlength="60" placeholder="e.g. The Pharmacokinetics" class="w-full rounded-xl border border-pine/20 px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-gold">
+              </div>
+            </div>
+            <button id="gameSaveBtn" type="button" class="mt-3 w-full sm:w-auto rounded-xl bg-pine text-white px-5 py-2.5 text-sm font-bold hover:bg-pine-light transition">Submit Score</button>
+            <span id="gameSaveStatus" class="block sm:inline sm:ml-3 mt-2 sm:mt-0 text-xs text-pine/65" aria-live="polite"></span>
+          </div>
+
+          <p class="text-[11px] text-pine/55 mt-4">
+            Just for fun — the leaderboard is not part of the escape-room competition or RSVP allocation.
+          </p>
+        </div>
+
+        <aside class="rounded-3xl border border-pine/15 bg-white p-4 sm:p-5 shadow-sm">
+          <div class="flex items-center justify-between gap-3 mb-3">
+            <div>
+              <div class="text-[10px] uppercase tracking-wider font-bold text-cranberry">Live leaderboard</div>
+              <h3 class="font-serif text-xl font-bold text-pine">Harbour Heroes</h3>
+            </div>
+            <button type="button" id="gameRefreshLeaderboard" class="rounded-lg border border-pine/20 px-3 py-2 text-xs font-semibold text-pine hover:bg-sand">Refresh</button>
+          </div>
+          <div id="gameLeaderboard" class="space-y-2" aria-live="polite">
+            <p class="text-sm text-pine/60">Loading leaderboard…</p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-pine/10 text-[11px] leading-relaxed text-pine/55">
+            Only the best score for each display name appears. Nicknames and optional team names are public; emails are never used here.
+          </div>
+        </aside>
       </div>
     </div>
   </section>
@@ -1018,6 +1190,7 @@
           <a href="#about" class="text-white/80 hover:text-gold transition">Top</a>
           <a href="#schedule" class="text-white/80 hover:text-gold transition">Schedule</a>
           <a href="#venue" class="text-white/80 hover:text-gold transition">Venue</a>
+          <a href="#game" class="text-white/80 hover:text-gold transition">Santa Dash</a>
           <a href="#rsvp" class="text-white/80 hover:text-gold transition">RSVP</a>
           <a href="https://escapadenz.co.nz/christmas-parties/" target="_blank" rel="noopener noreferrer" class="text-gold hover:underline">Escapade NZ &rarr;</a>
           
