@@ -11,6 +11,29 @@ module.exports = async function handler(req, res) {
   const sql = neon(process.env.DATABASE_URL);
   try {
     if (req.method === 'GET') {
+      if (String(req.query.list || '') === '1') {
+        // Public directory: only names and headcounts; never emails, dietary information or private invite codes.
+        const rows = await sql`
+          SELECT t.id, t.name, count(r.email)::int AS member_count
+          FROM escape_teams t
+          JOIN rsvps r ON r.team_id=t.id AND r.escape_room='Yes'
+          GROUP BY t.id
+          HAVING count(r.email)>0
+          ORDER BY t.created_at ASC, t.id ASC
+        `;
+        return respond(res, 200, {
+          teams: rows.map(t => ({
+            id: t.id,
+            name: t.name,
+            memberCount: t.member_count,
+            remaining: Math.max(0, 6 - t.member_count),
+            full: t.member_count >= 6
+          })),
+          maxTeams: 12,
+          teamCapacity: 6,
+          escapeCapacity: 36
+        });
+      }
       const code = String(req.query.code || '').trim().toUpperCase();
       if (!/^[A-Z0-9]{10}$/.test(code)) {
         return respond(res, 400, { error: 'Enter a valid 10-character invitation code.' });
@@ -60,7 +83,7 @@ module.exports = async function handler(req, res) {
     const message=String(error?.message || '');
     for (const [code,status,text] of [
       ['TEAM_FULL',409,'This team is already full (6/6).'],
-      ['SIX_TEAMS_FULL',409,'Six active teams are already formed.'],
+      ['TWELVE_TEAMS_FULL',409,'Twelve preliminary teams are already formed.'],
       ['TEAM_NOT_FOUND',404,'Team not found.'],
       ['RSVP_NOT_FOUND',404,'Escape room RSVP not found.'],
       ['INVALID_TEAM_NAME',400,'Please use a team name between 2 and 60 characters.']
