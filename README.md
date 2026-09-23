@@ -36,4 +36,4 @@ This lightweight internal-event prototype does not verify ownership of an email 
 
 
 ### Open-source inspiration
-The Santa Harbour Dash camera-follow / continuously scrolling world is inspired by common MIT-licensed browser endless-runner patterns, including Spike Sprint (https://github.com/shifulegend/spike-sprint). No third-party game art or assets are copied; the Auckland harbour route and SVG artwork in this project are custom.
+The current Santa Harbour Dash gameplay is inspired by Chromium's open-source T-Rex Runner structure, as distributed in wayou/t-rex-runner (BSD-3-Clause): automatic forward motion, progressive speed, randomized obstacle gaps, collision game-over and instant replay. No T-Rex Runner sprites or other third-party game art are copied; the Auckland harbour scenery, Santa canoe, ferry, sailboat, buoy, gull and pōhutukawa artwork are custom for this event.
