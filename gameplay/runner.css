@@ -91,3 +91,7 @@
 #game .runner-crew-actions button:hover{transform:translateY(-1px);}
 @media(max-width:760px){#game .runner-crew-list{grid-template-columns:1fr;}#game .runner-crew-head{flex-direction:column;}#game .runner-crew-dock{padding:14px;}#game .runner-crew-head h3{font-size:22px;}}
 @media(prefers-reduced-motion:reduce){#game .runner-crew-card,#game .runner-crew-track i,#game .runner-crew-actions button{transition:none!important;}}
+
+#game .runner-result-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+#game .runner-result-crew{padding:10px 16px;font-size:13px;font-weight:700;background:#fff;color:#285e6c;border:1px solid #9cbec0;border-radius:22px;}
+#game .runner-result-crew:hover{background:#eef7f5;}
