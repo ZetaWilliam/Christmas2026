@@ -48,7 +48,7 @@ async function request(query){
   assert(calls[0].query.includes('runner_scores'),'Crew Journey must be derived from game runs.');
 
   const runner=fs.readFileSync(__dirname+'/../gameplay/runner.js','utf8');
-  for(const needle of ['runnerCrewDock','Complete the Crew','loadCrewDock','chooseOpenCrew','selectExistingTeam','Happy to join any crew'])
+  for(const needle of ['runnerCrewDock','Complete the Crew','Bring this run to a crew','loadCrewDock','chooseOpenCrew','selectExistingTeam','Happy to join any crew'])
     assert(runner.includes(needle),'Missing crew UX: '+needle);
   assert(runner.includes("teamInput.value=team.name"),'Selecting a crew tags the game score with the exact crew name.');
   assert(runner.includes("confirm your RSVP")||runner.includes("Confirm or update your RSVP"),'Crew selection must remain provisional until RSVP confirmation.');
