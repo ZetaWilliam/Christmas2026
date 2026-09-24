@@ -1,6 +1,7 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const coast=require('../gameplay/coastline.js');
+assert.equal(coast.version,'2026.09.24-coast.2');
 assert.equal(coast.LANDMARKS.length,3);
 assert.equal(new Set(coast.LANDMARKS.map(o=>o.id)).size,3);
 assert.deepEqual(coast.LANDMARKS.map(o=>o.id),['city','bridge','rangitoto']);
@@ -36,6 +37,14 @@ for(const period of [700,1200,1800,2400,4800]){
 for(const seam of [1200,2400,3600,4800]){
  assert(Math.abs(coast.height(seam-1e-6)-coast.height(seam+1e-6))<1e-5);
 }
+for(const x of [185,650,1000,1650]){
+ assert(coast.connectedHeight(x,0)>coast.height(x,0),'Landmark bases should blend into the continuous near shoreline');
+ assert(Math.abs(coast.connectedHeight(x-.001,0)-coast.connectedHeight(x+.001,0))<.001,'Connected shoreline must be continuous');
+}
+const coastSource=fs.readFileSync(path.join(__dirname,'../gameplay/coastline.js'),'utf8');
+assert(!coastSource.includes('scale(-1,1)'),'Named coast artwork must never be mirrored');
+assert(coastSource.includes('function bridgeMask'),'Bridge uses a structure-only mask instead of an opaque source rectangle');
+assert(coastSource.includes('rowBackdrop'),'City/island extraction removes source-sky matte pixels');
 // The patch changes only distant rendering and its text label; everything else is inherited.
 class Base {draw(){} ocean(){} santa(){} hazard(){} reward(){} particles(){} overlay(){}}
 const win={HarbourRenderer:Base};
