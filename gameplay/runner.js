@@ -59,6 +59,7 @@
   function sync(){score.textContent=eng.score;distance.textContent=Math.floor(eng.distance);flowers.textContent=eng.flowers;gold.textContent='★'+eng.goldenFlowers;speed.textContent=(eng.speed/C.startSpeed).toFixed(2)+'×';combo.classList.toggle('hidden',eng.combo<2||eng.state!=='running');combo.textContent='COMBO ×'+eng.combo;}
   function handleEvents(){for(const ev of eng.drainEvents()){
     if(ev.type==='collect'){art.burst(ev.golden?'gold':'flower',176,207);chime(ev.golden?'gold':ev.combo>=3&&ev.combo%3===0?'combo':'flower');tell((ev.golden?'★ Golden pōhutukawa':'Pōhutukawa')+' +'+ev.points+(ev.combo>1?' · combo ×'+ev.combo:''));}
+    if(ev.type==='chainComplete'){art.burst(ev.golden?'gold':'flower',176,177);music.effect('combo');tell('Perfect bloom line · '+ev.count+'/'+ev.count+'!',2.6);}
     if(ev.type==='comboEnd')combo.classList.add('hidden');
     if(ev.type==='milestone'){chime('milestone');if(eng.time>feedbackUntil)tell(ev.distance+' distance — keep going!');}
     if(ev.type==='pause')pauseRun();
