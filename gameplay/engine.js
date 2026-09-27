@@ -15,9 +15,9 @@
     launch(){this.player.duck=false;this.player.grounded=false;this.player.vy=C.jumpV;this.jumpUntil=-1;}
     duck(on){this.duckHeld=!!on;if(on)this.lastDuckTime=this.time;if(this.state==='running')this.player.duck=(this.duckHeld||this.time<this.resumeDuckUntil)&&this.player.grounded;}
     playerBoxes(){const y=C.water+this.player.jumpY;return [
-      // Forgiving hazard hitbox: visually Santa/boat are wider than the collision core.
-      {x:C.playerX+22,y:y-9,w:44,h:7},
-      {x:C.playerX+35,y:y-(this.player.duck?30:53),w:22,h:this.player.duck?19:40}
+      // Deliberately smaller than the painted kayak/Santa silhouette so near-misses feel fair.
+      {x:C.playerX+25,y:y-8,w:38,h:6},
+      {x:C.playerX+37,y:y-(this.player.duck?27:50),w:18,h:this.player.duck?16:34}
     ];}
     pickupBoxes(){const y=C.water+this.player.jumpY;return [
       {x:C.playerX+14,y:y-11,w:60,h:9},
