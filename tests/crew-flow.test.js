@@ -52,11 +52,9 @@ async function request(query){
   const teamsApi=fs.readFileSync(__dirname+'/../api/teams.js','utf8');
   assert(rsvpApi.includes('lower(btrim(name)) = lower(${teamName})'),'RSVP team creation prevents duplicate crew names.');
   assert(teamsApi.includes('lower(btrim(name)) = lower(${teamName})'),'Organiser team creation prevents duplicate crew names.');
-  for(const needle of ['runnerCrewDock','Complete the Crew','Bring this run to a crew','loadCrewDock','chooseOpenCrew','selectExistingTeam','Happy to join any crew'])
-    assert(runner.includes(needle),'Missing crew UX: '+needle);
-  assert(runner.includes("teamInput.value=team.name"),'Selecting a crew tags the game score with the exact crew name.');
-  assert(runner.includes("if(teamInput)teamInput.value=''"),'Flexible mode clears any stale crew score tag.');
-  assert(runner.includes("if(teamInput&&existing)teamInput.value=''"),'Creating after joining clears an existing crew name rather than cloning it.');
-  assert(runner.includes("confirm your RSVP")||runner.includes("Confirm or update your RSVP"),'Crew selection must remain provisional until RSVP confirmation.');
-  console.log(JSON.stringify({crewApi:'ok',privacy:'aggregate only',journey:'top 3 best players',gameToRsvp:'wired'},null,2));
+  for(const needle of ['runnerCrewDock','Complete the Crew','Bring this run to a crew','loadCrewDock','chooseOpenCrew'])
+    assert(!runner.includes(needle),'Invitation cleanup should remove visible Crew Journey UI: '+needle);
+  assert(runner.includes("runnerTeamNames"),'Game keeps only a compact datalist for existing RSVP team names.');
+  assert(runner.includes("loadTeamNames"),'Existing RSVP teams are offered as optional score-tag suggestions.');
+  console.log(JSON.stringify({crewApi:'ok',privacy:'aggregate only',journeyBackend:'retained',visibleCrewPanel:'removed',teamSuggestions:'compact'},null,2));
 })().catch(e=>{console.error(e);process.exit(1);});
