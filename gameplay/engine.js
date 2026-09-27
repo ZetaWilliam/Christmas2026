@@ -15,8 +15,9 @@
     launch(){this.player.duck=false;this.player.grounded=false;this.player.vy=C.jumpV;this.jumpUntil=-1;}
     duck(on){this.duckHeld=!!on;if(on)this.lastDuckTime=this.time;if(this.state==='running')this.player.duck=(this.duckHeld||this.time<this.resumeDuckUntil)&&this.player.grounded;}
     playerBoxes(){const y=C.water+this.player.jumpY;return [
-      {x:C.playerX+19,y:y-10,w:50,h:8},
-      {x:C.playerX+33,y:y-(this.player.duck?32:55),w:26,h:this.player.duck?22:44}
+      // Forgiving hazard hitbox: visually Santa/boat are wider than the collision core.
+      {x:C.playerX+22,y:y-9,w:44,h:7},
+      {x:C.playerX+35,y:y-(this.player.duck?30:53),w:22,h:this.player.duck?19:40}
     ];}
     pickupBoxes(){const y=C.water+this.player.jumpY;return [
       {x:C.playerX+14,y:y-11,w:60,h:9},
@@ -105,5 +106,5 @@
     }
     snapshot(){return {state:this.state,time:this.time,speed:this.speed,world:this.world,score:this.score,distance:this.distance,flowers:this.flowers,goldenFlowers:this.goldenFlowers,combo:this.combo,maxCombo:this.maxCombo,player:{...this.player},obstacles:this.obstacles.map(o=>({...o})),rewards:this.rewards.map(r=>({...r})),reason:this.reason,result:this.result};}
   }
-  return Object.freeze({Engine,C,specs,overlap,rng,version:'2026.09.27-reward-lines.1'});
+  return Object.freeze({Engine,C,specs,overlap,rng,version:'2026.09.27-anime-polish.1'});
 });
