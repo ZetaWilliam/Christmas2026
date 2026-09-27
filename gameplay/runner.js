@@ -23,16 +23,6 @@
   const pause=document.createElement('button');pause.type='button';pause.id='runnerPauseBtn';pause.className='runner-quiet-button';pause.textContent='Pause';pause.disabled=true;start.before(pause);
   const bestEl=document.createElement('span');bestEl.className='runner-best';bestEl.textContent='Your best: '+best;score.parentElement.append(bestEl);
   const runSummary=document.createElement('p');runSummary.id='runnerRunSummary';runSummary.className='runner-summary';panel.prepend(runSummary);
-  const crewDock=document.createElement('section');
-  crewDock.id='runnerCrewDock';
-  crewDock.className='runner-crew-dock';
-  crewDock.innerHTML='<div class="runner-crew-head"><div><span>Complete the Crew</span><h3>Crew Journey</h3><p>Play on your own, then help a crew travel from the CBD to Rangitoto. Joining is optional and only becomes official when you confirm your RSVP.</p></div><button type="button" id="runnerCrewRefresh" class="runner-quiet-button">Refresh crews</button></div><div id="runnerCrewNotice" class="runner-crew-notice" aria-live="polite"></div><div id="runnerCrewList" class="runner-crew-list"><p class="runner-empty">Loading open crews…</p></div><div class="runner-crew-actions"><button type="button" id="runnerCreateCrew">Create a crew</button><button type="button" id="runnerFlexibleCrew">Happy to join any crew</button></div>';
-  const gameGrid=leaderboard.closest('aside')?.parentElement;
-  if(gameGrid)gameGrid.after(crewDock);
-  const crewList=$('runnerCrewList'),crewNotice=$('runnerCrewNotice');
-  let crewTeams=[],crewStops=[];
-  const crewNames=document.createElement('datalist');crewNames.id='runnerCrewNames';document.body.append(crewNames);
-  const teamInput=$('runnerTeamName');if(teamInput)teamInput.setAttribute('list','runnerCrewNames');
   const musicBtn=document.createElement('button');musicBtn.type='button';musicBtn.id='runnerMusicBtn';musicBtn.className='runner-quiet-button';sound.after(musicBtn);
   const trackBtn=document.createElement('button');trackBtn.type='button';trackBtn.id='runnerTrackBtn';trackBtn.className='runner-quiet-button runner-track';musicBtn.after(trackBtn);
   function musicLabels(){sound.textContent=music.sfxOn?'SFX On':'SFX Off';sound.setAttribute('aria-pressed',String(music.sfxOn));musicBtn.textContent=music.musicOn?'♫ Music On':'♫ Music Off';musicBtn.setAttribute('aria-pressed',String(music.musicOn));trackBtn.textContent=music.track===0?'Harbour Pop ↻':'Summer Bossa ↻';trackBtn.title='Switch instrumental background track';}
@@ -42,6 +32,16 @@
   function tone(){music.effect('flower');}
   function chime(type){music.effect(type==='end'?'splash':type);}
   const resultCard=document.createElement('div');resultCard.id='runnerResultCard';resultCard.className='runner-result';panel.prepend(resultCard);
+  const teamInput=$('runnerTeamName');
+  const teamNames=document.createElement('datalist');teamNames.id='runnerTeamNames';document.body.append(teamNames);
+  if(teamInput)teamInput.setAttribute('list','runnerTeamNames');
+  async function loadTeamNames(){
+    try{
+      const r=await fetch('/api/teams?list=1',{cache:'no-store'}),data=await r.json().catch(()=>({}));
+      if(!r.ok||!Array.isArray(data.teams))return;
+      teamNames.innerHTML=data.teams.map(t=>'<option value="'+text(t.name)+'"></option>').join('');
+    }catch(_){}
+  }
   const tiers=[
     {min:0,id:'explorer',name:'Harbour Explorer',title:'A good day on the water',hint:'Take a breath, watch the warning markers, and enjoy another voyage.'},
     {min:400,id:'cruiser',name:'Summer Cruiser',title:'Finding your sea legs!',hint:'A smooth start. Keep your hops steady and hold Duck for the low gulls.'},
@@ -49,8 +49,8 @@
     {min:1800,id:'hero',name:'Harbour Hero',title:'You made waves!',hint:'Sharp reactions and a lovely haul of blooms. A run worth sharing.'},
     {min:3200,id:'legend',name:'Harbour Legend',title:'What a voyage!',hint:'An outstanding harbour run. That is a score to celebrate.'}
   ];
-  function celebrate(result){const tier=tiers.filter(t=>result.score>=t.min).at(-1),level=tiers.indexOf(tier),record=result.score>best;art.result=tier;resultCard.dataset.tier=tier.id;resultCard.setAttribute('aria-label',tier.name+' — '+result.score+' points');resultCard.classList.remove('runner-result-enter');void resultCard.offsetWidth;resultCard.classList.add('runner-result-enter');resultCard.innerHTML='<div class="runner-result-label">'+tier.name+(record?' <span>NEW PERSONAL BEST</span>':'')+'</div><h3>'+tier.title+'</h3><div class="runner-result-score" id="runnerResultScore">0</div><p>'+tier.hint+'</p><div class="runner-result-stats"><span><b>'+result.distance+'</b>distance</span><span><b>'+result.flowers+'</b>blooms</span><span><b>'+result.goldenFlowers+'</b>golden</span><span><b>×'+result.maxCombo+'</b>best combo</span></div><div class="runner-result-actions"><button type="button" class="runner-result-replay">Another voyage →</button><button type="button" class="runner-result-crew">Bring this run to a crew ↓</button></div>';
-    resultCard.querySelector('.runner-result-replay').addEventListener('click',()=>{if(saving)return;begin();canvas.scrollIntoView({behavior:reduced?'auto':'smooth',block:'center'});});resultCard.querySelector('.runner-result-crew').addEventListener('click',()=>{crewDock.scrollIntoView({behavior:reduced?'auto':'smooth',block:'start'});});
+  function celebrate(result){const tier=tiers.filter(t=>result.score>=t.min).at(-1),level=tiers.indexOf(tier),record=result.score>best;art.result=tier;resultCard.dataset.tier=tier.id;resultCard.setAttribute('aria-label',tier.name+' — '+result.score+' points');resultCard.classList.remove('runner-result-enter');void resultCard.offsetWidth;resultCard.classList.add('runner-result-enter');resultCard.innerHTML='<div class="runner-result-label">'+tier.name+(record?' <span>NEW PERSONAL BEST</span>':'')+'</div><h3>'+tier.title+'</h3><div class="runner-result-score" id="runnerResultScore">0</div><p>'+tier.hint+'</p><div class="runner-result-stats"><span><b>'+result.distance+'</b>distance</span><span><b>'+result.flowers+'</b>blooms</span><span><b>'+result.goldenFlowers+'</b>golden</span><span><b>×'+result.maxCombo+'</b>best combo</span></div><div class="runner-result-actions"><button type="button" class="runner-result-replay">Another voyage →</button></div>';
+    resultCard.querySelector('.runner-result-replay').addEventListener('click',()=>{if(saving)return;begin();canvas.scrollIntoView({behavior:reduced?'auto':'smooth',block:'center'});});
     cancelAnimationFrame(resultFrame);const target=resultCard.querySelector('#runnerResultScore'),now=performance.now();function count(t){const p=Math.min(1,(t-now)/750);target.textContent=Math.round(result.score*(1-Math.pow(1-p,3))).toLocaleString();if(p<1)resultFrame=requestAnimationFrame(count);}if(reduced)target.textContent=result.score.toLocaleString();else resultFrame=requestAnimationFrame(count);
     music.pause();music.effect('result',level,record);if(record){best=result.score;bestEl.textContent='Your best: '+best;try{localStorage.setItem('harbour.personalBest.v2',String(best));}catch(_){}}
   }
@@ -93,91 +93,10 @@
   if('IntersectionObserver'in window)new IntersectionObserver(entries=>{if(!entries[0].isIntersecting)pauseRun();},{threshold:0}).observe(canvas);
   function draw(){art.draw();}
   function text(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-  function clearRsvpTeamSelection(){
-    const code=$('teamCode');
-    if(code){code.value='';code.dispatchEvent(new Event('input',{bubbles:true}));}
-  }
-  function showCrewNotice(html){
-    crewNotice.innerHTML=html||'';
-    crewNotice.classList.toggle('is-visible',Boolean(html));
-  }
-  function reviewRsvp(){
-    const rsvp=$('rsvp');if(rsvp)rsvp.scrollIntoView({behavior:reduced?'auto':'smooth',block:'start'});
-  }
-  function chooseOpenCrew(team){
-    if(!team||team.full)return;
-    if(teamInput)teamInput.value=team.name;
-    if(typeof window.selectExistingTeam==='function')window.selectExistingTeam(Number(team.id));
-    showCrewNotice('<strong>'+text(team.name)+' selected.</strong> This run can count toward the crew journey. Confirm or update your RSVP above to make the crew choice official. <button type="button" id="runnerReviewRsvp">Review RSVP</button>');
-    $('runnerReviewRsvp')?.addEventListener('click',reviewRsvp);
-    document.querySelectorAll('.runner-crew-card').forEach(el=>el.classList.toggle('is-selected',Number(el.dataset.teamId)===Number(team.id)));
-  }
-  function createCrewFromGame(){
-    clearRsvpTeamSelection();
-    const previous=(teamInput?.value||'').trim();
-    const existing=crewTeams.some(t=>String(t.name).trim().toLowerCase()===previous.toLowerCase());
-    if(teamInput&&existing)teamInput.value='';
-    const yes=document.querySelector('input[name="escapeRoom"][value="Yes"]');
-    const approach=document.querySelector('input[name="teamApproach"][value="group"]');
-    const mode=document.querySelector('input[name="teamMode"][value="create"]');
-    if(yes)yes.checked=true;if(approach)approach.checked=true;if(mode)mode.checked=true;
-    if(typeof window.updateTeamModeUI==='function')window.updateTeamModeUI();
-    const name=$('teamName');
-    if(name&&previous&&!existing&&!name.value)name.value=previous;
-    else if(name&&existing)name.value='';
-    showCrewNotice('<strong>Create a new crew.</strong> Give it a unique name in the RSVP form. Other people will then see the crew as an open option until it reaches six members.');
-    reviewRsvp();setTimeout(()=>name?.focus(),450);
-  }
-  function flexibleCrewFromGame(){
-    clearRsvpTeamSelection();
-    if(teamInput)teamInput.value='';
-    const yes=document.querySelector('input[name="escapeRoom"][value="Yes"]');
-    const approach=document.querySelector('input[name="teamApproach"][value="flexible"]');
-    if(yes)yes.checked=true;if(approach)approach.checked=true;
-    if(typeof window.updateTeamModeUI==='function')window.updateTeamModeUI();
-    showCrewNotice('<strong>You are all set to stay flexible.</strong> The organisers can place you with a crew later — no public “unassigned” label is shown.');
-    reviewRsvp();
-  }
-  function crewCard(team){
-    const j=team.journey||{distance:0,flowers:0,contributors:0,progress:0,stage:'CBD',next:'Harbour Bridge',target:3600};
-    const stats=j.contributors
-      ? Number(j.distance||0).toLocaleString()+' journey distance · '+Number(j.flowers||0)+' blooms · '+Number(j.contributors||0)+' contributing '+(Number(j.contributors)===1?'player':'players')
-      : 'No crew run yet — your score can start the journey.';
-    const places=team.remaining===1?'1 place open':team.remaining+' places open';
-    const stops=(crewStops.length?crewStops:[{label:'CBD'},{label:'Harbour Bridge'},{label:'Devonport'},{label:'Rangitoto'}]).map(s=>'<span>'+text(String(s.label).replace('Harbour Bridge','Bridge'))+'</span>').join('');
-    return '<article class="runner-crew-card" data-team-id="'+Number(team.id)+'"><div class="runner-crew-card-head"><div><h4>'+text(team.name)+'</h4><p>'+Number(team.memberCount)+'/6 crew members · <strong>'+places+'</strong></p></div><button type="button" data-crew-join="'+Number(team.id)+'">Join crew</button></div><div class="runner-crew-journey"><div class="runner-crew-track"><i style="width:'+Math.max(0,Math.min(100,Number(j.progress)||0))+'%"></i><b style="left:'+Math.max(2,Math.min(98,Number(j.progress)||0))+'%" aria-hidden="true">⛵</b></div><div class="runner-crew-stops">'+stops+'</div></div><p class="runner-crew-stats">'+stats+'</p><p class="runner-crew-stage">Now: '+text(j.stage||'CBD')+' · Next: '+text(j.next||'Rangitoto')+'</p></article>';
-  }
-  function renderCrewDock(data){
-    crewTeams=Array.isArray(data?.teams)?data.teams:[];
-    crewStops=Array.isArray(data?.crewJourneyStops)?data.crewJourneyStops:[];
-    const open=crewTeams.filter(t=>!t.full&&Number(t.remaining)>0)
-      .sort((a,b)=>Number(a.remaining)-Number(b.remaining)||Number(b.journey?.distance||0)-Number(a.journey?.distance||0)||String(a.name).localeCompare(String(b.name)));
-    crewNames.innerHTML=crewTeams.map(t=>'<option value="'+text(t.name)+'"></option>').join('');
-    if(!open.length){
-      crewList.innerHTML='<div class="runner-crew-empty"><strong>No open crews yet.</strong><span>Create the first one, or stay flexible and let the organisers place you later.</span></div>';
-      return;
-    }
-    crewList.innerHTML=open.map(crewCard).join('');
-    crewList.querySelectorAll('[data-crew-join]').forEach(btn=>btn.addEventListener('click',()=>{
-      const id=Number(btn.dataset.crewJoin),team=crewTeams.find(t=>Number(t.id)===id);chooseOpenCrew(team);
-    }));
-  }
-  async function loadCrewDock(){
-    try{
-      const r=await fetch('/api/teams?list=1',{cache:'no-store'}),data=await r.json().catch(()=>({}));
-      if(!r.ok||!Array.isArray(data.teams))throw Error(data.error||'Open crews unavailable.');
-      renderCrewDock(data);
-    }catch(error){
-      crewList.innerHTML='<div class="runner-crew-empty"><strong>Open crews are temporarily unavailable.</strong><span>You can still play, save a score and use the RSVP form normally.</span></div>';
-    }
-  }
-  $('runnerCrewRefresh')?.addEventListener('click',loadCrewDock);
-  $('runnerCreateCrew')?.addEventListener('click',createCrewFromGame);
-  $('runnerFlexibleCrew')?.addEventListener('click',flexibleCrewFromGame);
   function renderBoard(rows){leaderboard.innerHTML=rows.length?rows.map((r,i)=>'<div class="runner-board-row"><span>'+(i<3?['🥇','🥈','🥉'][i]:'#'+(i+1))+'</span><div><strong>'+text(r.name)+'</strong>'+(r.team?'<small>'+text(r.team)+'</small>':'')+'<small>'+Number(r.flowers||0)+' blooms · ★'+Number(r.goldenFlowers||0)+' · combo ×'+Number(r.maxCombo||0)+'</small></div><b>'+Number(r.score||0)+'</b></div>').join(''):'<p class="runner-empty">No scores yet. Set your own harbour record.</p>';}
   async function load(){try{const r=await fetch('/api/game',{cache:'no-store'});const data=await r.json();if(!r.ok)throw Error();renderBoard(data.leaderboard||[]);}catch(_){leaderboard.textContent='Leaderboard unavailable. Your game still works; try Refresh.';}}
-  async function submit(){if(saving||saved||!eng.result||eng.state!=='over')return;const name=$('runnerPlayerName').value.trim(),team=$('runnerTeamName').value.trim();if(name.length<2){status.textContent='Please enter a display name (2–30 characters).';$('runnerPlayerName').focus();return;}const payload={name,team,...eng.result},id=runId;saving=true;save.disabled=true;start.disabled=true;save.textContent='Saving…';status.textContent='';try{const r=await fetch('/api/game',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const data=await r.json().catch(()=>({}));if(!r.ok)throw Error(data.error||'Unable to save. Please try again.');if(id!==runId)return;saved=true;renderBoard(data.leaderboard||[]);save.textContent='✓ Score Saved';music.effect('saved');status.textContent='Saved. Only your best run appears on the board.';panel.classList.add('runner-score-saved');loadCrewDock();}catch(error){if(id===runId){save.disabled=false;save.textContent='Retry Submit';status.textContent=error.message||'Connection lost. Your result is still here.';}}finally{saving=false;controls();}}
+  async function submit(){if(saving||saved||!eng.result||eng.state!=='over')return;const name=$('runnerPlayerName').value.trim(),team=$('runnerTeamName').value.trim();if(name.length<2){status.textContent='Please enter a display name (2–30 characters).';$('runnerPlayerName').focus();return;}const payload={name,team,...eng.result},id=runId;saving=true;save.disabled=true;start.disabled=true;save.textContent='Saving…';status.textContent='';try{const r=await fetch('/api/game',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const data=await r.json().catch(()=>({}));if(!r.ok)throw Error(data.error||'Unable to save. Please try again.');if(id!==runId)return;saved=true;renderBoard(data.leaderboard||[]);save.textContent='✓ Score Saved';music.effect('saved');status.textContent='Saved. Only your best run appears on the board.';panel.classList.add('runner-score-saved');}catch(error){if(id===runId){save.disabled=false;save.textContent='Retry Submit';status.textContent=error.message||'Connection lost. Your result is still here.';}}finally{saving=false;controls();}}
   save.addEventListener('click',submit);$('runnerRefreshLeaderboard').addEventListener('click',load);
   window.HarbourDash=Object.freeze({version:api.version,snapshot:()=>eng.snapshot(),audio:()=>music.diagnostic(),artReady:()=>art.ready});
-  controls();sync();resize();load();loadCrewDock();
+  controls();sync();resize();load();loadTeamNames();
 })();
