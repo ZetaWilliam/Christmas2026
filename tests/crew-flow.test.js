@@ -39,18 +39,24 @@ async function request(query){
   assert.equal(open.journey.contributors,3);
   assert.equal(open.journey.stage,'Devonport');
   assert.equal(open.journey.next,'Rangitoto');
-  assert.equal(open.journey.target,3600);
-  assert(open.journey.progress>=59&&open.journey.progress<=60);
-  assert.equal(full.full,true);assert.equal(full.journey.progress,100);
+  assert.equal(open.journey.target,3000);
+  assert(open.journey.progress>=71&&open.journey.progress<=72);
+  assert.equal(full.full,true);assert.equal(full.journey.progress,100);assert.equal(full.journey.target,3000);
   assert(!JSON.stringify(r.body).includes('email'));
   assert(!JSON.stringify(r.body).includes('invite_code'));
   assert(calls[0].query.includes('rn <= 3'),'Crew Journey must cap contributions to three best players.');
   assert(calls[0].query.includes('runner_scores'),'Crew Journey must be derived from game runs.');
 
   const runner=fs.readFileSync(__dirname+'/../gameplay/runner.js','utf8');
+  const rsvpApi=fs.readFileSync(__dirname+'/../api/rsvps.js','utf8');
+  const teamsApi=fs.readFileSync(__dirname+'/../api/teams.js','utf8');
+  assert(rsvpApi.includes('lower(btrim(name)) = lower(${teamName})'),'RSVP team creation prevents duplicate crew names.');
+  assert(teamsApi.includes('lower(btrim(name)) = lower(${teamName})'),'Organiser team creation prevents duplicate crew names.');
   for(const needle of ['runnerCrewDock','Complete the Crew','Bring this run to a crew','loadCrewDock','chooseOpenCrew','selectExistingTeam','Happy to join any crew'])
     assert(runner.includes(needle),'Missing crew UX: '+needle);
   assert(runner.includes("teamInput.value=team.name"),'Selecting a crew tags the game score with the exact crew name.');
+  assert(runner.includes("if(teamInput)teamInput.value=''"),'Flexible mode clears any stale crew score tag.');
+  assert(runner.includes("if(teamInput&&existing)teamInput.value=''"),'Creating after joining clears an existing crew name rather than cloning it.');
   assert(runner.includes("confirm your RSVP")||runner.includes("Confirm or update your RSVP"),'Crew selection must remain provisional until RSVP confirmation.');
   console.log(JSON.stringify({crewApi:'ok',privacy:'aggregate only',journey:'top 3 best players',gameToRsvp:'wired'},null,2));
 })().catch(e=>{console.error(e);process.exit(1);});
