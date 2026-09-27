@@ -179,6 +179,30 @@
       }
       c.restore();
 
+      // Foreground swell bands travel toward the viewer: broad troughs, broken foam and changing perspective.
+      if(!this.reduced){
+        const frontPhase=(t*34+e.world*.085);
+        for(let band=0;band<2;band++){
+          const baseY=294+band*20,amp=5.8+band*3.2,lambda=230-band*28,phase=frontPhase*(1+band*.28);
+          const ridge=[];
+          for(let x=-30;x<=W+30;x+=10){
+            const yy=baseY
+              +Math.sin((x+phase)*Math.PI*2/lambda)*amp
+              +Math.sin((x*.58-phase*.42)*Math.PI*2/(lambda*.63))*amp*.34;
+            ridge.push([x,yy]);
+          }
+          const fill=c.createLinearGradient(0,baseY-amp*2,0,Math.min(320,baseY+22));
+          fill.addColorStop(0,p.night>.5?'rgba(77,133,162,.20)':'rgba(118,213,220,.22)');
+          fill.addColorStop(.42,p.night>.5?'rgba(35,84,118,.24)':'rgba(42,142,164,.22)');
+          fill.addColorStop(1,'rgba(10,48,72,0)');
+          c.beginPath();ridge.forEach((q,i)=>c[i?'lineTo':'moveTo'](q[0],q[1]));c.lineTo(W+30,330);c.lineTo(-30,330);c.closePath();c.fillStyle=fill;c.fill();
+          c.save();c.setLineDash([19+band*6,34+band*7]);c.lineDashOffset=-phase*.31;
+          c.beginPath();ridge.forEach((q,i)=>c[i?'lineTo':'moveTo'](q[0],q[1]-1.8));
+          c.strokeStyle=p.night>.5?'rgba(219,239,247,.24)':'rgba(250,255,250,.48)';
+          c.lineWidth=1.15+band*.35;c.stroke();c.restore();
+        }
+      }
+
       c.save();c.globalAlpha=p.night*.34;c.fillStyle='#102A48';c.fillRect(0,horizon,W,140);c.restore();
     }
     santa(){
