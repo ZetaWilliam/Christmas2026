@@ -33,7 +33,7 @@ A casual automatically scrolling Auckland harbour runner, separate from RSVP and
 
 ### Tuning
 - Fixed 120 Hz simulation; render frames may run at 30, 60 or 120 Hz without changing jump physics.
-- Initial speed 300 logical px/s; first 12 active seconds remain steady, then +2 px/s² up to 480 px/s (1.60×).
+- Initial speed 312 logical px/s; the opening grace period stays gentle, then speed rises gradually at +2.2 px/s² up to 492 px/s (about 1.58×).
 - Jump velocity −620 px/s, gravity 1550 px/s², 120 ms pre-landing input buffer. Held duck is applied after landing.
 - Low gull collision now intersects standing Santa but clears the crouched body. Paddle tips are not collision targets.
 - Double hazards start after 30 active seconds. A physics-based clearance check rejects overly wide combinations. Cluster separation includes recovery and reaction time.
@@ -65,3 +65,12 @@ Gameplay is inspired by Chromium's open-source T-Rex Runner structure, as distri
 - Players may optionally enter the same team name used in their RSVP when submitting a game score. Existing RSVP team names are offered as input suggestions without exposing member names or emails.
 - Team creation, joining and organiser assignment remain in the RSVP flow, where those decisions belong.
 - The public teams endpoint remains privacy-safe and exposes only team-level information; no participant names, emails, dietary information or invitation codes are returned.
+
+
+### Anime harbour art direction
+- The earlier scenic Auckland plate is kept only as a composition reference for Sky Tower, the Harbour Bridge and Rangitoto, then posterised and colour-unified before rendering so it reads as a soft animation background rather than a photograph.
+- The route continues south with one-time illustrated coastal silhouettes rather than recycling named landmarks: Coromandel, Wellington, Kaikōura, Banks Peninsula, Otago and Fiordland.
+- Long white cloud banks use hand-drawn Bézier forms; night skies use deterministic mini-constellations with faint connecting lines rather than an evenly spaced star grid.
+- Water is built from layered travelling swells, perspective-dependent amplitudes, broken foam highlights and moving reflections. Source texture is retained only at very low opacity.
+- Santa's hazard collision core is deliberately smaller than the visible canoe/character, while reward pickup remains more generous.
+- Background music uses two locally served CC BY 4.0 Kevin MacLeod recordings of the public-domain melody “Jingle Bells”; SFX and music remain independently switchable.
