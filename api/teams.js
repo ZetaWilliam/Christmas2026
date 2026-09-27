@@ -6,7 +6,7 @@ const respond = (res, status, body) => {
   return res.status(status).json(body);
 };
 
-const CREW_TARGET = 3600;
+const CREW_TARGET = 3000;
 const CREW_STOPS = Object.freeze([
   { distance: 0, label: 'CBD' },
   { distance: 900, label: 'Harbour Bridge' },
@@ -126,6 +126,16 @@ module.exports = async function handler(req, res) {
           teamName.length > 60 || (teamName && teamName.length < 2) ||
           (teamName && teamId !== null)) {
         return respond(res, 400, { error: 'Invalid team assignment.' });
+      }
+      if (teamName) {
+        const duplicate = await sql`
+          SELECT 1 FROM escape_teams
+          WHERE lower(btrim(name)) = lower(${teamName})
+          LIMIT 1
+        `;
+        if (duplicate.length) {
+          return respond(res, 409, { error: 'That team name is already in use. Please choose another.' });
+        }
       }
       const newCode = randomBytes(5).toString('hex').toUpperCase();
       const [row] = await sql`
