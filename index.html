@@ -321,14 +321,13 @@
         <a href="#about" class="text-white/80 hover:text-gold transition">About</a>
         <a href="#schedule" class="text-white/80 hover:text-gold transition">Schedule</a>
         <a href="#venue" class="text-white/80 hover:text-gold transition">Venue</a>
-        <a href="#game" class="text-white/80 hover:text-gold transition">Santa Dash</a>
         <a href="#rsvp" class="text-white/80 hover:text-gold transition">RSVP</a>
+        <a href="#game" class="text-white/80 hover:text-gold transition">Santa Dash</a>
       </nav>
 
       <div class="flex items-center space-x-3">
-        <button id="toggleSparklesBtn" title="Toggle summer sparkles" class="p-2 rounded-full bg-pine-light border border-gold/40 text-gold hover:bg-gold hover:text-pine transition text-xs flex items-center space-x-1">
-          <span>✨</span>
-          <span class="hidden sm:inline text-xs font-semibold">Sparkles</span>
+        <button id="toggleSparklesBtn" title="Toggle summer sparkles" aria-label="Toggle summer sparkles" class="p-2 rounded-full bg-pine-light border border-gold/40 text-gold hover:bg-gold hover:text-pine transition text-xs">
+          <span aria-hidden="true">✨</span>
         </button>
 
         <a href="#rsvp" class="bg-cranberry hover:bg-cranberry-dark text-white text-xs sm:text-sm font-semibold px-4 py-2 rounded-full shadow-lg border border-gold/40 hover:scale-105 transition flex items-center space-x-1">
@@ -615,7 +614,7 @@
             <div class="w-10 h-10 rounded-full bg-pine/10 text-pine flex items-center justify-center text-lg mb-4">
               📍
             </div>
-            <h3 class="font-serif font-bold text-pine text-lg mb-2">Location & Transit</h3>
+            <h3 class="font-serif font-bold text-pine text-lg mb-2">Location</h3>
             <p class="text-sm text-pine/80 leading-relaxed mb-3">
               <strong>Level 1, 23 Victoria Street East</strong><br>
               Auckland CBD 1010<br>
@@ -634,7 +633,7 @@
             <div class="w-10 h-10 rounded-full bg-cranberry/10 text-cranberry flex items-center justify-center text-lg mb-4">
               🍹
             </div>
-            <h3 class="font-serif font-bold text-pine text-lg mb-2">Licensed Bar & Rules</h3>
+            <h3 class="font-serif font-bold text-pine text-lg mb-2">Drinks</h3>
             <p class="text-sm text-pine/80 leading-relaxed mb-4">
               Drinks are available for individual purchase from the licensed lounge bar. No BYO alcohol.
             </p>
@@ -650,7 +649,7 @@
             <div class="w-10 h-10 rounded-full bg-gold/20 text-pine flex items-center justify-center text-lg mb-4">
               👟
             </div>
-            <h3 class="font-serif font-bold text-pine text-lg mb-2">Comfort & Lockers</h3>
+            <h3 class="font-serif font-bold text-pine text-lg mb-2">Lockers & Comfort</h3>
             <p class="text-sm text-pine/80 leading-relaxed mb-4">
               Complimentary lockers are available for bags and jackets. Flat, comfortable footwear is recommended.
             </p>
@@ -1215,8 +1214,8 @@
           <a href="#about" class="text-white/80 hover:text-gold transition">Top</a>
           <a href="#schedule" class="text-white/80 hover:text-gold transition">Schedule</a>
           <a href="#venue" class="text-white/80 hover:text-gold transition">Venue</a>
-          <a href="#game" class="text-white/80 hover:text-gold transition">Santa Dash</a>
           <a href="#rsvp" class="text-white/80 hover:text-gold transition">RSVP</a>
+          <a href="#game" class="text-white/80 hover:text-gold transition">Santa Dash</a>
           <a href="https://escapadenz.co.nz/christmas-parties/" target="_blank" rel="noopener noreferrer" class="text-gold hover:underline">Escapade NZ &rarr;</a>
           
           <button onclick="openOrganiserPortal()" class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-gold hover:text-pine text-white/90 border border-white/20 transition">
@@ -1551,7 +1550,9 @@
           throw new Error(data.error || 'Teams are temporarily unavailable.');
         }
         publicTeams = data.teams;
-        countLabel.textContent = publicTeams.length + '/12 preliminary teams · 6 members maximum per team';
+        countLabel.textContent = publicTeams.length
+          ? publicTeams.length + (publicTeams.length === 1 ? ' current team' : ' current teams') + ' · up to 6 per team'
+          : 'No current teams';
         if (!publicTeams.length) {
           listElement.innerHTML = '<p class="text-xs text-pine/65 sm:col-span-2 rounded-xl bg-white border border-pine/10 p-3">No teams have been created yet. You can create the first one or choose organiser assignment.</p>';
         } else {
