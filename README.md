@@ -60,11 +60,8 @@ Checks are plausibility bounds and a per-name short submission cooldown, not che
 ### Open-source inspiration
 Gameplay is inspired by Chromium's open-source T-Rex Runner structure, as distributed in wayou/t-rex-runner (BSD-3-Clause): automatic forward motion, progressive speed, randomized obstacles, collision game-over and replay. No T-Rex sprites or third-party game art are copied; the Auckland harbour and Christmas artwork are custom.
 
-
-## Crew Journey
-- Harbour Dash now doubles as a low-pressure crew discovery layer after the normal RSVP form.
-- Existing non-full teams appear as Open Crews with team name, headcount, remaining places and aggregate journey progress. No member names, emails, dietary information or invite codes are exposed.
-- A finished run can be tagged to an existing crew before score submission. Selecting a crew also preselects that same team in the RSVP form; the team choice is only official after the attendee confirms or updates their RSVP.
-- Players can instead create a new crew or choose “Happy to join any crew”. The flexible option never creates a public “unassigned” label.
-- Crew Journey uses up to the three strongest best-per-player runs for each exact team name, so larger teams do not automatically dominate. Journey stops are CBD → Harbour Bridge → Devonport → Rangitoto.
-- This integration uses the existing `escape_teams`, `rsvps` and `runner_scores` tables and requires no new database migration.
+## Team attribution in Harbour Dash
+- The large Open Crews / Crew Journey panel was removed to keep the invitation page concise.
+- Players may optionally enter the same team name used in their RSVP when submitting a game score. Existing RSVP team names are offered as input suggestions without exposing member names or emails.
+- Team creation, joining and organiser assignment remain in the RSVP flow, where those decisions belong.
+- The public teams endpoint remains privacy-safe and exposes only team-level information; no participant names, emails, dietary information or invitation codes are returned.
