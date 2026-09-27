@@ -3,8 +3,8 @@
   'use strict';
   const Base=window.HarbourAudio;if(!Base)return;
   const TRACKS=Object.freeze([
-    {file:'bells-bright.mp3',label:'Instrumental 1'},
-    {file:'bells-ensemble.mp3',label:'Instrumental 2'}
+    {file:'bells-bright.mp3',label:'Jingle Bells · Bright'},
+    {file:'bells-ensemble.mp3',label:'Jingle Bells · Ensemble'}
   ]);
   class RecordedAudio extends Base {
     constructor(){
@@ -61,11 +61,11 @@
       mediaState:this.media?(this.media.paused?'paused':'playing'):'not-started',
       mediaReady:this.media?.readyState||0,mediaTime:this.media?.currentTime||0,
       mediaDuration:Number.isFinite(this.media?.duration)?this.media.duration:0,
-      musicError:this.playbackError,edition:'2026.09.24-neutral-audio.1'};}
+      musicError:this.playbackError,edition:'2026.09.27-jingle-audio.1'};}
   }
   window.HarbourAudio=RecordedAudio;
   document.addEventListener('DOMContentLoaded',()=>{
-    const label=()=>{const b=document.getElementById('runnerTrackBtn');if(b){b.textContent=(window.HarbourDash?.audio().trackName||'Instrumental 1')+' ↻';b.title='Switch instrumental recording';}};
+    const label=()=>{const b=document.getElementById('runnerTrackBtn');if(b){b.textContent=(window.HarbourDash?.audio().trackName||'Jingle Bells · Bright')+' ↻';b.title='Switch instrumental recording';}};
     label();for(const id of ['runnerTrackBtn','runnerMusicBtn','runnerSoundBtn'])document.getElementById(id)?.addEventListener('click',label);
     const reference=document.getElementById('runnerSubmitPanel');
     if(reference&&!document.getElementById('runnerMusicCredit')){
