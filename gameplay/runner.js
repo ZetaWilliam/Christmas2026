@@ -113,17 +113,23 @@
   }
   function createCrewFromGame(){
     clearRsvpTeamSelection();
+    const previous=(teamInput?.value||'').trim();
+    const existing=crewTeams.some(t=>String(t.name).trim().toLowerCase()===previous.toLowerCase());
+    if(teamInput&&existing)teamInput.value='';
     const yes=document.querySelector('input[name="escapeRoom"][value="Yes"]');
     const approach=document.querySelector('input[name="teamApproach"][value="group"]');
     const mode=document.querySelector('input[name="teamMode"][value="create"]');
     if(yes)yes.checked=true;if(approach)approach.checked=true;if(mode)mode.checked=true;
     if(typeof window.updateTeamModeUI==='function')window.updateTeamModeUI();
-    const name=$('teamName');if(name&&teamInput?.value&&!name.value)name.value=teamInput.value;
-    showCrewNotice('<strong>Create a new crew.</strong> Give it a name in the RSVP form. Other people will then see the crew as an open option until it reaches six members.');
+    const name=$('teamName');
+    if(name&&previous&&!existing&&!name.value)name.value=previous;
+    else if(name&&existing)name.value='';
+    showCrewNotice('<strong>Create a new crew.</strong> Give it a unique name in the RSVP form. Other people will then see the crew as an open option until it reaches six members.');
     reviewRsvp();setTimeout(()=>name?.focus(),450);
   }
   function flexibleCrewFromGame(){
     clearRsvpTeamSelection();
+    if(teamInput)teamInput.value='';
     const yes=document.querySelector('input[name="escapeRoom"][value="Yes"]');
     const approach=document.querySelector('input[name="teamApproach"][value="flexible"]');
     if(yes)yes.checked=true;if(approach)approach.checked=true;
