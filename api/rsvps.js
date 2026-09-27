@@ -70,6 +70,17 @@ module.exports = async function handler(req, res) {
         }
       }
 
+      if (teamMode === 'create') {
+        const duplicate = await sql`
+          SELECT 1 FROM escape_teams
+          WHERE lower(btrim(name)) = lower(${teamName})
+          LIMIT 1
+        `;
+        if (duplicate.length) {
+          return reply(res, 409, { error: 'That team name is already in use. Please choose another.' });
+        }
+      }
+
       const joinReference = publicTeamSelected && Number.isSafeInteger(requestedTeamId) && requestedTeamId > 0
         ? '#' + requestedTeamId : teamCode;
       const newCode = randomBytes(5).toString('hex').toUpperCase();
