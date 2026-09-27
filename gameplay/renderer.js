@@ -92,6 +92,7 @@
       if(this.ready)this.landscape(p);else this.fallback(p);
       this.ocean(p);
       for(const f of e.ferries){if(this.ready){ctx.save();ctx.globalAlpha=.8;ctx.drawImage(this.sprites.ferry,f.x,159,123,68);ctx.restore();}}
+      this.rewardTrails(e.rewards);
       for(const r of e.rewards)if(!r.collected)this.reward(r);
       for(const o of e.obstacles)this.hazard(o,p);
       this.santa(p);this.particles();
@@ -149,6 +150,31 @@
       else if(o.type==='sailboat'){if(this.ready)c.drawImage(this.sprites.sailboat,o.x-3,y-68,76,70);else{c.fillStyle='#F0F6F3';c.fillRect(o.x,y-54,70,54);}this.warning(o.x+35,y-79,'HOP');}
       else if(o.type==='gull'){const flap=this.reduced?0:Math.sin(this.eng.time*9)*.07;if(this.ready){c.translate(o.x+23,y-46);c.rotate(flap);c.drawImage(this.sprites.gull,-30,-19,59,37);c.rotate(-flap);c.translate(-o.x-23,-y+46);}else{c.strokeStyle='#243E4A';c.lineWidth=3;c.beginPath();c.moveTo(o.x,y-45);c.quadraticCurveTo(o.x+11,y-60,o.x+23,y-45);c.quadraticCurveTo(o.x+35,y-59,o.x+46,y-45);c.stroke();}this.warning(o.x+23,y-81,'DUCK');}
       else {const x=o.x,g=c.createLinearGradient(x,y-24,x,y+4);g.addColorStop(0,'#B7E8E9');g.addColorStop(.5,'#256178');g.addColorStop(1,'#72B8C8');c.fillStyle=g;c.beginPath();c.moveTo(x-1,y);c.bezierCurveTo(x+9,y-3,x+14,y-26,x+30,y-20);c.bezierCurveTo(x+42,y-15,x+21,y-14,x+34,y-6);c.quadraticCurveTo(x+47,y+1,x+59,y-3);c.lineTo(x+60,y+4);c.closePath();c.fill();c.strokeStyle='#E9FDF9';c.lineWidth=1.6;c.beginPath();c.moveTo(x+8,y-7);c.bezierCurveTo(x+16,y-28,x+37,y-23,x+29,y-16);c.stroke();this.warning(x+28,y-38,'HOP');}c.restore();}
+    rewardTrails(rewards){
+      const c=this.ctx,groups=new Map();
+      for(const r of rewards){
+        if(r.collected||!r.chainId)continue;
+        if(!groups.has(r.chainId))groups.set(r.chainId,[]);
+        groups.get(r.chainId).push(r);
+      }
+      c.save();
+      for(const line of groups.values()){
+        if(line.length<2)continue;
+        line.sort((a,b)=>(a.chainIndex||0)-(b.chainIndex||0));
+        c.beginPath();
+        line.forEach((r,i)=>{
+          const y=r.y+Math.sin(r.bob)*3;
+          if(i===0)c.moveTo(r.x,y);
+          else c.lineTo(r.x,y);
+        });
+        c.strokeStyle='rgba(255,246,214,.34)';
+        c.lineWidth=1.2;
+        c.setLineDash([3,8]);
+        c.stroke();
+      }
+      c.setLineDash([]);
+      c.restore();
+    }
     reward(r){const c=this.ctx,y=r.y+Math.sin(r.bob)*3;c.save();const g=c.createRadialGradient(r.x,y,3,r.x,y,r.golden?28:23);g.addColorStop(0,r.golden?'rgba(255,237,167,.65)':'rgba(255,235,224,.35)');g.addColorStop(1,'rgba(255,242,189,0)');c.fillStyle=g;c.fillRect(r.x-30,y-30,60,60);if(this.ready)c.drawImage(r.golden?this.sprites.gold:this.sprites.flower,r.x-19,y-20,38,40);else{c.fillStyle=r.golden?'#FFD455':'#CE4341';c.beginPath();c.arc(r.x,y,14,0,7);c.fill();}c.fillStyle=r.golden?'#FFF3A9':'#FFFFF4';c.strokeStyle=r.golden?'#A77512':'#9E3839';c.lineWidth=2;c.textAlign='center';c.font='bold 13px Arial';c.strokeText(r.golden?'★':'+',r.x+15,y-14);c.fillText(r.golden?'★':'+',r.x+15,y-14);c.restore();}
     particles(){const c=this.ctx,t=this.eng.time;this.splashes=this.splashes.filter(p=>t-p.born>=0&&t-p.born<p.life);for(const p of this.splashes){const age=t-p.born;c.save();c.globalAlpha=1-age/p.life;c.fillStyle=p.kind==='gold'?'#FFE8A2':p.kind==='splash'?'#E0F8FE':'#F4BBAC';c.beginPath();c.arc(p.x+p.vx*age,p.y+p.vy*age+80*age*age,1.8,0,7);c.fill();c.restore();}}
     overlay(){const c=this.ctx,e=this.eng,W=e.width,ready=e.state==='ready',paused=e.state==='paused';c.save();if(!ready){c.fillStyle='rgba(12,33,55,.25)';c.fillRect(0,0,W,320);}const w=Math.min(320,W-48),x=(W-w)/2;c.fillStyle='rgba(246,253,251,.91)';c.beginPath();c.roundRect(x,85,w,96,14);c.fill();c.textAlign='center';c.fillStyle='#204559';c.font='bold 23px Georgia';c.fillText(ready?'A summer harbour escape':paused?'Take a breather':(this.result?.title||'A good day on the water'),W/2,119);c.font='13px Arial';c.fillStyle='#426C79';c.fillText(ready?'Tap Start Run when you’re ready':paused?'Your run is saved — tap Resume':'See your result below · try another run',W/2,148);c.restore();}
