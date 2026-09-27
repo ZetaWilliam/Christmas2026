@@ -10,6 +10,32 @@ test('Pause underneath a gull preserves crouch and grants a short resume handove
 test('Long frame pauses instead of skipping a hazard',()=>{const e=new Engine();e.start();e.advance(1);assert.equal(e.state,'paused');assert.equal(e.world,0);});
 test('Normal, gold, combo and final result agree exactly',()=>{const e=new Engine();e.start();e.nextGroup=1e8;for(const gold of [false,false,true]){e.rewards.push({x:C.playerX+43,y:C.water-35,bob:0,golden:gold,collected:false,missed:false});e.tick(C.step);}assert.equal(e.flowers,3);assert.equal(e.goldenFlowers,1);assert.equal(e.combo,3);assert.equal(e.bonus,100+120+340);e.end('test');assert.equal(e.result.score,Math.floor(e.distance)+560);assert.equal(e.result.maxCombo,3);});
 test('A missed flower resets consecutive combo without losing earned points',()=>{const e=new Engine();e.start();e.combo=3;e.bonus=360;e.lastFlower=0;e.nextGroup=1e8;e.rewards.push({x:C.playerX-10,y:20,bob:0,golden:false,missed:false});e.tick(C.step);assert.equal(e.combo,0);assert.equal(e.bonus,360);});
+function rewardLine(delay=0,golden=false){
+ const e=new Engine({seed:17});e.start();e.nextGroup=1e8;
+ const center=C.playerX+44+C.startSpeed*.397;
+ const line=e.makeRewardChain(center,99,golden);
+ for(let i=0;i<Math.round(delay/C.step);i++)e.tick(C.step);
+ e.hop();
+ for(let i=0;i<125&&e.state==='running';i++)e.tick(C.step);
+ return {e,line,events:e.drainEvents()};
+}
+test('A correctly timed jump collects all three blooms in the reward line',()=>{
+ const {e,line,events}=rewardLine(0,false);
+ assert.equal(line.length,3);assert.equal(e.flowers,3);
+ assert.deepEqual(line.map(r=>r.chainIndex),[0,1,2]);
+ assert(events.some(x=>x.type==='chainComplete'&&x.count===3));
+});
+test('A late jump still clips one bloom instead of making the whole line all-or-nothing',()=>{
+ const {e}=rewardLine(.30,false);assert.equal(e.flowers,1);
+});
+test('Golden super reward occupies the middle of a three-bloom line',()=>{
+ const {e,line}=rewardLine(0,true);assert.deepEqual(line.map(r=>r.golden),[false,true,false]);assert.equal(e.goldenFlowers,1);
+});
+test('Reward-line spacing scales with speed so the timing shape stays readable later in a run',()=>{
+ const e=new Engine();e.start();e.speed=480;const line=e.makeRewardChain(600,1,false);
+ assert(Math.abs((line[1].x-line[0].x)-96)<1e-9);assert(Math.abs((line[2].x-line[1].x)-96)<1e-9);
+ assert(line[1].y<line[0].y&&line[1].y<line[2].y);
+});
 function auto(e){const groups=new Map();for(const o of e.obstacles){if(o.x+o.w<C.playerX+14)continue;if(!groups.has(o.group))groups.set(o.group,[]);groups.get(o.group).push(o);}const g=[...groups.values()].sort((a,b)=>a[0].x-b[0].x)[0];if(!g){e.duck(false);return;}if(g[0].type==='gull'){const danger=g.some(o=>o.x<C.playerX+200&&o.x+o.w>C.playerX+20);e.duck(danger);return;}e.duck(false);const left=g[0].x,right=g.at(-1).x+g.at(-1).w,mid=(left+right)/2;const eta=(mid-(C.playerX+44))/e.speed;if(e.player.grounded&&eta<=.397&&eta>-.1)e.hop();}
 const runs=[];
 for(const width of [640,960])for(const hz of [30,60,120])for(let seed=1;seed<=24;seed++){
