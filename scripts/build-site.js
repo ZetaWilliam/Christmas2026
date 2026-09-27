@@ -58,4 +58,4 @@ for(const item of manifest){
  fs.writeFileSync('public/gameplay/music/'+item.file,data);
 }
 fs.copyFileSync('gameplay/music/CREDITS.md','public/gameplay/music/CREDITS.md');
-console.log(`Built ${version}: invitation copy trimmed, Crew Journey panel removed, three-bloom rewards retained, clean coast and credited instrumentals.`);
+console.log(`Built ${version}: registration-first layout, anime panorama, perspective swells, reduced collision core and credited instrumentals.`);
