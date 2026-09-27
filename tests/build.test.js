@@ -36,6 +36,14 @@ try{
  assert(h.indexOf('/gameplay/polish.js')<h.indexOf('/gameplay/coastline.js'));
  assert(h.indexOf('/gameplay/coastline.js')<h.indexOf('/gameplay/runner.js'));
  assert(h.includes('Harbour Dash'));assert(h.includes('View Escapade Event Info'));
+ assert(!visible.includes('Complete the Crew'));
+ assert(!visible.includes('Crew Journey'));
+ assert(!visible.includes('Up to 12 teams · 36 places'));
+ assert(!visible.includes('Venue guidelines and key details for group reservations.'));
+ assert(!visible.includes('No intense physical exertion required'));
+ assert(!visible.includes('Public entries show the chosen nickname'));
+ assert(visible.includes('Arrive at 10:45am'));
+ assert(visible.includes('Closing Remarks & Holiday Wishes'));
  for(const file of ['bells-bright.mp3','bells-ensemble.mp3','CREDITS.md'])assert(fs.existsSync(path.join(tmp,'public/gameplay/music',file)));
  console.log('Summer build checks passed: RSVP/cloud source unchanged, game after form, art/audio complete, reduced hitbox.');
 }finally{fs.rmSync(tmp,{recursive:true,force:true});}
