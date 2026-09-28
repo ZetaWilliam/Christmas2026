@@ -58,8 +58,8 @@ module.exports = async function handler(req, res) {
       if (name.length < 2 || name.length > 30) {
         return reply(res, 400, { error: 'Please use a name between 2 and 30 characters.' });
       }
-      if (!message || message.length > 240) {
-        return reply(res, 400, { error: 'Please keep your message between 1 and 240 characters.' });
+      if (!message || message.length > 100) {
+        return reply(res, 400, { error: 'Please keep your message between 1 and 100 characters.' });
       }
 
       const recent = await sql`
