@@ -112,6 +112,7 @@
       for(const o of e.obstacles)this.hazard(o,p);
       this.santa(p);this.particles();
       this.environmentLight(p);
+      if(typeof this.nightSkyHighlights==='function')this.nightSkyHighlights(p);
       if(e.state!=='running')this.overlay();
       const phase=document.getElementById('runnerSkyPhase');if(phase)phase.textContent=p.label;
       const label=document.getElementById('runnerLandmark');if(label)label.textContent=['Sky Tower · Waitematā','Harbour Bridge · Devonport','Rangitoto · Hauraki Gulf'][Math.floor(e.world*.055/380)%3];
