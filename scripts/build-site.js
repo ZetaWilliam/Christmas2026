@@ -7,7 +7,7 @@ const source=fs.readFileSync('index.html','utf8');
 const begin='    // Santa Harbour Dash — Dino-style Auckland endless runner',end='    // 微粒动画';
 const start=source.indexOf(begin),finish=source.indexOf(end,start);
 if(start<0||finish<=start||source.indexOf(begin,start+begin.length)>=0)throw Error('Cannot isolate legacy game. Source left unchanged.');
-const version='2026.09.28-six-panorama.12';
+const version='2026.09.28-continuous-scroll.13';
 let html=source.slice(0,start)+'    // The isolated Harbour Dash modules are loaded below.\n'+source.slice(finish);
 const gameMarker='  <!-- Santa Harbour Dash: Auckland Christmas endless runner -->',rsvpMarker='  <!-- 报名表单 -->',modalMarker='  <!-- 报名成功弹窗与电子票 -->';
 const a=html.indexOf(gameMarker),b=html.indexOf(rsvpMarker),c=html.indexOf(modalMarker);
@@ -52,7 +52,7 @@ if(panorama.toString('ascii',0,4)!=='RIFF'||panorama.toString('ascii',8,12)!=='W
 if(crypto.createHash('sha256').update(panorama).digest('hex')!=='19b24eec043db1fcdc30cd7be479be1b8803b0cd3882155b06781a7c9907a4b3')throw Error('Approved panorama integrity check failed');
 fs.writeFileSync('public/gameplay/art/coast-panorama.webp',panorama);
 const sceneHashes={
-  auckland:'2cc0531da6d51cebaa3b6504567c0e532c437bac148639743ba57456dd2bf59a',
+  auckland:'9b9a0952640b2519c64e835bc9c33c3e67d10d3fb7eeb70a15a0b834c9156310',
   queenstown:'ad863dac256512f76c8a970144ff004853c4ebcff588e415bdefc0fc31f33602',
   milford:'606417594644ced1dc22bc17cf0a17bdf661d864e51b2534005eb1f7edac4f38',
   christchurch:'514811a1b2dac6ec3e4b10854e293d5cbec8bea0d4f71c958550ae06d0176b1d',
@@ -77,4 +77,4 @@ for(const item of manifest){
  fs.writeFileSync('public/gameplay/music/'+item.file,data);
 }
 fs.copyFileSync('gameplay/music/CREDITS.md','public/gameplay/music/CREDITS.md');
-console.log(`Built ${version}: six matching text-free New Zealand panoramas, seamless crossfades, equal day-night lighting and 20000-point top tier.`);
+console.log(`Built ${version}: continuously scrolling six-scene New Zealand panorama, predecoded artwork, twinkling constellations, preserved day-night lighting and 20000-point top tier.`);
