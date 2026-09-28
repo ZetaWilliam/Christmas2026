@@ -30,7 +30,7 @@ async function listMessages(sql) {
     SELECT id, display_name, message, created_at
     FROM event_messages
     ORDER BY created_at DESC, id DESC
-    LIMIT 24
+    LIMIT 100
   `;
   return rows.map(r => ({
     id: Number(r.id),
