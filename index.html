@@ -890,19 +890,40 @@
 
             </div>
 
-            <fieldset class="space-y-2">
-              <legend class="sr-only">Your team arrangements</legend>
-              <label class="block cursor-pointer rounded-xl bg-white border border-pine/15 px-3 py-3 has-[:checked]:border-pine has-[:checked]:bg-pine/5">
-                <input type="radio" name="teamApproach" value="flexible" checked class="accent-[#0D3025] mr-2">
-                <span class="text-sm font-semibold text-pine">I'm happy to join any team</span>
-                <span class="block pl-6 text-xs text-pine/65">The organisers will arrange a team for me.</span>
-              </label>
-              <label class="block cursor-pointer rounded-xl bg-white border border-pine/15 px-3 py-3 has-[:checked]:border-pine has-[:checked]:bg-pine/5">
-                <input type="radio" name="teamApproach" value="group" class="accent-[#0D3025] mr-2">
-                <span class="text-sm font-semibold text-pine">I already have a team in mind</span>
-                <span class="block pl-6 text-xs text-pine/65">I'd like to create or join a named team with colleagues and compete for the fastest escape.</span>
-              </label>
-            </fieldset>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
+              <fieldset class="space-y-2">
+                <legend class="sr-only">Your team arrangements</legend>
+                <label class="block cursor-pointer rounded-xl bg-white border border-pine/15 px-3 py-3 has-[:checked]:border-pine has-[:checked]:bg-pine/5">
+                  <input type="radio" name="teamApproach" value="flexible" checked class="accent-[#0D3025] mr-2">
+                  <span class="text-sm font-semibold text-pine">I'm happy to join any team</span>
+                  <span class="block pl-6 text-xs text-pine/65">The organisers will arrange a team for me.</span>
+                </label>
+                <label class="block cursor-pointer rounded-xl bg-white border border-pine/15 px-3 py-3 has-[:checked]:border-pine has-[:checked]:bg-pine/5">
+                  <input type="radio" name="teamApproach" value="group" class="accent-[#0D3025] mr-2">
+                  <span class="text-sm font-semibold text-pine">I already have a team in mind</span>
+                  <span class="block pl-6 text-xs text-pine/65">I'd like to create or join a named team with colleagues and compete for the fastest escape.</span>
+                </label>
+              </fieldset>
+
+              <section class="rounded-xl border border-pine/15 bg-white p-3.5 space-y-2.5" aria-labelledby="teamMessageBoardTitle">
+                <div class="flex items-start justify-between gap-3">
+                  <div>
+                    <h4 id="teamMessageBoardTitle" class="text-xs font-bold uppercase tracking-wide text-pine">Team Message Board</h4>
+                    <p class="text-[11px] text-pine/65 mt-0.5">Say hello, find teammates, or share a team idea. <strong>Please keep it friendly and respectful.</strong></p>
+                  </div>
+                  <button type="button" onclick="refreshTeamMessages()" class="shrink-0 rounded-lg border border-pine/20 bg-[#F5F7F3] px-2.5 py-1.5 text-[11px] font-semibold text-pine hover:bg-sand">Refresh</button>
+                </div>
+                <div id="teamMessageList" class="space-y-2 max-h-36 overflow-y-auto pr-1" aria-live="polite">
+                  <p class="text-xs text-pine/55">Loading messages…</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-[0.72fr_1.5fr_auto] gap-2">
+                  <input id="teamMessageName" type="text" maxlength="30" autocomplete="nickname" placeholder="Your name" class="min-w-0 px-3 py-2 rounded-lg border border-pine/20 text-xs focus:outline-none focus:ring-2 focus:ring-gold">
+                  <input id="teamMessageText" type="text" maxlength="240" placeholder="Short message…" class="min-w-0 px-3 py-2 rounded-lg border border-pine/20 text-xs focus:outline-none focus:ring-2 focus:ring-gold">
+                  <button id="teamMessagePostBtn" type="button" onclick="postTeamMessage()" class="rounded-lg bg-pine text-white px-3 py-2 text-xs font-semibold hover:bg-pine-light">Post</button>
+                </div>
+                <p id="teamMessageStatus" class="text-[11px] text-pine/60 min-h-[1rem]" role="status" aria-live="polite"></p>
+              </section>
+            </div>
 
             <div id="teamGroupFields" class="hidden space-y-3 border-t border-pine/15 pt-3">
               <fieldset class="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1545,6 +1566,80 @@
 
     let selectedTeamId = null;
     let publicTeams = [];
+    let postingTeamMessage = false;
+
+    function renderTeamMessages(messages) {
+      const list = document.getElementById('teamMessageList');
+      if (!list) return;
+      if (!Array.isArray(messages) || !messages.length) {
+        list.innerHTML = '<p class="text-xs text-pine/55 rounded-lg bg-[#F5F7F3] px-3 py-2">No messages yet — leave the first friendly hello.</p>';
+        return;
+      }
+      list.innerHTML = messages.map(item => {
+        const when = item.createdAt ? new Date(item.createdAt) : null;
+        const stamp = when && !Number.isNaN(when.getTime())
+          ? when.toLocaleString([], {day:'numeric', month:'short', hour:'numeric', minute:'2-digit'})
+          : '';
+        return '<article class="rounded-lg bg-[#F5F7F3] border border-pine/10 px-3 py-2">' +
+          '<div class="flex items-baseline justify-between gap-2"><strong class="text-xs text-pine break-words">' + escapeHtml(item.name) + '</strong>' +
+          '<span class="text-[10px] text-pine/45 shrink-0">' + escapeHtml(stamp) + '</span></div>' +
+          '<p class="text-xs text-pine/75 mt-0.5 break-words">' + escapeHtml(item.message) + '</p></article>';
+      }).join('');
+    }
+
+    async function refreshTeamMessages() {
+      const list = document.getElementById('teamMessageList');
+      const status = document.getElementById('teamMessageStatus');
+      if (!list) return;
+      try {
+        const response = await fetch('/api/messages', {cache:'no-store'});
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !Array.isArray(data.messages)) throw new Error(data.error || 'Messages are temporarily unavailable.');
+        renderTeamMessages(data.messages);
+        if (status && status.textContent === 'Refreshing…') status.textContent = '';
+      } catch (error) {
+        list.innerHTML = '<p class="text-xs text-cranberry rounded-lg bg-cranberry/5 px-3 py-2">Message board unavailable. Please try Refresh.</p>';
+        if (status) status.textContent = '';
+      }
+    }
+
+    async function postTeamMessage() {
+      if (postingTeamMessage) return;
+      const nameField = document.getElementById('teamMessageName');
+      const messageField = document.getElementById('teamMessageText');
+      const button = document.getElementById('teamMessagePostBtn');
+      const status = document.getElementById('teamMessageStatus');
+      const name = nameField?.value.trim() || '';
+      const message = messageField?.value.trim() || '';
+      if (name.length < 2 || name.length > 30) {
+        status.textContent = 'Please enter a name between 2 and 30 characters.';
+        nameField?.focus(); return;
+      }
+      if (!message || message.length > 240) {
+        status.textContent = 'Please keep your message between 1 and 240 characters.';
+        messageField?.focus(); return;
+      }
+      postingTeamMessage = true;
+      if (button) { button.disabled = true; button.textContent = 'Posting…'; }
+      status.textContent = 'Posting…';
+      try {
+        const response = await fetch('/api/messages', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({name,message})
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Unable to post right now.');
+        if (messageField) messageField.value = '';
+        renderTeamMessages(data.messages || []);
+        status.textContent = 'Posted — thanks for keeping the board friendly.';
+      } catch (error) {
+        status.textContent = error.message || 'Unable to post right now.';
+      } finally {
+        postingTeamMessage = false;
+        if (button) { button.disabled = false; button.textContent = 'Post'; }
+      }
+    }
 
     async function refreshPublicTeams() {
       const countLabel = document.getElementById('publicTeamCount');
@@ -1612,9 +1707,11 @@
     });
 
     refreshPublicTeams();
+    refreshTeamMessages();
     setInterval(() => {
       if (!document.getElementById('teamChoices').classList.contains('hidden')) {
         refreshPublicTeams();
+        refreshTeamMessages();
       }
     }, 30000);
 
