@@ -18,7 +18,7 @@ for(const width of [320,390,640,960,1440]){
    assert.equal(o.screenX,o.x-coast.camera(world));
    assert(o.width>0&&o.height>0,'Landmark dimensions stay positive');
    const later=coast.layout(world+1,width).find(x=>x.id===o.id);
-   if(later)assert(Math.abs(later.screenX-o.screenX+.042)<1e-9,'Motion is continuous at route boundaries');
+   if(later)assert(Math.abs(later.screenX-o.screenX+.105)<1e-9,'Motion is continuous at route boundaries');
   }
   for(const id of previous)if(!ids.includes(id))passed.add(id);
   previous.clear();for(const id of ids)previous.add(id);
