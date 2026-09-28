@@ -58,12 +58,13 @@ async function request(method,body){
   assert.equal(r.code,429);
 
   const html=fs.readFileSync(__dirname+'/../index.html','utf8');
-  for(const needle of ['teamMessageBoardTitle','teamMessageList','teamMessageName','teamMessageText','teamMessageCount','postTeamMessage','refreshTeamMessages','Please keep it friendly and respectful.','maxlength="100"'])
-    assert(html.includes(needle),'Missing message-board UI or friendliness guidance: '+needle);
+  for(const needle of ['teamMessageBoardTitle','teamMessageList','teamMessageBoardCount','teamMessageName','teamMessageText','teamMessageCount','postTeamMessage','refreshTeamMessages','Please keep it friendly and respectful.','maxlength="100"','Newest first · scroll down for earlier messages ↓','overflow-y-scroll','scrollbar-gutter:stable'])
+    assert(html.includes(needle),'Missing message-board display UI or friendliness guidance: '+needle);
   const formStart=html.indexOf('<form id="rsvpForm"'),formEnd=html.indexOf('</form>',formStart),board=html.indexOf('id="teamMessageBoardTitle"');
   assert(formStart>=0&&formEnd>formStart&&board>formEnd,'Message board must sit outside the RSVP form as an independent sidebar.');
   const teamChoicesStart=html.indexOf('id="teamChoices"'),teamChoicesEnd=html.indexOf('</div>\n\n          <div>\n            <label class="block text-xs font-bold uppercase tracking-wider text-pine/80 mb-1.5">',teamChoicesStart);
   const teamChoices=html.slice(teamChoicesStart,teamChoicesEnd);
   assert(!teamChoices.includes('teamMessageBoardTitle'),'Team choices must stay full-width without an embedded message board.');
-  console.log(JSON.stringify({messageBoard:'ok',privacy:'nickname + message only',friendlyPrompt:true,limit:100,rateLimit:'15s/name'}));
+  assert(code.includes('LIMIT 100'),'Message API must return enough history for scrollback.');
+  console.log(JSON.stringify({messageBoard:'scroll-display',privacy:'nickname + message only',friendlyPrompt:true,limit:100,history:100,rateLimit:'15s/name'}));
 })().catch(e=>{console.error(e);process.exit(1);});
