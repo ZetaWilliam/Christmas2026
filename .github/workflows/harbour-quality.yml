@@ -1,7 +1,7 @@
 name: Harbour quality checks
 on:
   push:
-    branches: [main]
+    branches: [main, fix/scene-rotation-message-board]
   workflow_dispatch:
 permissions:
   contents: read
