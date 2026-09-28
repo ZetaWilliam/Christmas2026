@@ -96,8 +96,10 @@
         if(!img||!img.complete||!img.naturalWidth){ready=false;continue;}
         if(this.sources[scene.id]===img&&this.plates[scene.id])continue;
         const plate=makeSurface(PLATE_WIDTH,PLATE_HEIGHT),g=plate.getContext('2d');
-        const ratio=img.naturalWidth/img.naturalHeight,drawW=PLATE_WIDTH,drawH=drawW/ratio,y=(PLATE_HEIGHT-drawH)*.5;
-        g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.drawImage(img,0,y,drawW,drawH);
+        const cropRatio=scene.id==='auckland'?.875:1,sourceW=img.naturalWidth*cropRatio;
+        const ratio=sourceW/img.naturalHeight,drawW=PLATE_WIDTH,drawH=drawW/ratio,y=(PLATE_HEIGHT-drawH)*.5;
+        g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';
+        g.drawImage(img,0,0,sourceW,img.naturalHeight,0,y,drawW,drawH);
         g.globalCompositeOperation='destination-in';
         const mask=g.createLinearGradient(0,0,PLATE_WIDTH,0);
         mask.addColorStop(0,'rgba(0,0,0,0)');
