@@ -1002,20 +1002,33 @@
       </div>
 
       <aside class="rounded-3xl border border-pine/15 bg-white p-5 sm:p-6 shadow-xl lg:sticky lg:top-6" aria-labelledby="teamMessageBoardTitle">
-        <div class="flex items-start justify-between gap-3 pb-4 border-b border-pine/10">
+        <div class="flex items-start justify-between gap-3 pb-4">
           <div>
             <div class="text-[10px] uppercase tracking-[0.14em] font-bold text-cranberry">Community</div>
             <h3 id="teamMessageBoardTitle" class="font-serif text-2xl font-bold text-pine mt-0.5">Team Message Board</h3>
-            <p class="text-xs text-pine/65 mt-1 leading-relaxed">Say hello, find teammates, or share a team idea. <strong>Please keep it friendly and respectful.</strong></p>
+            <p class="text-xs text-pine/65 mt-1 leading-relaxed">A shared space to read notes, find teammates, and leave a quick hello. <strong>Please keep it friendly and respectful.</strong></p>
           </div>
           <button type="button" onclick="refreshTeamMessages()" class="shrink-0 rounded-lg border border-pine/20 bg-[#F5F7F3] px-3 py-2 text-xs font-semibold text-pine hover:bg-sand">Refresh</button>
         </div>
 
-        <div id="teamMessageList" class="space-y-2.5 max-h-[430px] overflow-y-auto pr-1 my-4" aria-live="polite">
-          <p class="text-xs text-pine/55">Loading messages…</p>
-        </div>
+        <section class="rounded-2xl border border-pine/15 bg-[#F7F5EC] overflow-hidden" aria-label="Community messages">
+          <div class="flex items-center justify-between gap-3 px-3.5 py-2.5 border-b border-pine/10 bg-white/80">
+            <div>
+              <div class="text-[10px] uppercase tracking-[0.12em] font-bold text-pine/70">Messages</div>
+              <div class="text-[10px] text-pine/50">Newest first · scroll down for earlier messages ↓</div>
+            </div>
+            <span id="teamMessageBoardCount" class="rounded-full bg-pine/8 border border-pine/10 px-2.5 py-1 text-[10px] font-semibold text-pine/65">0 messages</span>
+          </div>
+          <div id="teamMessageList" class="space-y-2.5 h-[420px] lg:h-[500px] overflow-y-scroll px-3 py-3" style="scrollbar-gutter:stable;scrollbar-width:thin;overscroll-behavior:contain;" aria-live="polite" tabindex="0">
+            <p class="text-xs text-pine/55">Loading messages…</p>
+          </div>
+          <div class="px-3.5 py-2 border-t border-pine/10 bg-white/75 text-[10px] text-pine/50">
+            Scroll inside the board to browse earlier messages.
+          </div>
+        </section>
 
-        <div class="space-y-2.5 pt-4 border-t border-pine/10">
+        <div class="space-y-2.5 pt-4 mt-4 border-t border-pine/10">
+          <div class="text-[10px] uppercase tracking-[0.12em] font-bold text-cranberry">Leave a message</div>
           <div>
             <label for="teamMessageName" class="block text-[10px] uppercase tracking-wide font-bold text-pine/70 mb-1">Name</label>
             <input id="teamMessageName" type="text" maxlength="30" autocomplete="nickname" placeholder="Your name" class="w-full px-3 py-2.5 rounded-xl border border-pine/20 text-sm focus:outline-none focus:ring-2 focus:ring-gold">
@@ -1583,21 +1596,27 @@
 
     function renderTeamMessages(messages) {
       const list = document.getElementById('teamMessageList');
+      const count = document.getElementById('teamMessageBoardCount');
       if (!list) return;
-      if (!Array.isArray(messages) || !messages.length) {
-        list.innerHTML = '<p class="text-xs text-pine/55 rounded-lg bg-[#F5F7F3] px-3 py-2">No messages yet — leave the first friendly hello.</p>';
+      const safeMessages = Array.isArray(messages) ? messages : [];
+      if (count) count.textContent = safeMessages.length + (safeMessages.length === 1 ? ' message' : ' messages');
+      if (!safeMessages.length) {
+        list.innerHTML = '<div class="min-h-full flex items-center justify-center"><p class="text-xs text-pine/55 rounded-xl bg-white/75 border border-pine/10 px-4 py-3 text-center">No messages yet — leave the first friendly hello.</p></div>';
         return;
       }
-      list.innerHTML = messages.map(item => {
+      list.innerHTML = safeMessages.map((item, index) => {
         const when = item.createdAt ? new Date(item.createdAt) : null;
         const stamp = when && !Number.isNaN(when.getTime())
           ? when.toLocaleString([], {day:'numeric', month:'short', hour:'numeric', minute:'2-digit'})
           : '';
-        return '<article class="rounded-lg bg-[#F5F7F3] border border-pine/10 px-3 py-2">' +
+        return '<article class="rounded-xl bg-white border border-pine/10 px-3.5 py-3 shadow-sm">' +
           '<div class="flex items-baseline justify-between gap-2"><strong class="text-xs text-pine break-words">' + escapeHtml(item.name) + '</strong>' +
-          '<span class="text-[10px] text-pine/45 shrink-0">' + escapeHtml(stamp) + '</span></div>' +
-          '<p class="text-xs text-pine/75 mt-0.5 break-words">' + escapeHtml(item.message) + '</p></article>';
+          '<span class="text-[10px] text-pine/40 shrink-0">' + escapeHtml(stamp) + '</span></div>' +
+          '<p class="text-xs text-pine/75 mt-1 leading-relaxed break-words">' + escapeHtml(item.message) + '</p>' +
+          (index === 0 ? '<span class="inline-block mt-2 text-[9px] uppercase tracking-wide font-bold text-cranberry/70">Newest</span>' : '') +
+          '</article>';
       }).join('');
+      list.scrollTop = 0;
     }
 
     async function refreshTeamMessages() {
