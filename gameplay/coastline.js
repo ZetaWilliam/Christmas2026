@@ -22,7 +22,7 @@
   }
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
-  const VERSION='2026.09.28-route-coast.2';
+  const VERSION='2026.09.28-crisp-panorama.3';
   const HORIZON=178,PARALLAX=.105;
   const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
   const smooth=t=>{t=clamp(t,0,1);return t*t*(3-2*t);};
@@ -207,12 +207,11 @@
     c.restore();
   }
   class CoastLayer{
-    constructor(){this.image=null;this.plate=null;this.sprites={};this.tinted={};this.rows=null;}
+    constructor(){this.image=null;}
     prepare(image){
-      if(!image||!image.complete||!image.naturalWidth||this.image===image)return;
-      if(image.naturalWidth!==960||image.naturalHeight!==192)return;
-      this.image=image;this.plate=animePlate(image);this.rows=rowBackdrop(this.plate);this.sprites={};this.tinted={};
-      for(const o of LANDMARKS.filter(x=>x.source))this.sprites[o.id]=extract(this.plate,o,this.rows);
+      if(!image||!image.complete||!image.naturalWidth)return false;
+      if(this.image!==image)this.image=image;
+      return true;
     }
     label(world,width,reduced=false){
       const visible=layout(world,width,reduced);
@@ -222,24 +221,24 @@
     drawSky(c,eng,p,reduced){
       const W=eng.width,scroll=camera(eng.world,reduced);
       if(p.night<.72){
-        const warm=Math.max(0,.65-p.night),cell=760;
-        for(let i=Math.floor(scroll*.20/cell)-2;i<=Math.floor((scroll*.20+W)/cell)+2;i++){
-          const x=i*cell-scroll*.20+hash(i,93)*150,y=18+hash(i,94)*48,w=280+hash(i,95)*280,h=38+hash(i,96)*35;
-          longCloud(c,x,y,w,h,(.38+hash(i,97)*.30)*(1-p.night*.88),warm>.4&&hash(i,98)>.72);
+        const warm=Math.max(0,.65-p.night),cell=820;
+        for(let i=Math.floor(scroll*.18/cell)-2;i<=Math.floor((scroll*.18+W)/cell)+2;i++){
+          const x=i*cell-scroll*.18+hash(i,93)*150,y=18+hash(i,94)*44,w=310+hash(i,95)*300,h=36+hash(i,96)*30;
+          longCloud(c,x,y,w,h,(.22+hash(i,97)*.18)*(1-p.night*.88),warm>.4&&hash(i,98)>.78);
         }
       }
       if(p.night>.16&&!reduced){
-        constellation(c,W*.12,42,.82,p.night*.72,4);
-        constellation(c,W*.48,73,.68,p.night*.58,9);
-        constellation(c,W*.71,36,.9,p.night*.65,13);
-        c.save();c.globalAlpha=p.night*.82;c.fillStyle='#FFF5D8';c.beginPath();c.arc(W-72,44,13,0,7);c.fill();c.fillStyle=p.top;c.beginPath();c.arc(W-66,39,12,0,7);c.fill();c.restore();
+        constellation(c,W*.12,42,.82,p.night*.52,4);
+        constellation(c,W*.48,73,.68,p.night*.42,9);
+        constellation(c,W*.71,36,.9,p.night*.48,13);
+        c.save();c.globalAlpha=p.night*.66;c.fillStyle='#FFF5D8';c.beginPath();c.arc(W-72,44,13,0,7);c.fill();c.fillStyle=p.top;c.beginPath();c.arc(W-66,39,12,0,7);c.fill();c.restore();
       }
     }
     drawTerrain(c,world,width,p,reduced){
       const scroll=camera(world,reduced),layers=[
-        {idx:2,depth:.34,color:p.night>.5?'#586B7A':'#B8CBC8',alpha:.16,scale:.40},
-        {idx:1,depth:.58,color:p.night>.5?'#4A6070':'#91AEA4',alpha:.23,scale:.61},
-        {idx:0,depth:.86,color:p.night>.5?'#3D5664':'#6F9180',alpha:.31,scale:.84}
+        {idx:2,depth:.34,color:p.night>.5?'#586B7A':'#B8CBC8',alpha:.11,scale:.40},
+        {idx:1,depth:.58,color:p.night>.5?'#4A6070':'#91AEA4',alpha:.17,scale:.61},
+        {idx:0,depth:.86,color:p.night>.5?'#3D5664':'#6F9180',alpha:.24,scale:.84}
       ];
       for(const L of layers){
         const cam=scroll*L.depth,start=Math.floor(cam/8)*8;c.save();c.fillStyle=L.color;c.globalAlpha=L.alpha;c.beginPath();
@@ -247,32 +246,35 @@
         c.lineTo(width+8,HORIZON+5);c.lineTo(-8,HORIZON+5);c.closePath();c.fill();c.restore();
       }
     }
-    tintedSprite(id,p){
-      const src=this.sprites[id],step=Math.round(clamp(p.night,0,1)*18);if(!src||step===0)return src;
-      const key=id+':'+step;if(this.tinted[key])return this.tinted[key];
-      const c=surface(src.width,src.height),g=c.getContext('2d');g.drawImage(src,0,0);g.globalCompositeOperation='source-atop';
-      g.fillStyle='rgba(18,39,67,'+(step/18*.50)+')';g.fillRect(0,0,c.width,c.height);return this.tinted[key]=c;
-    }
     draw(c,eng,p,image,reduced=false){
-      this.prepare(image);const W=eng.width;
-      c.save();c.beginPath();c.rect(0,0,W,HORIZON+4);c.clip();
+      const W=eng.width,scroll=camera(eng.world,reduced);
+      c.save();c.beginPath();c.rect(0,0,W,320);c.clip();
+
+      // Continuous procedural base remains underneath so the Auckland plate can leave the frame without a seam.
       const sky=c.createLinearGradient(0,0,0,HORIZON);sky.addColorStop(0,p.top);sky.addColorStop(1,p.horizon);c.fillStyle=sky;c.fillRect(0,0,W,HORIZON+4);
       this.drawSky(c,eng,p,reduced);this.drawTerrain(c,eng.world,W,p,reduced);
-      for(const o of layout(eng.world,W,reduced)){
-        if(o.source){
-          const sprite=this.tintedSprite(o.id,p);
-          if(sprite){
-            c.save();c.globalAlpha=p.night>.5?.48:.58;
-            c.filter=p.night>.5?'saturate(.58) contrast(.82) brightness(.90)':'saturate(.66) contrast(.84) brightness(1.06)';
-            c.drawImage(sprite,o.screenX,HORIZON-o.height+3,o.width,o.height);c.restore();
-          }
-        }else drawProcedural(c,o,p);
+
+      // New high-resolution Auckland plate: drawn once, unmirrored and without blur/saturation filters.
+      // The dynamic ocean is painted later by Renderer.ocean(), so its lower half is naturally covered.
+      if(this.prepare(image)){
+        const plateW=1840,plateH=320,x=36-scroll*.98;
+        if(x<W&&x+plateW>0){
+          c.save();c.globalAlpha=p.night>.5?.82:.98;c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
+          c.drawImage(this.image,x,0,plateW,plateH);
+          if(p.night>.04){c.fillStyle='rgba(20,42,67,'+(p.night*.32)+')';c.fillRect(Math.max(0,x),0,Math.min(W,x+plateW)-Math.max(0,x),HORIZON+4);}
+          c.restore();
+        }
       }
-      const haze=c.createLinearGradient(0,HORIZON-34,0,HORIZON+5);
-      haze.addColorStop(0,'rgba(222,239,240,0)');
-      haze.addColorStop(.58,p.night>.5?'rgba(79,101,117,.12)':'rgba(206,229,229,.16)');
-      haze.addColorStop(1,p.night>.5?'rgba(71,96,113,.24)':'rgba(185,217,220,.34)');
-      c.fillStyle=haze;c.fillRect(0,HORIZON-34,W,39);c.restore();
+
+      // Later destinations remain one-way procedural landmarks and never recycle.
+      for(const o of layout(eng.world,W,reduced))if(!o.source)drawProcedural(c,o,p);
+
+      // Very light horizon blending only; do not fog the landmark silhouettes.
+      const haze=c.createLinearGradient(0,HORIZON-12,0,HORIZON+4);
+      haze.addColorStop(0,'rgba(220,238,239,0)');
+      haze.addColorStop(1,p.night>.5?'rgba(66,91,109,.12)':'rgba(190,221,222,.15)');
+      c.fillStyle=haze;c.fillRect(0,HORIZON-12,W,16);
+      c.restore();
     }
   }
   return Object.freeze({version:VERSION,CoastLayer,LANDMARKS,layout,camera,height,connectedHeight,noise,animePlate,longCloud,constellation,bridgeMask,rowBackdrop});
