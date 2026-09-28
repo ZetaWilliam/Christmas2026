@@ -42,6 +42,31 @@ for(const seam of [1200,2400,3600,4800,6000,7200]){
 for(const x of coast.LANDMARKS.map(o=>o.x+Math.min(180,o.width?o.width*.35:160))){
  assert(coast.connectedHeight(x,0)>=coast.height(x,0),'Named scenery blends into the continuous shoreline');
 }
+// Regression: animePlate() returns a canvas, so rowBackdrop() must accept canvas width/height
+// instead of assuming HTMLImageElement naturalWidth/naturalHeight.
+const originalDocument=global.document;
+global.document={
+ createElement(type){
+  assert.equal(type,'canvas');
+  return {
+   width:0,height:0,
+   getContext(){
+    return {
+     drawImage(){},
+     getImageData(_x,_y,w,h){return {data:new Uint8ClampedArray(w*h*4)};}
+    };
+   }
+  };
+ }
+};
+try{
+ const canvasRows=coast.rowBackdrop({width:12,height:3});
+ assert.equal(canvasRows.length,3,'rowBackdrop accepts a canvas-like source');
+ assert.deepEqual(canvasRows[0],[0,0,0]);
+}finally{
+ if(originalDocument===undefined)delete global.document;
+ else global.document=originalDocument;
+}
 const coastSource=fs.readFileSync(path.join(__dirname,'../gameplay/coastline.js'),'utf8');
 assert(!coastSource.includes('scale(-1,1)'),'Named coast artwork must never be mirrored');
 assert(coastSource.includes('function animePlate'),'Previous scenic reference is posterised before use');
