@@ -1,7 +1,7 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const coast=require('../gameplay/coastline.js');
-assert.equal(coast.version,'2026.09.28-horizon-fixed.4');
+assert.equal(coast.version,'2026.09.28-horizon-fixed.5');
 assert.equal(coast.LANDMARKS.length,10);
 assert.equal(new Set(coast.LANDMARKS.map(o=>o.id)).size,10);
 assert.deepEqual(coast.LANDMARKS.map(o=>o.id),[
@@ -77,8 +77,8 @@ assert(!coastSource.includes('scale(-1,1)'),'Named coast artwork must never be m
 const plate=coast.panoramaPlacement(0);
 assert(Math.abs((plate.y+coast.PANORAMA.waterlineY*plate.scale)-178)<1e-9,'Panorama shoreline must align exactly with the gameplay horizon');
 assert(plate.y<0&&plate.y>-120,'Panorama is shifted upward enough to keep the skyline above water without losing the tower');
-assert.equal(coast.PANORAMA.sourceWidth,1280);
-assert.equal(coast.PANORAMA.sourceHeight,426);
+assert.equal(coast.PANORAMA.sourceWidth,1080);
+assert.equal(coast.PANORAMA.sourceHeight,360);
 assert(coastSource.includes('function longCloud'),'Long white clouds are drawn as continuous painted forms');
 assert(coastSource.includes('function constellation'),'Night sky uses grouped constellations, not an even dot grid');
 assert(!coastSource.includes("c.filter=p.night>.5?'saturate"),'Crisp panorama must not be blurred by the old landmark filter chain');
