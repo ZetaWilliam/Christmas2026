@@ -85,7 +85,7 @@
   class Renderer{
     constructor(canvas,engine,reduced){this.canvas=canvas;this.ctx=canvas.getContext('2d');this.eng=engine;this.reduced=reduced;this.ready=false;this.sprites={};this.splashes=[];this.lastTime=0;this.result=null;this.atlas=new Image();this.atlas.onload=()=>{try{for(const [key,cut]of Object.entries(CUTS))this.sprites[key]=this.cut(cut);this.ready=true;this.draw();}catch(error){console.warn('Harbour art preparation failed',error.name);}};this.atlas.onerror=()=>{console.warn('Harbour artwork unavailable');};this.atlas.src='/gameplay/art/atlas.webp';}
     cut(rect){const c=document.createElement('canvas');c.width=rect[2];c.height=rect[3];const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(this.atlas,...rect,0,0,c.width,c.height);const image=x.getImageData(0,0,c.width,c.height),data=image.data,n=c.width*c.height,seen=new Uint8Array(n),queue=new Int32Array(n);let head=0,tail=0;const add=i=>{if(i<0||i>=n||seen[i])return;const j=i*4,m=Math.min(data[j],data[j+1],data[j+2]),M=Math.max(data[j],data[j+1],data[j+2]);if(m>243||(m>224&&M-m<17)){seen[i]=1;queue[tail++]=i;}};for(let a=0;a<c.width;a++){add(a);add(n-c.width+a);}for(let y=0;y<c.height;y++){add(y*c.width);add((y+1)*c.width-1);}while(head<tail){const i=queue[head++];data[i*4+3]=0;if(i%c.width)add(i-1);if(i%c.width<c.width-1)add(i+1);add(i-c.width);add(i+c.width);}x.putImageData(image,0,0);return c;}
-    palette(){const t=this.eng.time,phase=(t%64)/16,i=Math.floor(phase),f=(1-Math.cos((phase-i)*Math.PI))/2;const p=[['#C3E8F6','#EEF8F6','#36A3B9'],['#F3B38B','#FFE0B3','#4897A8'],['#142C49','#365475','#174D69'],['#BDCFE4','#F4E7E5','#5A9DB3']];const a=p[i],b=p[(i+1)%4];return{top:this.mix(a[0],b[0],f),horizon:this.mix(a[1],b[1],f),water:this.mix(a[2],b[2],f),night:this.reduced?0:Math.max(0,Math.sin(Math.PI*phase/2-Math.PI/2)),label:this.reduced?'Day':['Day → sunset','Sunset → night','Night → dawn','Dawn → day'][i]};}
+    palette(){const t=this.eng.time,phase=(t%96)/24,i=Math.floor(phase),f=(1-Math.cos((phase-i)*Math.PI))/2;const p=[['#BFDDF0','#E9F2EE','#3D91A6'],['#D8C6B4','#EFE2CC','#49899B'],['#8198AF','#C7D2D9','#3B7286'],['#B8CBDE','#E9E1D7','#4C879A']];const a=p[i],b=p[(i+1)%4],raw=Math.max(0,Math.sin(Math.PI*phase/2-Math.PI/2));return{top:this.mix(a[0],b[0],f),horizon:this.mix(a[1],b[1],f),water:this.mix(a[2],b[2],f),night:this.reduced?0:raw*.42,label:this.reduced?'Day':['Day → warm light','Warm light → blue hour','Blue hour → dawn','Dawn → day'][i]};}
     mix(a,b,t){const rgb=s=>s.match(/\w\w/g).map(x=>parseInt(x,16)),x=rgb(a),y=rgb(b);return '#'+x.map((v,i)=>Math.round(v+(y[i]-v)*t).toString(16).padStart(2,'0')).join('');}
     burst(kind,x,y){if(this.reduced)return;for(let i=0;i<(kind==='gold'?20:kind==='splash'?12:9);i++)this.splashes.push({x,y,vx:(Math.random()-.5)*110,vy:-35-Math.random()*75,born:this.eng.time,life:.55+Math.random()*.4,kind});}
     draw(){const e=this.eng,ctx=this.ctx,W=e.width,H=320,p=this.palette();ctx.setTransform(this.canvas.width/W,0,0,this.canvas.height/H,0,0);ctx.clearRect(0,0,W,H);const gradient=ctx.createLinearGradient(0,0,0,H);gradient.addColorStop(0,p.top);gradient.addColorStop(.57,p.horizon);gradient.addColorStop(1,p.water);ctx.fillStyle=gradient;ctx.fillRect(0,0,W,H);
@@ -109,101 +109,82 @@
     ocean(p){
       const c=this.ctx,e=this.eng,W=e.width,t=e.time,horizon=180;
       const base=c.createLinearGradient(0,horizon,0,320);
-      base.addColorStop(0,this.mix(p.water,'#D9F0EE',.30));
-      base.addColorStop(.48,p.water);
-      base.addColorStop(1,this.mix(p.water,'#123F59',.34));
+      base.addColorStop(0,this.mix(p.water,'#DDEDEA',.36));
+      base.addColorStop(.46,this.mix(p.water,'#5BA8B5',.08));
+      base.addColorStop(1,this.mix(p.water,'#173F55',.28));
       c.fillStyle=base;c.fillRect(0,horizon,W,140);
 
-      // Keep just a hint of the painted source texture, then let animated swells carry the surface.
+      // The source texture is deliberately faint: it gives grain without competing with gameplay.
       if(this.ready){
-        c.save();c.globalAlpha=.12;
-        for(let y=horizon;y<320;y+=6){
-          const depth=(y-horizon)/140,sy=190+((depth*104+t*(this.reduced?0:1.5))%112),tile=1050+depth*620;
-          const offset=(e.world*(.035+depth*.10))%tile;
+        c.save();c.globalAlpha=.045;c.globalCompositeOperation='soft-light';
+        for(let y=horizon;y<320;y+=8){
+          const depth=(y-horizon)/140,sy=190+((depth*98+t*(this.reduced?0:.8))%108),tile=1120+depth*680;
+          const offset=(e.world*(.018+depth*.052))%tile;
           for(let x=-offset;x<W;x+=tile)c.drawImage(this.atlas,0,sy,640,3,x,y,tile,5);
         }
         c.restore();
       }
 
-      // Layered perspective swells: long, smooth waves approach the canoe instead of tiled ripple symbols.
-      const rows=[
-        {y:191,amp:1.1,lambda:260,speed:.11,alpha:.11},
-        {y:208,amp:1.7,lambda:230,speed:.15,alpha:.14},
-        {y:230,amp:2.5,lambda:205,speed:.20,alpha:.17},
-        {y:255,amp:3.6,lambda:180,speed:.27,alpha:.20},
-        {y:283,amp:5.0,lambda:155,speed:.34,alpha:.23},
-        {y:312,amp:6.8,lambda:138,speed:.42,alpha:.25}
-      ];
-      for(let i=0;i<rows.length;i++){
-        const r=rows[i],phase=this.reduced?0:(e.world*r.speed+t*(12+i*1.7));
+      // Swell ridges advance toward the viewer instead of sliding as fixed horizontal sine rows.
+      const flow=this.reduced?0:(t*8.6+e.world*.018);
+      for(let i=0;i<9;i++){
+        const lane=((i*18.5+flow)%146+146)%146,depth=lane/146,y=horizon+lane;
+        const amp=.65+Math.pow(depth,1.62)*6.9,lambda=292-depth*134+(i%3)*13;
+        const phase=this.reduced?i*47:e.world*(.022+depth*.052)+t*(4.8+depth*3.6)+i*41;
         const pts=[];
-        for(let x=-20;x<=W+20;x+=8){
-          const yy=r.y
-            +Math.sin((x+phase)*Math.PI*2/r.lambda)*r.amp
-            +Math.sin((x*.47-phase*.58)*Math.PI*2/(r.lambda*.72))*r.amp*.28;
+        for(let x=-28;x<=W+28;x+=8){
+          const yy=y
+            +Math.sin((x+phase)*Math.PI*2/lambda)*amp
+            +Math.sin((x*.51-phase*.43+i*19)*Math.PI*2/(lambda*.64))*amp*.26
+            +Math.sin((x*.23+phase*.67+i*31)*Math.PI*2/(lambda*1.38))*amp*.12;
           pts.push([x,yy]);
         }
-        const shade=c.createLinearGradient(0,r.y-r.amp*2,0,r.y+18);
-        shade.addColorStop(0,p.night>.45?'rgba(117,171,193,'+(r.alpha*.72)+')':'rgba(205,246,244,'+(r.alpha*.72)+')');
-        shade.addColorStop(.38,p.night>.45?'rgba(58,113,145,'+(r.alpha*.52)+')':'rgba(118,205,209,'+(r.alpha*.48)+')');
-        shade.addColorStop(1,'rgba(16,65,91,0)');
-        c.beginPath();pts.forEach((q,j)=>c[j?'lineTo':'moveTo'](q[0],q[1]));c.lineTo(W+20,r.y+20);c.lineTo(-20,r.y+20);c.closePath();c.fillStyle=shade;c.fill();
+        const face=c.createLinearGradient(0,y-amp*1.5,0,y+11+depth*8);
+        face.addColorStop(0,p.night>.25?'rgba(131,176,194,'+(.045+depth*.05)+')':'rgba(207,240,239,'+(.05+depth*.07)+')');
+        face.addColorStop(.45,p.night>.25?'rgba(57,110,135,'+(.045+depth*.06)+')':'rgba(78,159,174,'+(.04+depth*.055)+')');
+        face.addColorStop(1,'rgba(17,62,83,0)');
         c.beginPath();pts.forEach((q,j)=>c[j?'lineTo':'moveTo'](q[0],q[1]));
-        c.strokeStyle=p.night>.45?'rgba(192,227,236,'+(r.alpha*.62)+')':'rgba(247,255,252,'+(r.alpha*.88)+')';
-        c.lineWidth=.65+i*.12;c.stroke();
+        c.lineTo(W+28,y+13+depth*8);c.lineTo(-28,y+13+depth*8);c.closePath();c.fillStyle=face;c.fill();
 
-        if(i>=2&&!this.reduced){
-          c.save();c.setLineDash([13+i*3,27+i*5]);c.lineDashOffset=-(phase*.28);
-          c.beginPath();pts.forEach((q,j)=>c[j?'lineTo':'moveTo'](q[0],q[1]-1.1));
-          c.strokeStyle=p.night>.45?'rgba(210,235,242,.11)':'rgba(255,255,246,'+(.12+i*.017)+')';
-          c.lineWidth=.7+i*.08;c.stroke();c.restore();
+        c.beginPath();pts.forEach((q,j)=>c[j?'lineTo':'moveTo'](q[0],q[1]));
+        c.strokeStyle=p.night>.25?'rgba(205,229,236,'+(.16+depth*.12)+')':'rgba(247,253,249,'+(.20+depth*.16)+')';
+        c.lineWidth=.55+depth*.8;c.stroke();
+
+        if(depth>.38&&!this.reduced){
+          c.save();c.setLineDash([8+depth*15,26+depth*34]);c.lineDashOffset=-(phase*.31+i*11);
+          c.beginPath();pts.forEach((q,j)=>c[j?'lineTo':'moveTo'](q[0],q[1]-1.2-depth));
+          c.strokeStyle=p.night>.25?'rgba(222,239,244,'+(.08+depth*.09)+')':'rgba(255,255,249,'+(.10+depth*.14)+')';
+          c.lineWidth=.65+depth*.7;c.stroke();c.restore();
         }
       }
 
-      // Soft vertical glints connect the sky light to the moving surface.
+      // Broken foam drifts both toward camera and slightly sideways; deterministic placement prevents visual flicker.
       if(!this.reduced){
-        c.save();const lightX=W-88,glow=p.night>.45?'rgba(224,235,255,.10)':'rgba(255,238,184,.16)';
-        for(let i=0;i<13;i++){
-          const y=187+i*9.5,width=5+i*2.2+Math.sin(t*1.8+i)*3,x=lightX+Math.sin(t*.55+i*.9)*12;
-          c.strokeStyle=glow;c.lineWidth=1;c.beginPath();c.moveTo(x-width,y);c.lineTo(x+width,y);c.stroke();
+        c.save();c.lineCap='round';
+        for(let i=0;i<24;i++){
+          const lane=((i*29+flow*1.55)%154+154)%154,depth=lane/154;
+          if(depth<.34)continue;
+          const y=horizon+lane+Math.sin(t*.55+i)*1.4;
+          const span=W+180,x=((i*193-e.world*(.026+depth*.073))%span+span)%span-90;
+          const len=13+depth*42+(i%4)*4;
+          c.strokeStyle=p.night>.25?'rgba(221,239,244,'+(.06+depth*.12)+')':'rgba(250,255,252,'+(.08+depth*.18)+')';
+          c.lineWidth=.65+depth*.55;c.beginPath();c.moveTo(x,y);
+          c.bezierCurveTo(x+len*.28,y-2.2-depth*2,x+len*.62,y+1.7,x+len,y-.5);c.stroke();
         }
         c.restore();
       }
 
-      // Small broken highlights add depth without turning the ocean back into photographic texture.
-      c.save();c.strokeStyle=p.night>.4?'rgba(191,223,231,.15)':'rgba(246,255,255,.30)';c.lineWidth=.7;
-      for(let i=0;i<30;i++){
-        const depth=(i%7)/6,x=((i*197-e.world*(.045+depth*.18))%(W+90)+W+90)%(W+90)-45;
-        const y=188+depth*121+Math.sin(t*.9+i)*1.7;
-        c.beginPath();c.moveTo(x,y);c.quadraticCurveTo(x+8+depth*7,y-1,x+20+depth*19,y+.35);c.stroke();
-      }
-      c.restore();
-
-      // Foreground swell bands travel toward the viewer: broad troughs, broken foam and changing perspective.
+      // A quiet light path adds depth without becoming a bright focal point.
       if(!this.reduced){
-        const frontPhase=(t*34+e.world*.085);
-        for(let band=0;band<2;band++){
-          const baseY=294+band*20,amp=5.8+band*3.2,lambda=230-band*28,phase=frontPhase*(1+band*.28);
-          const ridge=[];
-          for(let x=-30;x<=W+30;x+=10){
-            const yy=baseY
-              +Math.sin((x+phase)*Math.PI*2/lambda)*amp
-              +Math.sin((x*.58-phase*.42)*Math.PI*2/(lambda*.63))*amp*.34;
-            ridge.push([x,yy]);
-          }
-          const fill=c.createLinearGradient(0,baseY-amp*2,0,Math.min(320,baseY+22));
-          fill.addColorStop(0,p.night>.5?'rgba(77,133,162,.20)':'rgba(118,213,220,.22)');
-          fill.addColorStop(.42,p.night>.5?'rgba(35,84,118,.24)':'rgba(42,142,164,.22)');
-          fill.addColorStop(1,'rgba(10,48,72,0)');
-          c.beginPath();ridge.forEach((q,i)=>c[i?'lineTo':'moveTo'](q[0],q[1]));c.lineTo(W+30,330);c.lineTo(-30,330);c.closePath();c.fillStyle=fill;c.fill();
-          c.save();c.setLineDash([19+band*6,34+band*7]);c.lineDashOffset=-phase*.31;
-          c.beginPath();ridge.forEach((q,i)=>c[i?'lineTo':'moveTo'](q[0],q[1]-1.8));
-          c.strokeStyle=p.night>.5?'rgba(219,239,247,.24)':'rgba(250,255,250,.48)';
-          c.lineWidth=1.15+band*.35;c.stroke();c.restore();
+        c.save();const lightX=W*.76,glow=p.night>.25?'rgba(221,232,246,.065)':'rgba(247,238,201,.085)';
+        for(let i=0;i<10;i++){
+          const y=188+i*11.8,width=5+i*2.1+Math.sin(t*1.1+i)*2.2,x=lightX+Math.sin(t*.38+i*.82)*10;
+          c.strokeStyle=glow;c.lineWidth=.8;c.beginPath();c.moveTo(x-width,y);c.lineTo(x+width,y);c.stroke();
         }
+        c.restore();
       }
 
-      c.save();c.globalAlpha=p.night*.34;c.fillStyle='#102A48';c.fillRect(0,horizon,W,140);c.restore();
+      c.save();c.globalAlpha=p.night*.24;c.fillStyle='#173349';c.fillRect(0,horizon,W,140);c.restore();
     }
     santa(){
       const c=this.ctx,e=this.eng,p=e.player,water=254;
