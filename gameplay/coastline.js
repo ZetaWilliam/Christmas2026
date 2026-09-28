@@ -356,5 +356,5 @@
       c.restore();
     }
   }
-  return Object.freeze({version:VERSION,CoastLayer,LANDMARKS,layout,camera,rawCamera,routeX,ROUTE_SPAN,panoramaPlacement,panoramaPlacements,PANORAMA,height,connectedHeight,noise,animePlate,longCloud,constellation,bridgeMask,rowBackdrop});
+  return Object.freeze({version:VERSION,CoastLayer,LANDMARKS,layout,camera,rawCamera,routeX,ROUTE_SPAN,PARALLAX,panoramaPlacement,panoramaPlacements,PANORAMA,height,connectedHeight,noise,animePlate,longCloud,constellation,bridgeMask,rowBackdrop});
 });
