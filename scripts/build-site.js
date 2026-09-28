@@ -7,7 +7,7 @@ const source=fs.readFileSync('index.html','utf8');
 const begin='    // Santa Harbour Dash — Dino-style Auckland endless runner',end='    // 微粒动画';
 const start=source.indexOf(begin),finish=source.indexOf(end,start);
 if(start<0||finish<=start||source.indexOf(begin,start+begin.length)>=0)throw Error('Cannot isolate legacy game. Source left unchanged.');
-const version='2026.09.28-south-island-night.11';
+const version='2026.09.28-six-city.12';
 let html=source.slice(0,start)+'    // The isolated Harbour Dash modules are loaded below.\n'+source.slice(finish);
 const gameMarker='  <!-- Santa Harbour Dash: Auckland Christmas endless runner -->',rsvpMarker='  <!-- 报名表单 -->',modalMarker='  <!-- 报名成功弹窗与电子票 -->';
 const a=html.indexOf(gameMarker),b=html.indexOf(rsvpMarker),c=html.indexOf(modalMarker);
@@ -51,6 +51,10 @@ const panorama=Buffer.from(fs.readFileSync('gameplay/art/coast-approved.b64','ut
 if(panorama.toString('ascii',0,4)!=='RIFF'||panorama.toString('ascii',8,12)!=='WEBP')throw Error('Invalid approved panorama artwork');
 if(crypto.createHash('sha256').update(panorama).digest('hex')!=='19b24eec043db1fcdc30cd7be479be1b8803b0cd3882155b06781a7c9907a4b3')throw Error('Approved panorama integrity check failed');
 fs.writeFileSync('public/gameplay/art/coast-panorama.webp',panorama);
+const cityMontage=fs.readFileSync('gameplay/art/city-montage.webp');
+if(cityMontage.toString('ascii',0,4)!=='RIFF'||cityMontage.toString('ascii',8,12)!=='WEBP')throw Error('Invalid six-city panorama artwork');
+if(crypto.createHash('sha256').update(cityMontage).digest('hex')!=='4f11d5926031c4121306680f6cc8f2caeee3d2da9307cfe753f9d4680dd393b0')throw Error('Six-city panorama integrity check failed');
+fs.writeFileSync('public/gameplay/art/city-montage.webp',cityMontage);
 // Serve the credited recordings from our own origin; never hotlink during gameplay.
 const manifest=JSON.parse(fs.readFileSync('gameplay/music/manifest.json','utf8'));
 if(manifest.length!==2)throw Error('Expected two licensed recordings');
@@ -62,4 +66,4 @@ for(const item of manifest){
  fs.writeFileSync('public/gameplay/music/'+item.file,data);
 }
 fs.copyFileSync('gameplay/music/CREDITS.md','public/gameplay/music/CREDITS.md');
-console.log(`Built ${version}: detailed South Island landmarks, equal day-night cycle, whole-scene lighting, point-star constellations and 8000-point top tier.`);
+console.log(`Built ${version}: six consistent illustrated city panoramas, cross-faded loop, equal day-night cycle and 20000-point top tier.`);
