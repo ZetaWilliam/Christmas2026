@@ -1,4 +1,9 @@
 const { neon } = require('@neondatabase/serverless');
+const { createHash, timingSafeEqual } = require('node:crypto');
+
+const ORGANIZER_KEY_HASH = '47ac7ff1d61825000c3771813c2f6a5ef1922cd482ab033daf65d89699f2626c';
+const PRELAUNCH_CLEAR_THROUGH_ID = 7;
+let prelaunchClearAttempted = false;
 
 const reply = (res, status, body) => {
   res.setHeader('Cache-Control', 'no-store');
@@ -10,6 +15,16 @@ function cleanName(value) {
 }
 function cleanMessage(value) {
   return String(value || '').replace(/[\u0000-\u001F\u007F]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+function parseBody(req) {
+  if (typeof req.body !== 'string') return req.body || {};
+  try { return JSON.parse(req.body || '{}'); }
+  catch { return {}; }
+}
+function validOrganizerKey(value) {
+  const digest = createHash('sha256').update(String(value || ''), 'utf8').digest();
+  const expected = Buffer.from(ORGANIZER_KEY_HASH, 'hex');
+  return digest.length === expected.length && timingSafeEqual(digest, expected);
 }
 async function ensureTable(sql) {
   await sql`
@@ -24,6 +39,13 @@ async function ensureTable(sql) {
     CREATE INDEX IF NOT EXISTS event_messages_created_at_idx
     ON event_messages (created_at DESC)
   `;
+  if (!prelaunchClearAttempted) {
+    await sql`
+      DELETE FROM event_messages
+      WHERE id <= ${PRELAUNCH_CLEAR_THROUGH_ID}
+    `;
+    prelaunchClearAttempted = true;
+  }
 }
 async function listMessages(sql) {
   const rows = await sql`
@@ -51,7 +73,12 @@ module.exports = async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-      const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
+      const body = parseBody(req);
+      if (body.action === 'admin-auth') {
+        if (!validOrganizerKey(body.adminKey)) return reply(res, 401, { error: 'Incorrect organiser key.' });
+        return reply(res, 200, { ok: true, admin: true });
+      }
+
       const name = cleanName(body.name);
       const message = cleanMessage(body.message);
 
@@ -89,13 +116,28 @@ module.exports = async function handler(req, res) {
       return reply(res, 201, { ok: true, messages: await listMessages(sql) });
     }
 
-    res.setHeader('Allow', 'GET, POST');
+    if (req.method === 'DELETE') {
+      const body = parseBody(req);
+      if (!validOrganizerKey(body.adminKey)) return reply(res, 401, { error: 'Incorrect organiser key.' });
+
+      if (body.clearAll === true) {
+        await sql`DELETE FROM event_messages`;
+      } else {
+        const id = Number(body.id);
+        if (!Number.isInteger(id) || id <= 0) return reply(res, 400, { error: 'A valid message id is required.' });
+        await sql`DELETE FROM event_messages WHERE id = ${id}`;
+      }
+      return reply(res, 200, { ok: true, messages: await listMessages(sql) });
+    }
+
+    res.setHeader('Allow', 'GET, POST, DELETE');
     return reply(res, 405, { error: 'Method not allowed.' });
   } catch (error) {
     console.error('Message board API error:', error?.code || error?.name || 'unknown');
-    return reply(res, 500, { error: 'Unable to load or post messages right now.' });
+    return reply(res, 500, { error: 'Unable to load or update messages right now.' });
   }
 };
 
 module.exports.cleanName = cleanName;
 module.exports.cleanMessage = cleanMessage;
+module.exports.validOrganizerKey = validOrganizerKey;
