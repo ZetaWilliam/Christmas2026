@@ -23,7 +23,7 @@
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
   const VERSION='2026.09.28-seamless-route.6';
-  const HORIZON=178,PARALLAX=.105,ROUTE_SPAN=11200,PANORAMA_FEATHER=.22;
+  const HORIZON=178,PARALLAX=.105,ROUTE_SPAN=11200,LOOP_BLEND=700,PANORAMA_FEATHER=.22;
   const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
   const smooth=t=>{t=clamp(t,0,1);return t*t*(3-2*t);};
   const hash=(i,s=0)=>{let x=Math.imul(i|0,374761393)^Math.imul(s|0,668265263);x=Math.imul(x^(x>>>13),1274126177);return((x^(x>>>16))>>>0)/4294967295;};
@@ -81,13 +81,20 @@
     return Object.freeze({x,y,width:PANORAMA.width,height,scale});
   }
   function panoramaPlacements(world,width,reduced=false){
-    return [-1,0,1].map(offset=>panoramaPlacement(world,reduced,offset))
-      .filter(p=>p.x+p.width>-4&&p.x<width+4);
+    const local=camera(world,reduced),out=[],primary=panoramaPlacement(world,reduced,0);
+    if(primary.x+primary.width>-4&&primary.x<width+4)out.push({...primary,alpha:1});
+    if(!reduced&&local>ROUTE_SPAN-LOOP_BLEND){
+      const t=smooth((local-(ROUTE_SPAN-LOOP_BLEND))/LOOP_BLEND);
+      const base=panoramaPlacement(0,true,0);
+      out.push({...base,x:width+(PANORAMA.startX-width)*t,alpha:t});
+    }
+    return out;
   }
   function layout(world,width,reduced=false){
-    const scroll=camera(world,reduced),out=[];
+    const scroll=camera(world,reduced),out=[],offsets=[0];
+    if(!reduced&&scroll>ROUTE_SPAN-LOOP_BLEND)offsets.push(1);
     for(const o of LANDMARKS){
-      for(const cycleOffset of [-1,0,1]){
+      for(const cycleOffset of offsets){
         const screenX=o.x+cycleOffset*ROUTE_SPAN-scroll;
         if(screenX+o.width>-2&&screenX<width+2)out.push({...o,screenX});
       }
@@ -337,7 +344,7 @@
       // feathered edges, so there is never a hard vertical boundary against the procedural coast.
       if(this.prepare(image)){
         for(const plate of panoramaPlacements(eng.world,W,reduced)){
-          c.save();c.globalAlpha=1;c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
+          c.save();c.globalAlpha=plate.alpha??1;c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
           c.drawImage(this.plate,plate.x,plate.y,plate.width,plate.height);c.restore();
         }
       }
@@ -356,5 +363,5 @@
       c.restore();
     }
   }
-  return Object.freeze({version:VERSION,CoastLayer,LANDMARKS,layout,camera,rawCamera,routeX,ROUTE_SPAN,PARALLAX,panoramaPlacement,panoramaPlacements,PANORAMA,height,connectedHeight,noise,animePlate,longCloud,constellation,bridgeMask,rowBackdrop});
+  return Object.freeze({version:VERSION,CoastLayer,LANDMARKS,layout,camera,rawCamera,routeX,ROUTE_SPAN,LOOP_BLEND,PARALLAX,panoramaPlacement,panoramaPlacements,PANORAMA,height,connectedHeight,noise,animePlate,longCloud,constellation,bridgeMask,rowBackdrop});
 });
