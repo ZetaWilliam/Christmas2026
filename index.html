@@ -787,7 +787,8 @@
 
   <!-- 报名表单 -->
   <section id="rsvp" class="py-16 sm:py-24 bg-gradient-to-b from-parchment to-sand/80 relative">
-    <div class="max-w-2xl mx-auto px-4 sm:px-6">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-6 lg:gap-8 items-start">
       
       <div class="bg-white rounded-3xl p-6 sm:p-10 border border-pine/10 shadow-xl relative overflow-visible">
         
@@ -890,40 +891,19 @@
 
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
-              <fieldset class="space-y-2">
-                <legend class="sr-only">Your team arrangements</legend>
-                <label class="block cursor-pointer rounded-xl bg-white border border-pine/15 px-3 py-3 has-[:checked]:border-pine has-[:checked]:bg-pine/5">
-                  <input type="radio" name="teamApproach" value="flexible" checked class="accent-[#0D3025] mr-2">
-                  <span class="text-sm font-semibold text-pine">I'm happy to join any team</span>
-                  <span class="block pl-6 text-xs text-pine/65">The organisers will arrange a team for me.</span>
-                </label>
-                <label class="block cursor-pointer rounded-xl bg-white border border-pine/15 px-3 py-3 has-[:checked]:border-pine has-[:checked]:bg-pine/5">
-                  <input type="radio" name="teamApproach" value="group" class="accent-[#0D3025] mr-2">
-                  <span class="text-sm font-semibold text-pine">I already have a team in mind</span>
-                  <span class="block pl-6 text-xs text-pine/65">I'd like to create or join a named team with colleagues and compete for the fastest escape.</span>
-                </label>
-              </fieldset>
-
-              <section class="rounded-xl border border-pine/15 bg-white p-3.5 space-y-2.5" aria-labelledby="teamMessageBoardTitle">
-                <div class="flex items-start justify-between gap-3">
-                  <div>
-                    <h4 id="teamMessageBoardTitle" class="text-xs font-bold uppercase tracking-wide text-pine">Team Message Board</h4>
-                    <p class="text-[11px] text-pine/65 mt-0.5">Say hello, find teammates, or share a team idea. <strong>Please keep it friendly and respectful.</strong></p>
-                  </div>
-                  <button type="button" onclick="refreshTeamMessages()" class="shrink-0 rounded-lg border border-pine/20 bg-[#F5F7F3] px-2.5 py-1.5 text-[11px] font-semibold text-pine hover:bg-sand">Refresh</button>
-                </div>
-                <div id="teamMessageList" class="space-y-2 max-h-36 overflow-y-auto pr-1" aria-live="polite">
-                  <p class="text-xs text-pine/55">Loading messages…</p>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-[0.72fr_1.5fr_auto] gap-2">
-                  <input id="teamMessageName" type="text" maxlength="30" autocomplete="nickname" placeholder="Your name" class="min-w-0 px-3 py-2 rounded-lg border border-pine/20 text-xs focus:outline-none focus:ring-2 focus:ring-gold">
-                  <input id="teamMessageText" type="text" maxlength="240" placeholder="Short message…" class="min-w-0 px-3 py-2 rounded-lg border border-pine/20 text-xs focus:outline-none focus:ring-2 focus:ring-gold">
-                  <button id="teamMessagePostBtn" type="button" onclick="postTeamMessage()" class="rounded-lg bg-pine text-white px-3 py-2 text-xs font-semibold hover:bg-pine-light">Post</button>
-                </div>
-                <p id="teamMessageStatus" class="text-[11px] text-pine/60 min-h-[1rem]" role="status" aria-live="polite"></p>
-              </section>
-            </div>
+            <fieldset class="space-y-2">
+              <legend class="sr-only">Your team arrangements</legend>
+              <label class="block cursor-pointer rounded-xl bg-white border border-pine/15 px-3 py-3 has-[:checked]:border-pine has-[:checked]:bg-pine/5">
+                <input type="radio" name="teamApproach" value="flexible" checked class="accent-[#0D3025] mr-2">
+                <span class="text-sm font-semibold text-pine">I'm happy to join any team</span>
+                <span class="block pl-6 text-xs text-pine/65">The organisers will arrange a team for me.</span>
+              </label>
+              <label class="block cursor-pointer rounded-xl bg-white border border-pine/15 px-3 py-3 has-[:checked]:border-pine has-[:checked]:bg-pine/5">
+                <input type="radio" name="teamApproach" value="group" class="accent-[#0D3025] mr-2">
+                <span class="text-sm font-semibold text-pine">I already have a team in mind</span>
+                <span class="block pl-6 text-xs text-pine/65">I'd like to create or join a named team with colleagues and compete for the fastest escape.</span>
+              </label>
+            </fieldset>
 
             <div id="teamGroupFields" class="hidden space-y-3 border-t border-pine/15 pt-3">
               <fieldset class="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1018,6 +998,39 @@
             <span>&rarr;</span>
           </button>
         </form>
+
+      </div>
+
+      <aside class="rounded-3xl border border-pine/15 bg-white p-5 sm:p-6 shadow-xl lg:sticky lg:top-6" aria-labelledby="teamMessageBoardTitle">
+        <div class="flex items-start justify-between gap-3 pb-4 border-b border-pine/10">
+          <div>
+            <div class="text-[10px] uppercase tracking-[0.14em] font-bold text-cranberry">Community</div>
+            <h3 id="teamMessageBoardTitle" class="font-serif text-2xl font-bold text-pine mt-0.5">Team Message Board</h3>
+            <p class="text-xs text-pine/65 mt-1 leading-relaxed">Say hello, find teammates, or share a team idea. <strong>Please keep it friendly and respectful.</strong></p>
+          </div>
+          <button type="button" onclick="refreshTeamMessages()" class="shrink-0 rounded-lg border border-pine/20 bg-[#F5F7F3] px-3 py-2 text-xs font-semibold text-pine hover:bg-sand">Refresh</button>
+        </div>
+
+        <div id="teamMessageList" class="space-y-2.5 max-h-[430px] overflow-y-auto pr-1 my-4" aria-live="polite">
+          <p class="text-xs text-pine/55">Loading messages…</p>
+        </div>
+
+        <div class="space-y-2.5 pt-4 border-t border-pine/10">
+          <div>
+            <label for="teamMessageName" class="block text-[10px] uppercase tracking-wide font-bold text-pine/70 mb-1">Name</label>
+            <input id="teamMessageName" type="text" maxlength="30" autocomplete="nickname" placeholder="Your name" class="w-full px-3 py-2.5 rounded-xl border border-pine/20 text-sm focus:outline-none focus:ring-2 focus:ring-gold">
+          </div>
+          <div>
+            <div class="flex items-center justify-between gap-3 mb-1">
+              <label for="teamMessageText" class="text-[10px] uppercase tracking-wide font-bold text-pine/70">Message</label>
+              <span id="teamMessageCount" class="text-[10px] text-pine/45">0/100</span>
+            </div>
+            <textarea id="teamMessageText" maxlength="100" rows="3" placeholder="Write a short friendly message…" class="w-full resize-none px-3 py-2.5 rounded-xl border border-pine/20 text-sm focus:outline-none focus:ring-2 focus:ring-gold"></textarea>
+          </div>
+          <button id="teamMessagePostBtn" type="button" onclick="postTeamMessage()" class="w-full rounded-xl bg-pine text-white px-4 py-2.5 text-sm font-semibold hover:bg-pine-light">Post Message</button>
+          <p id="teamMessageStatus" class="text-xs text-pine/60 min-h-[1rem]" role="status" aria-live="polite"></p>
+        </div>
+      </aside>
 
       </div>
     </div>
@@ -1615,8 +1628,8 @@
         status.textContent = 'Please enter a name between 2 and 30 characters.';
         nameField?.focus(); return;
       }
-      if (!message || message.length > 240) {
-        status.textContent = 'Please keep your message between 1 and 240 characters.';
+      if (!message || message.length > 100) {
+        status.textContent = 'Please keep your message between 1 and 100 characters.';
         messageField?.focus(); return;
       }
       postingTeamMessage = true;
@@ -1708,6 +1721,15 @@
 
     refreshPublicTeams();
     refreshTeamMessages();
+    const teamMessageTextField = document.getElementById('teamMessageText');
+    const teamMessageCount = document.getElementById('teamMessageCount');
+    if (teamMessageTextField && teamMessageCount) {
+      const updateTeamMessageCount = () => {
+        teamMessageCount.textContent = teamMessageTextField.value.length + '/100';
+      };
+      teamMessageTextField.addEventListener('input', updateTeamMessageCount);
+      updateTeamMessageCount();
+    }
     setInterval(() => {
       if (!document.getElementById('teamChoices').classList.contains('hidden')) {
         refreshPublicTeams();
