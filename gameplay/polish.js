@@ -3,7 +3,7 @@
   'use strict';
   const BaseRenderer=window.HarbourRenderer, BaseAudio=window.HarbourAudio;
   if(!BaseRenderer||!BaseAudio)return;
-  const VERSION='2026.09.28-continuous-scroll.4';
+  const VERSION='2026.09.28-cinematic-dissolve.5';
   const SCENES=['auckland','queenstown','milford','christchurch','dunedin','wellington'];
   class CleanRenderer extends BaseRenderer {
     constructor(canvas,engine,reduced){
