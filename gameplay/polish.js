@@ -3,16 +3,18 @@
   'use strict';
   const BaseRenderer=window.HarbourRenderer, BaseAudio=window.HarbourAudio;
   if(!BaseRenderer||!BaseAudio)return;
-  const VERSION='2026.09.28-six-panorama.3';
+  const VERSION='2026.09.28-continuous-scroll.4';
   const SCENES=['auckland','queenstown','milford','christchurch','dunedin','wellington'];
   class CleanRenderer extends BaseRenderer {
     constructor(canvas,engine,reduced){
       super(canvas,engine,reduced);
       this.sceneImages={};this.sceneReady=false;this.sceneLoaded=0;
       for(const id of SCENES){
-        const image=new Image();
-        image.onload=()=>{this.sceneLoaded++;this.sceneReady=this.sceneLoaded===SCENES.length;this.draw();};
-        image.onerror=()=>console.warn('Illustrated scene unavailable:',id);
+        const image=new Image();let settled=false;
+        image.decoding='async';
+        const finish=()=>{if(settled)return;settled=true;this.sceneLoaded++;this.sceneReady=this.sceneLoaded===SCENES.length;if(this.sceneReady)this.draw();};
+        image.onload=()=>{const decoded=typeof image.decode==='function'?image.decode():Promise.resolve();decoded.catch(()=>{}).then(finish);};
+        image.onerror=()=>{console.warn('Illustrated scene unavailable:',id);finish();};
         image.src='/gameplay/art/scenes/'+id+'.webp?v='+VERSION;
         this.sceneImages[id]=image;
       }
