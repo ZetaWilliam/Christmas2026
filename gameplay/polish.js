@@ -3,15 +3,19 @@
   'use strict';
   const BaseRenderer=window.HarbourRenderer, BaseAudio=window.HarbourAudio;
   if(!BaseRenderer||!BaseAudio)return;
-  const VERSION='2026.09.28-approved-panorama.2';
+  const VERSION='2026.09.28-six-panorama.3';
+  const SCENES=['auckland','queenstown','milford','christchurch','dunedin','wellington'];
   class CleanRenderer extends BaseRenderer {
     constructor(canvas,engine,reduced){
       super(canvas,engine,reduced);
-      this.sceneReady=false;
-      this.scene=new Image();
-      this.scene.onload=()=>{this.sceneReady=true;this.draw();};
-      this.scene.onerror=()=>console.warn('Illustrated harbour unavailable; using fallback.');
-      this.scene.src='/gameplay/art/coast-panorama.webp?v='+VERSION;
+      this.sceneImages={};this.sceneReady=false;this.sceneLoaded=0;
+      for(const id of SCENES){
+        const image=new Image();
+        image.onload=()=>{this.sceneLoaded++;this.sceneReady=this.sceneLoaded===SCENES.length;this.draw();};
+        image.onerror=()=>console.warn('Illustrated scene unavailable:',id);
+        image.src='/gameplay/art/scenes/'+id+'.webp?v='+VERSION;
+        this.sceneImages[id]=image;
+      }
     }
     cut(rect){
       const c=document.createElement('canvas');c.width=rect[2];c.height=rect[3];
@@ -50,12 +54,7 @@
       }
       ctx.putImageData(im,0,0);return c;
     }
-    palette(){
-      if(this.reduced)return{top:'#C8E7F2',horizon:'#EDF5F1',water:'#549EAE',night:0,label:'Day'};
-      const phase=(this.eng.time%72)/18,i=Math.floor(phase),f=(1-Math.cos((phase-i)*Math.PI))/2;
-      const P=[['#C8E7F2','#EDF5F1','#549EAE'],['#EAB995','#F4DCC0','#668F9F'],['#243B56','#526F86','#315F79'],['#CBD3E6','#EFEBE4','#729CAF']];
-      const a=P[i],b=P[(i+1)%4];return{top:this.mix(a[0],b[0],f),horizon:this.mix(a[1],b[1],f),water:this.mix(a[2],b[2],f),night:Math.max(0,Math.sin(Math.PI*phase/2-Math.PI/2)),label:['Day → sunset','Sunset → night','Night → dawn','Dawn → day'][i]};
-    }
+    palette(){return BaseRenderer.prototype.palette.call(this);}
     landscape(p){
       const c=this.ctx,W=this.eng.width;
       if(!this.sceneReady){this.fallback(p);return;}
