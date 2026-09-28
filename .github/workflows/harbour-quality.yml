@@ -1,7 +1,7 @@
 name: Harbour quality checks
 on:
   push:
-    branches: [main]
+    branches: [main, feat/message-board-admin]
   workflow_dispatch:
 permissions:
   contents: read
