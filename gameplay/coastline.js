@@ -26,8 +26,8 @@
   }
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
-  const VERSION='2026.09.28-cinematic-dissolve.10';
-  const HORIZON=178,PARALLAX=.027,SEGMENT=900,DISSOLVE_FRACTION=.28,PAN_FRACTION=.065,TAU=Math.PI*2;
+  const VERSION='2026.09.29-scene-rotation.11';
+  const HORIZON=178,SCENE_DISTANCE=900,ROUTE_DISTANCE=SCENE_DISTANCE*6,DISSOLVE_FRACTION=.28,PAN_FRACTION=.065,TAU=Math.PI*2;
   const SCENES=Object.freeze([
     Object.freeze({id:'auckland',label:'Auckland · Tāmaki Makaurau'}),
     Object.freeze({id:'queenstown',label:'Queenstown · Tāhuna'}),
@@ -36,16 +36,17 @@
     Object.freeze({id:'dunedin',label:'Dunedin · Ōtepoti'}),
     Object.freeze({id:'wellington',label:'Wellington · Te Whanganui-a-Tara'})
   ]);
-  const ROUTE_SPAN=SEGMENT*SCENES.length;
   const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
   const smoother=t=>{t=clamp(t,0,1);return t*t*t*(t*(t*6-15)+10);};
   const hash=(i,s=0)=>{let x=Math.imul(i|0,374761393)^Math.imul(s|0,668265263);x=Math.imul(x^(x>>>13),1274126177);return((x^(x>>>16))>>>0)/4294967295;};
-  function routeX(x){const n=Number.isFinite(x)?x:0;return ((n%ROUTE_SPAN)+ROUTE_SPAN)%ROUTE_SPAN;}
-  function rawCamera(world,reduced=false){return reduced?0:Math.max(0,Number.isFinite(world)?world:0)*PARALLAX;}
-  function camera(world,reduced=false){return reduced?0:routeX(rawCamera(world,false));}
+  function routeDistance(world,reduced=false){
+    if(reduced)return 0;
+    const d=Math.max(0,Number.isFinite(world)?world:0)/10;
+    return ((d%ROUTE_DISTANCE)+ROUTE_DISTANCE)%ROUTE_DISTANCE;
+  }
   function sceneState(world,reduced=false){
     if(reduced)return Object.freeze({index:0,next:1,local:0,dissolve:0,current:SCENES[0],nextScene:SCENES[1]});
-    const scroll=camera(world,false),pos=scroll/SEGMENT,index=Math.min(SCENES.length-1,Math.floor(pos)),local=pos-index;
+    const route=routeDistance(world,false),pos=route/SCENE_DISTANCE,index=Math.min(SCENES.length-1,Math.floor(pos)),local=pos-index;
     const dissolve=smoother((local-(1-DISSOLVE_FRACTION))/DISSOLVE_FRACTION);
     return Object.freeze({index,next:(index+1)%SCENES.length,local,dissolve,current:SCENES[index],nextScene:SCENES[(index+1)%SCENES.length]});
   }
@@ -149,5 +150,5 @@
       c.restore();
     }
   }
-  return Object.freeze({version:VERSION,SCENES,ROUTE_SPAN,SEGMENT,DISSOLVE_FRACTION,PAN_FRACTION,PARALLAX,routeX,rawCamera,camera,sceneState,sceneIndex,CoastLayer});
+  return Object.freeze({version:VERSION,SCENES,SCENE_DISTANCE,ROUTE_DISTANCE,DISSOLVE_FRACTION,PAN_FRACTION,routeDistance,sceneState,sceneIndex,CoastLayer});
 });
