@@ -55,8 +55,8 @@ const sceneHashes={
   auckland:'2cc0531da6d51cebaa3b6504567c0e532c437bac148639743ba57456dd2bf59a',
   queenstown:'ad863dac256512f76c8a970144ff004853c4ebcff588e415bdefc0fc31f33602',
   milford:'606417594644ced1dc22bc17cf0a17bdf661d864e51b2534005eb1f7edac4f38',
-  christchurch:'17e3d1f97a7f844a152e4a6242e45677fe7d76b2af46cceaa8cdfdd9f9d0ecc4',
-  dunedin:'601501da416444ba6734191cd0931fd82739cf638349b9d903af1634871b374d',
+  christchurch:'514811a1b2dac6ec3e4b10854e293d5cbec8bea0d4f71c958550ae06d0176b1d',
+  dunedin:'2dd4f5c49e320059a7f218c747958ded855c74eb4bd9d95496868c30aa9f2476',
   wellington:'e55977f1a40413a6328f1e1666761ecf89b2867f8fce9cecb5a900e9a0f743ce'
 };
 fs.mkdirSync('public/gameplay/art/scenes',{recursive:true});
