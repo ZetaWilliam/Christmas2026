@@ -44,17 +44,17 @@
   }
   const tiers=[
     {min:0,id:'explorer',band:'low',name:'Harbour Explorer'},
-    {min:500,id:'cruiser',band:'low',name:'Summer Cruiser'},
-    {min:1200,id:'skipper',band:'mid',name:'Waitematā Skipper'},
-    {min:2000,id:'hero',band:'mid',name:'Coastal Explorer'},
-    {min:3000,id:'legend',band:'high',name:'Harbour Hero'}
+    {min:1000,id:'cruiser',band:'low',name:'Summer Cruiser'},
+    {min:2500,id:'skipper',band:'mid',name:'Waitematā Skipper'},
+    {min:5000,id:'hero',band:'mid',name:'Coastal Explorer'},
+    {min:8000,id:'legend',band:'high',name:'Harbour Hero'}
   ];
   const bandMeta=Object.freeze({
     low:{label:'Starter Tier',headline:'Keep Going',hint:'The swell was rough this time — try another run.',sub:'Build your rhythm and watch the hazard markers.',secondary:'Back to Event'},
     mid:{label:'Coastal Explorer',headline:'Great Run',hint:'You made strong progress along the coast.',sub:'Keep Going Further',secondary:'Share'},
     high:{label:'Top Tier',headline:'Harbour Hero',hint:'You reached the top celebration tier.',sub:'A standout run along the coast.',secondary:'View Leaderboard'}
   });
-  const scoreMilestones=[500,1200,2000,3000];
+  const scoreMilestones=[1000,2500,5000,8000];
 
   function milestoneMarkup(value){
     const nextIndex=scoreMilestones.findIndex(m=>value<m);
