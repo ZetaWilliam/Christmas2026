@@ -22,7 +22,7 @@
   }
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
-  const VERSION='2026.09.28-horizon-fixed.4';
+  const VERSION='2026.09.28-horizon-fixed.5';
   const HORIZON=178,PARALLAX=.105;
   const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
   const smooth=t=>{t=clamp(t,0,1);return t*t*(3-2*t);};
@@ -53,7 +53,7 @@
     return h;
   }
   function camera(world,reduced=false){return reduced?0:Math.max(0,Number.isFinite(world)?world:0)*PARALLAX;}
-  const PANORAMA=Object.freeze({sourceWidth:1280,sourceHeight:426,waterlineY:322,width:1050,startX:-45,depth:.36});
+  const PANORAMA=Object.freeze({sourceWidth:1080,sourceHeight:360,waterlineY:272,width:1050,startX:-45,depth:.36});
   function panoramaPlacement(world,reduced=false){
     const scale=PANORAMA.width/PANORAMA.sourceWidth;
     const height=PANORAMA.sourceHeight*scale;
