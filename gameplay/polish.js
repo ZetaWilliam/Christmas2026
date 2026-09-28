@@ -3,7 +3,7 @@
   'use strict';
   const BaseRenderer=window.HarbourRenderer, BaseAudio=window.HarbourAudio;
   if(!BaseRenderer||!BaseAudio)return;
-  const VERSION='2026.09.23-clean.3';
+  const VERSION='2026.09.28-crisp-panorama.1';
   class CleanRenderer extends BaseRenderer {
     constructor(canvas,engine,reduced){
       super(canvas,engine,reduced);
@@ -11,7 +11,7 @@
       this.scene=new Image();
       this.scene.onload=()=>{this.sceneReady=true;this.draw();};
       this.scene.onerror=()=>console.warn('Illustrated harbour unavailable; using fallback.');
-      this.scene.src='/gameplay/art/coast.webp?v='+VERSION;
+      this.scene.src='/gameplay/art/coast-panorama.webp?v='+VERSION;
     }
     cut(rect){
       const c=document.createElement('canvas');c.width=rect[2];c.height=rect[3];
