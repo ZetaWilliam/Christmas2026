@@ -295,10 +295,15 @@
     drawSky(c,eng,p,reduced){
       const W=eng.width,scroll=camera(eng.world,reduced);
       if(p.night<.72){
-        const warm=Math.max(0,.65-p.night),cell=820;
-        for(let i=Math.floor(scroll*.18/cell)-2;i<=Math.floor((scroll*.18+W)/cell)+2;i++){
-          const x=i*cell-scroll*.18+hash(i,93)*150,y=18+hash(i,94)*44,w=310+hash(i,95)*300,h=36+hash(i,96)*30;
-          longCloud(c,x,y,w,h,(.22+hash(i,97)*.18)*(1-p.night*.88),warm>.4&&hash(i,98)>.78);
+        const warm=Math.max(0,.65-p.night),skySpan=ROUTE_SPAN*.18,skyScroll=scroll*.18,count=12;
+        for(let i=0;i<count;i++){
+          const base=i*(skySpan/count)+hash(i,93)*72;
+          const y=18+hash(i,94)*44,w=310+hash(i,95)*300,h=36+hash(i,96)*30;
+          for(const offset of [-1,0,1]){
+            const x=base+offset*skySpan-skyScroll;
+            if(x+w<-80||x>W+80)continue;
+            longCloud(c,x,y,w,h,(.22+hash(i,97)*.18)*(1-p.night*.88),warm>.4&&hash(i,98)>.78);
+          }
         }
       }
       if(p.night>.16&&!reduced){
