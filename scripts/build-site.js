@@ -47,7 +47,8 @@ const coast=Buffer.from(fs.readFileSync('gameplay/art/coast.b64','utf8').trim(),
 if(coast.toString('ascii',0,4)!=='RIFF'||coast.toString('ascii',8,12)!=='WEBP')throw Error('Invalid coast artwork');
 if(crypto.createHash('sha256').update(coast).digest('hex')!=='dd14f17cb595a37a5ea03fdd0173554ee195e7a4e4629ce042f024df137fcdc9')throw Error('Coast artwork integrity check failed');
 fs.writeFileSync('public/gameplay/art/coast.webp',coast);
-const panoramaParts=['gameplay/art/coast-panorama.0.b64','gameplay/art/coast-panorama.1.b64'];\nconst panorama=Buffer.from(panoramaParts.map(f=>fs.readFileSync(f,'utf8').trim()).join(''),'base64');
+const panoramaParts=['gameplay/art/coast-panorama.0.b64','gameplay/art/coast-panorama.1.b64'];
+const panorama=Buffer.from(panoramaParts.map(f=>fs.readFileSync(f,'utf8').trim()).join(''),'base64');
 if(panorama.toString('ascii',0,4)!=='RIFF'||panorama.toString('ascii',8,12)!=='WEBP')throw Error('Invalid crisp panorama artwork');
 if(crypto.createHash('sha256').update(panorama).digest('hex')!=='9d1dde636f3b0ff15f7683e7829071014243687cb8d1c96b8c95637fa7800f02')throw Error('Crisp panorama integrity check failed');
 fs.writeFileSync('public/gameplay/art/coast-panorama.webp',panorama);
