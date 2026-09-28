@@ -3,7 +3,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
 const coast=require('../gameplay/coastline.js');
 assert.equal(coast.version,'2026.09.28-route-coast.2');
 assert.equal(coast.LANDMARKS.length,10);
-assert.equal(new Set(coast.LANDMARKS.map(o=>o.id)).size,9);
+assert.equal(new Set(coast.LANDMARKS.map(o=>o.id)).size,10);
 assert.deepEqual(coast.LANDMARKS.map(o=>o.id),[
   'city','bridge','rangitoto','coromandel','wellington','kaikoura','banks','otago','nugget','fiordland'
 ]);
