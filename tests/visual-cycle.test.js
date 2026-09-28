@@ -25,8 +25,8 @@ assert(rendererSource.includes("c.fillStyle='#07162B'"),'Night lighting uses a f
 assert(rendererSource.includes("c.globalAlpha=p.warm*.055"),'Dawn/dusk warmth is also applied to the whole frame');
 
 const runner=fs.readFileSync('gameplay/runner.js','utf8');
-assert(runner.includes("{min:8000,id:'legend',band:'high',name:'Harbour Hero'}"),'Top tier must start at 8000');
-assert(runner.includes('const scoreMilestones=[1000,2500,5000,8000];'),'Visible score milestones must end at 8000');
-assert(!runner.includes("{min:3000,id:'legend'"),'Legacy 3000-point top tier must not return');
+assert(runner.includes("{min:20000,id:'legend',band:'high',name:'Harbour Hero'}"),'Top tier must start at 20000');
+assert(runner.includes('const scoreMilestones=[2000,5000,10000,20000];'),'Visible score milestones must end at 20000');
+assert(!runner.includes("{min:8000,id:'legend'"),'Legacy 8000-point top tier must not return');
 
-console.log(JSON.stringify({cycleSeconds:cycle.seconds,darkShare:Number(darkShare.toFixed(3)),topTier:8000,wholeSceneLighting:true}));
+console.log(JSON.stringify({cycleSeconds:cycle.seconds,darkShare:Number(darkShare.toFixed(3)),topTier:20000,wholeSceneLighting:true}));
