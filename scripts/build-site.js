@@ -7,7 +7,7 @@ const source=fs.readFileSync('index.html','utf8');
 const begin='    // Santa Harbour Dash — Dino-style Auckland endless runner',end='    // 微粒动画';
 const start=source.indexOf(begin),finish=source.indexOf(end,start);
 if(start<0||finish<=start||source.indexOf(begin,start+begin.length)>=0)throw Error('Cannot isolate legacy game. Source left unchanged.');
-const version='2026.09.28-horizon-fixed.7';
+const version='2026.09.28-horizon-fixed.8';
 let html=source.slice(0,start)+'    // The isolated Harbour Dash modules are loaded below.\n'+source.slice(finish);
 const gameMarker='  <!-- Santa Harbour Dash: Auckland Christmas endless runner -->',rsvpMarker='  <!-- 报名表单 -->',modalMarker='  <!-- 报名成功弹窗与电子票 -->';
 const a=html.indexOf(gameMarker),b=html.indexOf(rsvpMarker),c=html.indexOf(modalMarker);
@@ -47,9 +47,9 @@ const coast=Buffer.from(fs.readFileSync('gameplay/art/coast.b64','utf8').trim(),
 if(coast.toString('ascii',0,4)!=='RIFF'||coast.toString('ascii',8,12)!=='WEBP')throw Error('Invalid coast artwork');
 if(crypto.createHash('sha256').update(coast).digest('hex')!=='dd14f17cb595a37a5ea03fdd0173554ee195e7a4e4629ce042f024df137fcdc9')throw Error('Coast artwork integrity check failed');
 fs.writeFileSync('public/gameplay/art/coast.webp',coast);
-const panorama=fs.readFileSync('gameplay/art/coast-panorama.webp');
+const panorama=Buffer.from(fs.readFileSync('gameplay/art/coast-approved.b64','utf8').trim(),'base64');
 if(panorama.toString('ascii',0,4)!=='RIFF'||panorama.toString('ascii',8,12)!=='WEBP')throw Error('Invalid approved panorama artwork');
-if(crypto.createHash('sha256').update(panorama).digest('hex')!=='0f51798520298962ef149bae2da0743eddca00fa61f41034081d3d1ecd6a21bd')throw Error('Approved panorama integrity check failed');
+if(crypto.createHash('sha256').update(panorama).digest('hex')!=='19b24eec043db1fcdc30cd7be479be1b8803b0cd3882155b06781a7c9907a4b3')throw Error('Approved panorama integrity check failed');
 fs.writeFileSync('public/gameplay/art/coast-panorama.webp',panorama);
 // Serve the credited recordings from our own origin; never hotlink during gameplay.
 const manifest=JSON.parse(fs.readFileSync('gameplay/music/manifest.json','utf8'));
