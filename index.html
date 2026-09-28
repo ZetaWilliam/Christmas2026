@@ -1008,7 +1008,18 @@
             <h3 id="teamMessageBoardTitle" class="font-serif text-2xl font-bold text-pine mt-0.5">Team Message Board</h3>
             <p class="text-xs text-pine/65 mt-1 leading-relaxed">A shared space to read notes, find teammates, and leave a quick hello. <strong>Please keep it friendly and respectful.</strong></p>
           </div>
-          <button type="button" onclick="refreshTeamMessages()" class="shrink-0 rounded-lg border border-pine/20 bg-[#F5F7F3] px-3 py-2 text-xs font-semibold text-pine hover:bg-sand">Refresh</button>
+          <div class="shrink-0 flex flex-col gap-2">
+            <button type="button" onclick="refreshTeamMessages()" class="rounded-lg border border-pine/20 bg-[#F5F7F3] px-3 py-2 text-xs font-semibold text-pine hover:bg-sand">Refresh</button>
+            <button id="teamMessageAdminBtn" type="button" onclick="toggleMessageBoardAdmin()" class="rounded-lg border border-pine/20 bg-white px-3 py-2 text-[11px] font-semibold text-pine/70 hover:bg-sand">Organizer admin</button>
+          </div>
+        </div>
+
+        <div id="teamMessageAdminTools" class="hidden mb-3 rounded-xl border border-cranberry/20 bg-cranberry/5 px-3 py-2.5 flex items-center justify-between gap-3">
+          <div>
+            <div class="text-[10px] uppercase tracking-[0.12em] font-bold text-cranberry">Organizer mode</div>
+            <div class="text-[10px] text-pine/60">Delete individual messages or clear the board.</div>
+          </div>
+          <button type="button" onclick="clearAllTeamMessages()" class="shrink-0 rounded-lg border border-cranberry/25 bg-white px-3 py-1.5 text-[11px] font-semibold text-cranberry hover:bg-cranberry/5">Clear all</button>
         </div>
 
         <section class="rounded-2xl border border-pine/15 bg-[#F7F5EC] overflow-hidden" aria-label="Community messages">
@@ -1593,6 +1604,90 @@
     let selectedTeamId = null;
     let publicTeams = [];
     let postingTeamMessage = false;
+    let messageBoardAdminKey = '';
+    let messageBoardAdmin = false;
+
+    function setMessageBoardAdminUI(active) {
+      messageBoardAdmin = !!active;
+      const tools = document.getElementById('teamMessageAdminTools');
+      const button = document.getElementById('teamMessageAdminBtn');
+      if (tools) tools.classList.toggle('hidden', !messageBoardAdmin);
+      if (button) button.textContent = messageBoardAdmin ? 'Admin on · Lock' : 'Organizer admin';
+    }
+
+    async function validateMessageBoardAdminKey(key, showError = true) {
+      try {
+        const response = await fetch('/api/messages', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({action:'admin-auth', adminKey:key})
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.admin) throw new Error(data.error || 'Could not enable organizer mode.');
+        messageBoardAdminKey = key;
+        sessionStorage.setItem('teamMessageAdminKey', key);
+        setMessageBoardAdminUI(true);
+        await refreshTeamMessages();
+        return true;
+      } catch (error) {
+        messageBoardAdminKey = '';
+        sessionStorage.removeItem('teamMessageAdminKey');
+        setMessageBoardAdminUI(false);
+        if (showError) alert(error.message || 'Could not enable organizer mode.');
+        return false;
+      }
+    }
+
+    async function toggleMessageBoardAdmin() {
+      if (messageBoardAdmin) {
+        messageBoardAdminKey = '';
+        sessionStorage.removeItem('teamMessageAdminKey');
+        setMessageBoardAdminUI(false);
+        await refreshTeamMessages();
+        return;
+      }
+      const key = window.prompt('Organizer admin key:');
+      if (!key) return;
+      await validateMessageBoardAdminKey(key, true);
+    }
+
+    async function deleteTeamMessage(id) {
+      if (!messageBoardAdmin || !messageBoardAdminKey) return;
+      if (!window.confirm('Delete this message?')) return;
+      const status = document.getElementById('teamMessageStatus');
+      try {
+        const response = await fetch('/api/messages', {
+          method:'DELETE',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({adminKey:messageBoardAdminKey, id:Number(id)})
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Unable to delete this message.');
+        renderTeamMessages(data.messages || []);
+        if (status) status.textContent = 'Message deleted.';
+      } catch (error) {
+        if (status) status.textContent = error.message || 'Unable to delete this message.';
+      }
+    }
+
+    async function clearAllTeamMessages() {
+      if (!messageBoardAdmin || !messageBoardAdminKey) return;
+      if (!window.confirm('Clear every message from the board? This cannot be undone.')) return;
+      const status = document.getElementById('teamMessageStatus');
+      try {
+        const response = await fetch('/api/messages', {
+          method:'DELETE',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({adminKey:messageBoardAdminKey, clearAll:true})
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Unable to clear the board.');
+        renderTeamMessages(data.messages || []);
+        if (status) status.textContent = 'Message board cleared.';
+      } catch (error) {
+        if (status) status.textContent = error.message || 'Unable to clear the board.';
+      }
+    }
 
     function renderTeamMessages(messages) {
       const list = document.getElementById('teamMessageList');
@@ -1609,9 +1704,12 @@
         const stamp = when && !Number.isNaN(when.getTime())
           ? when.toLocaleString([], {day:'numeric', month:'short', hour:'numeric', minute:'2-digit'})
           : '';
+        const adminDelete = messageBoardAdmin
+          ? '<button type="button" onclick="deleteTeamMessage(' + Number(item.id) + ')" class="text-[10px] font-semibold text-cranberry hover:underline">Delete</button>'
+          : '';
         return '<article class="rounded-xl bg-white border border-pine/10 px-3.5 py-3 shadow-sm">' +
           '<div class="flex items-baseline justify-between gap-2"><strong class="text-xs text-pine break-words">' + escapeHtml(item.name) + '</strong>' +
-          '<span class="text-[10px] text-pine/40 shrink-0">' + escapeHtml(stamp) + '</span></div>' +
+          '<div class="flex items-center gap-2"><span class="text-[10px] text-pine/40 shrink-0">' + escapeHtml(stamp) + '</span>' + adminDelete + '</div></div>' +
           '<p class="text-xs text-pine/75 mt-1 leading-relaxed break-words">' + escapeHtml(item.message) + '</p>' +
           (index === 0 ? '<span class="inline-block mt-2 text-[9px] uppercase tracking-wide font-bold text-cranberry/70">Newest</span>' : '') +
           '</article>';
@@ -1740,6 +1838,9 @@
 
     refreshPublicTeams();
     refreshTeamMessages();
+    const savedMessageAdminKey = sessionStorage.getItem('teamMessageAdminKey');
+    if (savedMessageAdminKey) validateMessageBoardAdminKey(savedMessageAdminKey, false);
+    else setMessageBoardAdminUI(false);
     const teamMessageTextField = document.getElementById('teamMessageText');
     const teamMessageCount = document.getElementById('teamMessageCount');
     if (teamMessageTextField && teamMessageCount) {
