@@ -22,7 +22,7 @@
   }
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
-  const VERSION='2026.09.28-crisp-panorama.3';
+  const VERSION='2026.09.28-horizon-fixed.4';
   const HORIZON=178,PARALLAX=.105;
   const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
   const smooth=t=>{t=clamp(t,0,1);return t*t*(3-2*t);};
@@ -53,6 +53,13 @@
     return h;
   }
   function camera(world,reduced=false){return reduced?0:Math.max(0,Number.isFinite(world)?world:0)*PARALLAX;}
+  const PANORAMA=Object.freeze({sourceWidth:1280,sourceHeight:426,waterlineY:322,width:1050,startX:-45,depth:.36});
+  function panoramaPlacement(world,reduced=false){
+    const scale=PANORAMA.width/PANORAMA.sourceWidth;
+    const height=PANORAMA.sourceHeight*scale;
+    const y=HORIZON-PANORAMA.waterlineY*scale;
+    return Object.freeze({x:PANORAMA.startX-camera(world,reduced)*PANORAMA.depth,y,width:PANORAMA.width,height,scale});
+  }
   function layout(world,width,reduced=false){
     const scroll=camera(world,reduced);
     return LANDMARKS.map(o=>({...o,screenX:o.x-scroll}))
@@ -248,20 +255,23 @@
     }
     draw(c,eng,p,image,reduced=false){
       const W=eng.width,scroll=camera(eng.world,reduced);
-      c.save();c.beginPath();c.rect(0,0,W,320);c.clip();
+      c.save();c.beginPath();c.rect(0,0,W,HORIZON+4);c.clip();
 
       // Continuous procedural base remains underneath so the Auckland plate can leave the frame without a seam.
       const sky=c.createLinearGradient(0,0,0,HORIZON);sky.addColorStop(0,p.top);sky.addColorStop(1,p.horizon);c.fillStyle=sky;c.fillRect(0,0,W,HORIZON+4);
       this.drawSky(c,eng,p,reduced);this.drawTerrain(c,eng.world,W,p,reduced);
 
-      // New high-resolution Auckland plate: drawn once, unmirrored and without blur/saturation filters.
-      // The dynamic ocean is painted later by Renderer.ocean(), so its lower half is naturally covered.
+      // Approved Auckland panorama: preserve its aspect ratio and pin its painted shoreline
+      // to the gameplay horizon. The previous 1840x320 stretch pushed the skyline below water.
       if(this.prepare(image)){
-        const plateW=1840,plateH=320,x=36-scroll*.98;
-        if(x<W&&x+plateW>0){
-          c.save();c.globalAlpha=p.night>.5?.82:.98;c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
-          c.drawImage(this.image,x,0,plateW,plateH);
-          if(p.night>.04){c.fillStyle='rgba(20,42,67,'+(p.night*.32)+')';c.fillRect(Math.max(0,x),0,Math.min(W,x+plateW)-Math.max(0,x),HORIZON+4);}
+        const plate=panoramaPlacement(eng.world,reduced);
+        if(plate.x<W&&plate.x+plate.width>0){
+          c.save();c.globalAlpha=p.night>.5?.84:1;c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
+          c.drawImage(this.image,plate.x,plate.y,plate.width,plate.height);
+          if(p.night>.04){
+            const left=Math.max(0,plate.x),right=Math.min(W,plate.x+plate.width);
+            if(right>left){c.fillStyle='rgba(20,42,67,'+(p.night*.30)+')';c.fillRect(left,0,right-left,HORIZON+4);}
+          }
           c.restore();
         }
       }
@@ -277,5 +287,5 @@
       c.restore();
     }
   }
-  return Object.freeze({version:VERSION,CoastLayer,LANDMARKS,layout,camera,height,connectedHeight,noise,animePlate,longCloud,constellation,bridgeMask,rowBackdrop});
+  return Object.freeze({version:VERSION,CoastLayer,LANDMARKS,layout,camera,panoramaPlacement,PANORAMA,height,connectedHeight,noise,animePlate,longCloud,constellation,bridgeMask,rowBackdrop});
 });
