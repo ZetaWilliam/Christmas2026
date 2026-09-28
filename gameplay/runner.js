@@ -43,16 +43,68 @@
     }catch(_){}
   }
   const tiers=[
-    {min:0,id:'explorer',name:'Harbour Explorer',title:'A good day on the water',hint:'Take a breath, watch the warning markers, and enjoy another voyage.'},
-    {min:400,id:'cruiser',name:'Summer Cruiser',title:'Finding your sea legs!',hint:'A smooth start. Keep your hops steady and hold Duck for the low gulls.'},
-    {min:900,id:'skipper',name:'Waitematā Skipper',title:'Beautifully navigated!',hint:'Nice timing! Keep collecting blooms to build your next combo.'},
-    {min:1800,id:'hero',name:'Harbour Hero',title:'You made waves!',hint:'Sharp reactions and a lovely haul of blooms. A run worth sharing.'},
-    {min:3200,id:'legend',name:'Harbour Legend',title:'What a voyage!',hint:'An outstanding harbour run. That is a score to celebrate.'}
+    {min:0,id:'explorer',band:'low',name:'Harbour Explorer'},
+    {min:500,id:'cruiser',band:'low',name:'Summer Cruiser'},
+    {min:1200,id:'skipper',band:'mid',name:'Waitematā Skipper'},
+    {min:2000,id:'hero',band:'mid',name:'Coastal Explorer'},
+    {min:3000,id:'legend',band:'high',name:'Harbour Hero'}
   ];
-  function celebrate(result){const tier=tiers.filter(t=>result.score>=t.min).at(-1),level=tiers.indexOf(tier),record=result.score>best;art.result=tier;resultCard.dataset.tier=tier.id;resultCard.setAttribute('aria-label',tier.name+' — '+result.score+' points');resultCard.classList.remove('runner-result-enter');void resultCard.offsetWidth;resultCard.classList.add('runner-result-enter');resultCard.innerHTML='<div class="runner-result-label">'+tier.name+(record?' <span>NEW PERSONAL BEST</span>':'')+'</div><h3>'+tier.title+'</h3><div class="runner-result-score" id="runnerResultScore">0</div><p>'+tier.hint+'</p><div class="runner-result-stats"><span><b>'+result.distance+'</b>distance</span><span><b>'+result.flowers+'</b>blooms</span><span><b>'+result.goldenFlowers+'</b>golden</span><span><b>×'+result.maxCombo+'</b>best combo</span></div><div class="runner-result-actions"><button type="button" class="runner-result-replay">Another voyage →</button></div>';
+  const bandMeta=Object.freeze({
+    low:{label:'Starter Tier',headline:'Keep Going',hint:'The swell was rough this time — try another run.',sub:'Build your rhythm and watch the hazard markers.',secondary:'Back to Event'},
+    mid:{label:'Coastal Explorer',headline:'Great Run',hint:'You made strong progress along the coast.',sub:'Keep Going Further',secondary:'Share'},
+    high:{label:'Top Tier',headline:'Harbour Hero',hint:'You reached the top celebration tier.',sub:'A standout run along the coast.',secondary:'View Leaderboard'}
+  });
+  const scoreMilestones=[500,1200,2000,3000];
+
+  function milestoneMarkup(value){
+    const nextIndex=scoreMilestones.findIndex(m=>value<m);
+    const currentIndex=nextIndex<0?scoreMilestones.length-1:nextIndex;
+    return '<div class="runner-result-progress" aria-label="Score milestones">'+scoreMilestones.map((m,i)=>{
+      const complete=value>=m;
+      const current=i===currentIndex;
+      return '<div class="runner-result-milestone '+(complete?'is-complete ':'')+(current?'is-current':'')+'">'+
+        '<span class="runner-result-dot" aria-hidden="true">'+(complete&&!current?'✓':'')+'</span>'+
+        '<span class="runner-result-threshold">'+m.toLocaleString()+'</span></div>';
+    }).join('')+'</div>';
+  }
+
+  async function shareResult(result,headline){
+    const shareData={title:'Harbour Dash · '+headline,text:headline+' — '+result.score.toLocaleString()+' points',url:window.location.href.split('#')[0]+'#game'};
+    try{
+      if(navigator.share){await navigator.share(shareData);return;}
+      await navigator.clipboard.writeText(shareData.text+' · '+shareData.url);
+      status.textContent='Result link copied.';
+    }catch(_){status.textContent='Share cancelled.';}
+  }
+
+  function celebrate(result){
+    const tier=tiers.filter(t=>result.score>=t.min).at(-1),level=tiers.indexOf(tier),record=result.score>best,meta=bandMeta[tier.band];
+    const headline=tier.band==='high'&&record?'New High Score':meta.headline;
+    const tierLabel=tier.band==='high'&&record?'Harbour Hero · '+meta.label:meta.label;
+    art.result={title:headline};
+    resultCard.dataset.tier=tier.id;resultCard.dataset.band=tier.band;
+    resultCard.setAttribute('aria-label',headline+' — '+result.score+' points');
+    resultCard.classList.remove('runner-result-enter');void resultCard.offsetWidth;resultCard.classList.add('runner-result-enter');
+    resultCard.innerHTML=
+      '<div class="runner-result-kicker">'+tierLabel+(record&&tier.band!=='high'?' <span>NEW PERSONAL BEST</span>':'')+'</div>'+
+      '<h3>'+headline+'</h3>'+
+      '<p class="runner-result-hint">'+meta.hint+'</p>'+
+      '<div class="runner-result-scorebox"><span>SCORE</span><div class="runner-result-score" id="runnerResultScore">0</div></div>'+
+      milestoneMarkup(result.score)+
+      '<div class="runner-result-tier"><strong>'+meta.label+'</strong><span>'+meta.sub+'</span></div>'+
+      '<div class="runner-result-stats"><span><b>'+result.distance+'</b>distance</span><span><b>'+result.flowers+'</b>blooms</span><span><b>'+result.goldenFlowers+'</b>golden</span><span><b>×'+result.maxCombo+'</b>best combo</span></div>'+
+      '<div class="runner-result-actions"><button type="button" class="runner-result-replay">Play Again</button><button type="button" class="runner-result-secondary">'+meta.secondary+'</button></div>';
     resultCard.querySelector('.runner-result-replay').addEventListener('click',()=>{if(saving)return;begin();canvas.scrollIntoView({behavior:reduced?'auto':'smooth',block:'center'});});
-    cancelAnimationFrame(resultFrame);const target=resultCard.querySelector('#runnerResultScore'),now=performance.now();function count(t){const p=Math.min(1,(t-now)/750);target.textContent=Math.round(result.score*(1-Math.pow(1-p,3))).toLocaleString();if(p<1)resultFrame=requestAnimationFrame(count);}if(reduced)target.textContent=result.score.toLocaleString();else resultFrame=requestAnimationFrame(count);
-    music.pause();music.effect('result',level,record);if(record){best=result.score;bestEl.textContent='Your best: '+best;try{localStorage.setItem('harbour.personalBest.v2',String(best));}catch(_){}}
+    resultCard.querySelector('.runner-result-secondary').addEventListener('click',()=>{
+      if(tier.band==='low'){document.getElementById('about')?.scrollIntoView({behavior:reduced?'auto':'smooth',block:'start'});}
+      else if(tier.band==='mid'){shareResult(result,headline);}
+      else leaderboard.scrollIntoView({behavior:reduced?'auto':'smooth',block:'center'});
+    });
+    cancelAnimationFrame(resultFrame);const target=resultCard.querySelector('#runnerResultScore'),now=performance.now();
+    function count(t){const p=Math.min(1,(t-now)/720);target.textContent=Math.round(result.score*(1-Math.pow(1-p,3))).toLocaleString();if(p<1)resultFrame=requestAnimationFrame(count);}
+    if(reduced)target.textContent=result.score.toLocaleString();else resultFrame=requestAnimationFrame(count);
+    music.pause();music.effect('result',level,record);
+    if(record){best=result.score;bestEl.textContent='Your best: '+best;try{localStorage.setItem('harbour.personalBest.v2',String(best));}catch(_){}}
   }
   function controls(){const running=eng.state==='running',paused=eng.state==='paused';hop.disabled=!running;duck.disabled=!running;pause.disabled=!running&&!paused;pause.textContent=paused?'Resume':'Pause';start.disabled=running;start.textContent=running?'Running…':paused?'Resume':eng.state==='over'?'Run Again':'Start Run';}
   function resize(){const rect=canvas.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1);canvas.width=Math.max(1,Math.round(rect.width*dpr));canvas.height=Math.max(1,Math.round(rect.height*dpr));draw();}

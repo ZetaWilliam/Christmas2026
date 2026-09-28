@@ -1,11 +1,11 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const coast=require('../gameplay/coastline.js');
-assert.equal(coast.version,'2026.09.27-anime-coast.1');
-assert.equal(coast.LANDMARKS.length,9);
-assert.equal(new Set(coast.LANDMARKS.map(o=>o.id)).size,9);
+assert.equal(coast.version,'2026.09.28-route-coast.2');
+assert.equal(coast.LANDMARKS.length,10);
+assert.equal(new Set(coast.LANDMARKS.map(o=>o.id)).size,10);
 assert.deepEqual(coast.LANDMARKS.map(o=>o.id),[
-  'city','bridge','rangitoto','coromandel','wellington','kaikoura','banks','otago','fiordland'
+  'city','bridge','rangitoto','coromandel','wellington','kaikoura','banks','otago','nugget','fiordland'
 ]);
 let samples=0;
 for(const width of [320,390,640,960,1440]){
@@ -18,15 +18,20 @@ for(const width of [320,390,640,960,1440]){
    assert.equal(o.screenX,o.x-coast.camera(world));
    assert(o.width>0&&o.height>0,'Landmark dimensions stay positive');
    const later=coast.layout(world+1,width).find(x=>x.id===o.id);
-   if(later)assert(Math.abs(later.screenX-o.screenX+.042)<1e-9,'Motion is continuous at route boundaries');
+   if(later)assert(Math.abs(later.screenX-o.screenX+.105)<1e-9,'Motion is continuous at route boundaries');
   }
   for(const id of previous)if(!ids.includes(id))passed.add(id);
   previous.clear();for(const id of ids)previous.add(id);
   samples++;
  }
- assert.equal(passed.size,9,'Every named landmark occurs once along the route');
+ assert.equal(passed.size,10,'Every named landmark occurs once along the route');
  assert.deepEqual(coast.layout(260000,width),[],'No named-landmark repeat at long distances');
  assert.deepEqual(coast.layout(260000,width,true),coast.layout(0,width,true),'Reduced motion is stationary');
+}
+assert(coast.camera(10000)>1000,'The route should advance fast enough for visible landmark changes in a normal run');
+for(let i=1;i<coast.LANDMARKS.length;i++){
+ assert(coast.LANDMARKS[i].x>coast.LANDMARKS[i-1].x,'Landmarks remain in one-way geographic sequence');
+ assert(coast.LANDMARKS[i].x-coast.LANDMARKS[i-1].x<950,'Route spacing should avoid long empty scenic gaps');
 }
 for(const period of [700,1200,1800,2400,4800]){
  let different=0;
@@ -83,4 +88,4 @@ const Updated=win.HarbourRenderer;assert(Updated!==Base);
 for(const method of ['ocean','santa','hazard','reward','particles','overlay'])
  assert.equal(Updated.prototype[method],Base.prototype[method],method+' remains unchanged');
 assert.equal(coast.camera(NaN),0);
-console.log('Coast tests passed: '+samples+' views; 9 one-time landmarks, anime plate, long clouds and constellations.');
+console.log('Coast tests passed: '+samples+' views; 10 one-time landmarks, accelerated route, long white clouds and continuous terrain.');
