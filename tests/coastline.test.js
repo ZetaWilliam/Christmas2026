@@ -2,34 +2,38 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const coast=require('../gameplay/coastline.js');
 
-assert.equal(coast.version,'2026.09.28-cinematic-dissolve.10');
+assert.equal(coast.version,'2026.09.29-scene-rotation.11');
 assert.deepEqual(coast.SCENES.map(s=>s.id),['auckland','queenstown','milford','christchurch','dunedin','wellington']);
 assert.equal(new Set(coast.SCENES.map(s=>s.id)).size,6);
-assert(coast.PARALLAX<=.027,'Boat-linked background panning must remain slow');
-assert(coast.PAN_FRACTION<=.065,'Each full panorama should move only gently within its scene');
-
-const cycleWorld=coast.ROUTE_SPAN/coast.PARALLAX;
-const cycleDistance=cycleWorld/10;
-assert(cycleDistance>=19900&&cycleDistance<=20100,'One full six-scene panorama loop should align with the 20k top-tier journey');
+assert.equal(coast.SCENE_DISTANCE,900,'Each scene should advance after about 900 distance');
+assert.equal(coast.ROUTE_DISTANCE,5400,'All six panoramas should rotate in a 5400-distance loop');
+assert(coast.PAN_FRACTION<=.065,'Each full panorama should still move only gently within its scene');
 
 for(let i=0;i<coast.SCENES.length;i++){
-  const early=(i+.12)*coast.SEGMENT/coast.PARALLAX;
-  const state=coast.sceneState(early);
+  const world=(i*coast.SCENE_DISTANCE+80)*10;
+  const state=coast.sceneState(world);
   assert.equal(state.current.id,coast.SCENES[i].id,'Scene order mismatch at '+i);
   assert.equal(state.nextScene.id,coast.SCENES[(i+1)%coast.SCENES.length].id);
   assert.equal(state.dissolve,0,'Each scene must remain fully readable before the cinematic dissolve');
 }
-assert.equal(coast.sceneState(cycleWorld).current.id,'auckland','Wellington must loop back to Auckland');
-assert.equal(coast.sceneIndex(cycleWorld),0);
-assert.equal(coast.sceneState(cycleWorld*.63,true).current.id,'auckland','Reduced motion keeps Auckland stationary');
+assert.equal(coast.sceneState(coast.ROUTE_DISTANCE*10).current.id,'auckland','Wellington must loop back to Auckland');
+assert.equal(coast.sceneIndex(coast.ROUTE_DISTANCE*10),0);
+assert.equal(coast.sceneState(40000,true).current.id,'auckland','Reduced motion keeps Auckland stationary');
 
 const start=1-coast.DISSOLVE_FRACTION;
-const before=coast.sceneState((start-.01)*coast.SEGMENT/coast.PARALLAX);
-const middle=coast.sceneState((start+coast.DISSOLVE_FRACTION*.5)*coast.SEGMENT/coast.PARALLAX);
-const late=coast.sceneState(.995*coast.SEGMENT/coast.PARALLAX);
+const before=coast.sceneState((start-.01)*coast.SCENE_DISTANCE*10);
+const middle=coast.sceneState((start+coast.DISSOLVE_FRACTION*.5)*coast.SCENE_DISTANCE*10);
+const late=coast.sceneState(.995*coast.SCENE_DISTANCE*10);
 assert.equal(before.dissolve,0,'Transition must not start too early');
 assert(middle.dissolve>.35&&middle.dissolve<.65,'Transition midpoint must be gradual');
 assert(late.dissolve>.99,'Next panorama must be effectively complete before segment rollover');
+
+assert.equal(coast.sceneState(0).current.id,'auckland');
+assert.equal(coast.sceneState(9000).current.id,'queenstown','At 900 distance the background must leave Auckland');
+assert.equal(coast.sceneState(18000).current.id,'milford');
+assert.equal(coast.sceneState(27000).current.id,'christchurch');
+assert.equal(coast.sceneState(36000).current.id,'dunedin');
+assert.equal(coast.sceneState(45000).current.id,'wellington');
 
 const src=fs.readFileSync(path.join(__dirname,'../gameplay/coastline.js'),'utf8');
 assert(!src.includes('scenePositions'),'Side-by-side stitched panorama mode must not return');
@@ -37,12 +41,12 @@ assert(!src.includes("scene.id==='auckland'?.875:1"),'Auckland must use the orig
 assert(!src.includes("globalCompositeOperation='destination-in'"),'Panorama edges must not be feather-cut into visible strips');
 assert(!src.includes('drawProcedural'),'Procedural placeholder scenery must not return');
 assert(!src.includes('scale(-1,1)'),'Panoramas must never be mirrored');
-assert(src.includes('this.drawPlate(c,current,W,H,state.local,1-d)'),'Outgoing panorama uses full-screen slow pan');
+assert(src.includes('this.drawPlate(c,current,W,H,state.local,1-d)'),'Outgoing panorama uses full-screen gentle pan');
 assert(src.includes('this.drawPlate(c,incoming,W,H,0,d)'),'Incoming panorama dissolves in at its natural starting composition');
 assert(src.includes('Math.sin(Math.PI*d)*.10'),'Transition uses a light atmospheric veil to suppress landmark ghosting');
 assert(src.includes('function starPoint'),'Night sky uses individual luminous star points');
 assert(src.includes('Math.sin(time*2.45'),'Stars twinkle independently');
-assert(src.includes('drawNightSky'),'Stars are separated from the background pass so they can render after global night lighting');
+assert(src.includes('drawNightSky'),'Stars are separated from the background pass so they render after global night lighting');
 
 const polish=fs.readFileSync(path.join(__dirname,'../gameplay/polish.js'),'utf8');
 assert(polish.includes("image.decoding='async'"),'Panorama images request asynchronous decode');
@@ -55,4 +59,4 @@ vm.runInNewContext(src,context);
 const Updated=win.HarbourRenderer;assert(Updated!==Base);
 for(const method of ['ocean','santa','hazard','reward','particles','overlay'])assert.equal(Updated.prototype[method],Base.prototype[method]);
 
-console.log(JSON.stringify({scenes:6,loopDistance:Number(cycleDistance.toFixed(1)),parallax:coast.PARALLAX,cinematicDissolve:true,originalPanoramas:true}));
+console.log(JSON.stringify({scenes:6,sceneDistance:coast.SCENE_DISTANCE,loopDistance:coast.ROUTE_DISTANCE,cinematicDissolve:true,originalPanoramas:true}));
