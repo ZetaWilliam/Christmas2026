@@ -23,7 +23,7 @@
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
   const VERSION='2026.09.28-continuous-scroll.9';
-  const HORIZON=178,PARALLAX=.035,SCENE_STEP=900,PLATE_WIDTH=1080,PLATE_HEIGHT=182,FEATHER=160,TAU=Math.PI*2;
+  const HORIZON=178,PARALLAX=.035,SCENE_STEP=900,PLATE_WIDTH=1080,PLATE_HEIGHT=182,FEATHER=90,TAU=Math.PI*2;
   const SCENES=Object.freeze([
     Object.freeze({id:'auckland',label:'Auckland · Tāmaki Makaurau'}),
     Object.freeze({id:'queenstown',label:'Queenstown · Tāhuna'}),
