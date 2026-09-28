@@ -3,7 +3,7 @@
   'use strict';
   const BaseRenderer=window.HarbourRenderer, BaseAudio=window.HarbourAudio;
   if(!BaseRenderer||!BaseAudio)return;
-  const VERSION='2026.09.28-crisp-panorama.1';
+  const VERSION='2026.09.28-approved-panorama.2';
   class CleanRenderer extends BaseRenderer {
     constructor(canvas,engine,reduced){
       super(canvas,engine,reduced);
