@@ -58,8 +58,13 @@
       .filter(o=>o.screenX+o.width>-2&&o.screenX<width+2);
   }
   function surface(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return c;}
+  function sourceSize(image){
+    const W=Number(image?.naturalWidth||image?.width||0),H=Number(image?.naturalHeight||image?.height||0);
+    if(!Number.isFinite(W)||!Number.isFinite(H)||W<=0||H<=0)throw Error('Invalid panorama source dimensions');
+    return [W,H];
+  }
   function rowBackdrop(image){
-    const W=image.naturalWidth,H=image.naturalHeight,c=surface(W,H),g=c.getContext('2d',{willReadFrequently:true});
+    const [W,H]=sourceSize(image),c=surface(W,H),g=c.getContext('2d',{willReadFrequently:true});
     g.drawImage(image,0,0);const d=g.getImageData(0,0,W,H).data,rows=[];
     for(let y=0;y<H;y++){
       const rs=[],gs=[],bs=[];
@@ -70,7 +75,7 @@
     return rows;
   }
   function animePlate(image){
-    const W=image.naturalWidth,H=image.naturalHeight,c=surface(W,H),g=c.getContext('2d',{willReadFrequently:true});
+    const [W,H]=sourceSize(image),c=surface(W,H),g=c.getContext('2d',{willReadFrequently:true});
     g.filter='saturate(.92) contrast(.96) brightness(1.04)';g.drawImage(image,0,0);g.filter='none';
     const im=g.getImageData(0,0,W,H),d=im.data;
     for(let i=0;i<d.length;i+=4){
