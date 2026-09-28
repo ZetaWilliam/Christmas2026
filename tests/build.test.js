@@ -42,8 +42,8 @@ try{
  assert(!visible.includes('Venue guidelines and key details for group reservations.'));
  assert(!visible.includes('No intense physical exertion required'));
  assert(!visible.includes('Public entries show the chosen nickname'));
- assert(h.includes('Arrive at <strong>10:45am</strong>'));
- assert(h.includes('Closing Remarks & Holiday Wishes'));
+ assert(h.includes('Please arrive by <strong>10:45am</strong>'));
+ assert(h.includes('Final Photos, Social Time & Closing Remarks'));
  for(const file of ['bells-bright.mp3','bells-ensemble.mp3','CREDITS.md'])assert(fs.existsSync(path.join(tmp,'public/gameplay/music',file)));
  console.log('Summer build checks passed: RSVP/cloud source unchanged, game after form, art/audio complete, reduced hitbox.');
 }finally{fs.rmSync(tmp,{recursive:true,force:true});}
