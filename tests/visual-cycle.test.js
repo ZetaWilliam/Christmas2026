@@ -17,9 +17,10 @@ const darkShare=dark/total;
 assert(darkShare>.495&&darkShare<.505,'Day and night must occupy equal halves of the cycle');
 
 const drawCall=rendererSource.indexOf('this.environmentLight(p);');
+const starHook=rendererSource.indexOf("if(typeof this.nightSkyHighlights==='function')this.nightSkyHighlights(p);");
 const santaCall=rendererSource.indexOf('this.santa(p);this.particles();');
 const overlayCall=rendererSource.indexOf("if(e.state!=='running')this.overlay();");
-assert(santaCall>=0&&drawCall>santaCall&&overlayCall>drawCall,'Whole-scene lighting is composited after gameplay art and before pause/result overlay');
+assert(santaCall>=0&&drawCall>santaCall&&starHook>drawCall&&overlayCall>starHook,'Whole-scene lighting stays before star highlights, while pause/result overlay remains on top');
 assert(rendererSource.includes("c.globalAlpha=p.night*.34"),'Whole-scene darkness must scale continuously with night');
 assert(rendererSource.includes("c.fillStyle='#07162B'"),'Night lighting uses a full-frame deep-blue wash');
 assert(rendererSource.includes("c.globalAlpha=p.warm*.055"),'Dawn/dusk warmth is also applied to the whole frame');
@@ -29,4 +30,4 @@ assert(runner.includes("{min:20000,id:'legend',band:'high',name:'Harbour Hero'}"
 assert(runner.includes('const scoreMilestones=[2000,5000,10000,20000];'),'Visible score milestones must end at 20000');
 assert(!runner.includes("{min:8000,id:'legend'"),'Legacy 8000-point top tier must not return');
 
-console.log(JSON.stringify({cycleSeconds:cycle.seconds,darkShare:Number(darkShare.toFixed(3)),topTier:20000,wholeSceneLighting:true}));
+console.log(JSON.stringify({cycleSeconds:cycle.seconds,darkShare:Number(darkShare.toFixed(3)),topTier:20000,wholeSceneLighting:true,starsAfterNightLighting:true}));
