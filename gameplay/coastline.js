@@ -22,28 +22,45 @@
   }
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
-  const VERSION='2026.09.28-horizon-fixed.5';
-  const HORIZON=178,PARALLAX=.105;
+  const VERSION='2026.09.28-seamless-route.6';
+  const HORIZON=178,PARALLAX=.105,ROUTE_SPAN=11200,LOOP_BLEND=700,PANORAMA_FEATHER=.22;
   const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
   const smooth=t=>{t=clamp(t,0,1);return t*t*(3-2*t);};
   const hash=(i,s=0)=>{let x=Math.imul(i|0,374761393)^Math.imul(s|0,668265263);x=Math.imul(x^(x>>>13),1274126177);return((x^(x>>>16))>>>0)/4294967295;};
   function noise(x,seed){const i=Math.floor(x),f=smooth(x-i);return hash(i,seed)*(1-f)+hash(i+1,seed)*f;}
+  const tau=Math.PI*2;
+  function routeX(x){const n=Number.isFinite(x)?x:0;return ((n%ROUTE_SPAN)+ROUTE_SPAN)%ROUTE_SPAN;}
   function height(x,layer=0){
-    const a=noise(x/910,19+layer)*8.7,b=noise(x/283,41+layer)*6.3,c=noise(x/97,73+layer)*1.9;
-    return 3+a+b+c;
+    const u=routeX(x)/ROUTE_SPAN*tau,phase=layer*.83;
+    return 5.5
+      +(Math.sin(u+phase)+1)*3.1
+      +(Math.sin(5*u+1.2+phase*.7)+1)*2.15
+      +(Math.sin(11*u+2.7-phase*.4)+1)*1.25
+      +(Math.sin(23*u+.35+phase*.2)+1)*.62;
   }
-  function bell(x,center,radius,amp){const d=Math.abs(x-center)/radius;return d>=1?0:amp*(.5+.5*Math.cos(Math.PI*d));}
+  function circularDelta(x,center){
+    let d=routeX(x)-routeX(center);
+    if(d>ROUTE_SPAN/2)d-=ROUTE_SPAN;
+    if(d<-ROUTE_SPAN/2)d+=ROUTE_SPAN;
+    return d;
+  }
+  function bell(x,center,radius,amp){const d=Math.abs(circularDelta(x,center))/radius;return d>=1?0:amp*(.5+.5*Math.cos(Math.PI*d));}
   const LANDMARKS=Object.freeze([
-    Object.freeze({id:'city',label:'Sky Tower · Auckland waterfront',x:40,width:455,height:142,rect:Object.freeze([0,68,343,116]),source:true}),
-    Object.freeze({id:'bridge',label:'Harbour Bridge · Waitematā',x:470,width:500,height:90,rect:Object.freeze([330,142,240,42]),source:true}),
-    Object.freeze({id:'rangitoto',label:'Rangitoto · Hauraki Gulf',x:980,width:560,height:108,rect:Object.freeze([560,128,344,54]),source:true}),
-    Object.freeze({id:'coromandel',label:'Mauao · Bay of Plenty',x:1600,width:610,height:124}),
-    Object.freeze({id:'wellington',label:'Wellington Harbour · Te Whanganui-a-Tara',x:2240,width:640,height:146}),
-    Object.freeze({id:'kaikoura',label:'Kaikōura Coast · South Island',x:3050,width:700,height:162}),
-    Object.freeze({id:'banks',label:'Banks Peninsula · Canterbury',x:3920,width:650,height:142}),
-    Object.freeze({id:'otago',label:'Otago Harbour · Dunedin',x:4740,width:640,height:148}),
-    Object.freeze({id:'nugget',label:'Nugget Point · Catlins coast',x:5550,width:590,height:148}),
-    Object.freeze({id:'fiordland',label:'Fiordland · Southern coast',x:6360,width:760,height:176})
+    Object.freeze({id:'city',label:'Sky Tower · Auckland waterfront',x:40,width:455,height:142,source:true}),
+    Object.freeze({id:'bridge',label:'Harbour Bridge · Waitematā',x:620,width:500,height:90,source:true}),
+    Object.freeze({id:'rangitoto',label:'Rangitoto · Hauraki Gulf',x:1250,width:560,height:108,source:true}),
+    Object.freeze({id:'coromandel',label:'Mauao · Bay of Plenty',x:1950,width:610,height:124}),
+    Object.freeze({id:'taranaki',label:'Mount Taranaki · West Coast',x:2750,width:650,height:166}),
+    Object.freeze({id:'wellington',label:'Wellington Harbour · Te Whanganui-a-Tara',x:3550,width:650,height:146}),
+    Object.freeze({id:'palliser',label:'Cape Palliser · Wairarapa',x:4300,width:590,height:136}),
+    Object.freeze({id:'kaikoura',label:'Kaikōura Coast · South Island',x:5050,width:720,height:166}),
+    Object.freeze({id:'banks',label:'Banks Peninsula · Canterbury',x:5850,width:660,height:144}),
+    Object.freeze({id:'porthills',label:'Port Hills · Ōtautahi Christchurch',x:6600,width:620,height:132}),
+    Object.freeze({id:'moeraki',label:'Moeraki Boulders · Otago Coast',x:7350,width:590,height:118}),
+    Object.freeze({id:'otago',label:'Otago Harbour · Dunedin',x:8100,width:650,height:150}),
+    Object.freeze({id:'nugget',label:'Nugget Point · Catlins coast',x:8850,width:600,height:150}),
+    Object.freeze({id:'fiordland',label:'Fiordland · Southern coast',x:9650,width:770,height:178}),
+    Object.freeze({id:'bluff',label:'Motupōhue · Bluff',x:10400,width:610,height:142})
   ]);
   const CONNECTORS=Object.freeze(LANDMARKS.map((o,i)=>Object.freeze({x:o.x+o.width*.42,r:Math.max(180,o.width*.58),h:7+(i%3)*2.2})));
   function connectedHeight(x,layer=0){
@@ -52,18 +69,37 @@
     if(weight)for(const a of CONNECTORS)h+=bell(x,a.x,a.r,a.h*weight);
     return h;
   }
-  function camera(world,reduced=false){return reduced?0:Math.max(0,Number.isFinite(world)?world:0)*PARALLAX;}
+  function rawCamera(world,reduced=false){return reduced?0:Math.max(0,Number.isFinite(world)?world:0)*PARALLAX;}
+  function camera(world,reduced=false){return reduced?0:routeX(rawCamera(world,false));}
   const PANORAMA=Object.freeze({sourceWidth:1080,sourceHeight:360,waterlineY:272,width:1050,startX:-45,depth:.36});
-  function panoramaPlacement(world,reduced=false){
+  function panoramaPlacement(world,reduced=false,cycleOffset=0){
     const scale=PANORAMA.width/PANORAMA.sourceWidth;
     const height=PANORAMA.sourceHeight*scale;
     const y=HORIZON-PANORAMA.waterlineY*scale;
-    return Object.freeze({x:PANORAMA.startX-camera(world,reduced)*PANORAMA.depth,y,width:PANORAMA.width,height,scale});
+    const local=camera(world,reduced);
+    const x=PANORAMA.startX+(cycleOffset*ROUTE_SPAN-local)*PANORAMA.depth;
+    return Object.freeze({x,y,width:PANORAMA.width,height,scale});
+  }
+  function panoramaPlacements(world,width,reduced=false){
+    const local=camera(world,reduced),out=[],primary=panoramaPlacement(world,reduced,0);
+    if(primary.x+primary.width>-4&&primary.x<width+4)out.push({...primary,alpha:1});
+    if(!reduced&&local>ROUTE_SPAN-LOOP_BLEND){
+      const t=smooth((local-(ROUTE_SPAN-LOOP_BLEND))/LOOP_BLEND);
+      const base=panoramaPlacement(0,true,0);
+      out.push({...base,x:width+(PANORAMA.startX-width)*t,alpha:t});
+    }
+    return out;
   }
   function layout(world,width,reduced=false){
-    const scroll=camera(world,reduced);
-    return LANDMARKS.map(o=>({...o,screenX:o.x-scroll}))
-      .filter(o=>o.screenX+o.width>-2&&o.screenX<width+2);
+    const scroll=camera(world,reduced),out=[],offsets=[0];
+    if(!reduced&&scroll>ROUTE_SPAN-LOOP_BLEND)offsets.push(1);
+    for(const o of LANDMARKS){
+      for(const cycleOffset of offsets){
+        const screenX=o.x+cycleOffset*ROUTE_SPAN-scroll;
+        if(screenX+o.width>-2&&screenX<width+2)out.push({...o,screenX});
+      }
+    }
+    return out.sort((a,b)=>a.screenX-b.screenX);
   }
   function surface(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return c;}
   function sourceSize(image){
@@ -176,12 +212,23 @@
       hill(c,0,y,o.width,o.height*.74,n>.5?'#496374':'#638E72',n>.5?'#63798A':'#83AB83');
       c.fillStyle=n>.5?'#334D5E':'#4E7B65';c.beginPath();c.moveTo(90,y);c.quadraticCurveTo(220,y-110,360,y-30);c.quadraticCurveTo(470,y-88,610,y);c.closePath();c.fill();
       for(let i=0;i<8;i++)house(c,50+i*66,y-4,0.65,n>.45);
+    }else if(o.id==='taranaki'){
+      hill(c,-20,y,o.width+40,o.height*.42,n>.5?'#405968':'#6D8E7D',n>.5?'#617582':'#94AB91');
+      c.fillStyle=n>.5?'#50677A':'#718DA0';c.beginPath();c.moveTo(105,y);c.lineTo(315,y-o.height);c.lineTo(535,y);c.closePath();c.fill();
+      c.fillStyle=n>.5?'#C5D0D8':'#F2F4F0';c.beginPath();c.moveTo(245,y-o.height*.58);c.lineTo(315,y-o.height);c.lineTo(382,y-o.height*.58);c.lineTo(338,y-o.height*.69);c.lineTo(314,y-o.height*.61);c.lineTo(287,y-o.height*.70);c.closePath();c.fill();
+      c.fillStyle=n>.5?'#2F5056':'#4F7564';c.fillRect(0,y-18,o.width,18);
     }else if(o.id==='wellington'){
       hill(c,-20,y,o.width+40,o.height*.66,n>.5?'#4C6171':'#72957E',n>.5?'#647A88':'#91B093');
       c.fillStyle=n>.5?'#576C78':'#E8DDD0';c.strokeStyle='rgba(54,71,82,.35)';
       for(let i=0;i<13;i++){const w=18+(i%3)*5,h=24+(i*17)%53;c.fillRect(55+i*44,y-h,w,h);c.strokeRect(55+i*44,y-h,w,h);}
       c.fillStyle=n>.5?'#7E8D94':'#D7D0C6';for(let i=0;i<5;i++){c.beginPath();c.ellipse(375,y-18-i*8,28-i*3,7,0,0,7);c.fill();}
       c.fillRect(365,y-55,20,55);
+    }else if(o.id==='palliser'){
+      hill(c,-20,y,o.width+40,o.height*.48,n>.5?'#445963':'#6C806D',n>.5?'#687983':'#91A187');
+      c.fillStyle=n>.5?'#D6D4CC':'#F1E8D8';c.fillRect(430,y-88,15,88);
+      c.fillStyle='#B84B43';for(let i=0;i<4;i++)c.fillRect(430,y-88+i*20,15,8);
+      c.fillStyle=n>.5?'#D9D5C9':'#EFE6D3';c.beginPath();c.moveTo(423,y-88);c.lineTo(437.5,y-108);c.lineTo(452,y-88);c.closePath();c.fill();
+      c.fillStyle=n>.5?'#344B55':'#506960';for(const q of [[65,26],[142,34],[228,24],[320,30]]){c.beginPath();c.ellipse(q[0],y-5,q[1],12,0,0,7);c.fill();}
     }else if(o.id==='kaikoura'){
       const peaks=[[0,0],[100,-52],[175,-120],[240,-76],[330,-154],[405,-90],[505,-132],[585,-62],[720,0]];
       c.fillStyle=n>.5?'#4B6078':'#708AA2';c.beginPath();peaks.forEach((q,i)=>c[i?'lineTo':'moveTo'](q[0],y+q[1]));c.lineTo(o.width,y);c.closePath();c.fill();
@@ -192,6 +239,15 @@
       c.fillStyle=n>.5?'#6F7D83':'#DED8C9';c.fillRect(385,y-66,50,66);c.strokeStyle='rgba(55,71,76,.35)';c.strokeRect(385,y-66,50,66);
       c.beginPath();c.moveTo(378,y-66);c.lineTo(410,y-105);c.lineTo(442,y-66);c.closePath();c.fill();c.fillRect(407,y-126,6,31);
       for(let i=0;i<7;i++)house(c,72+i*65,y-3,.62,n>.45);
+    }else if(o.id==='porthills'){
+      hill(c,-10,y,o.width+20,o.height*.74,n>.5?'#405963':'#617E69',n>.5?'#657A82':'#8FA186');
+      c.fillStyle=n>.5?'#596E77':'#D8D4C8';for(let i=0;i<8;i++){const xx=60+i*62,h=18+(i%3)*7;c.fillRect(xx,y-h,24,h);}
+      c.strokeStyle=n>.5?'rgba(214,229,232,.28)':'rgba(244,248,242,.42)';c.lineWidth=1.2;c.beginPath();c.moveTo(12,y-3);c.quadraticCurveTo(180,y-17,315,y-5);c.quadraticCurveTo(470,y-18,610,y-3);c.stroke();
+    }else if(o.id==='moeraki'){
+      hill(c,-20,y,o.width+40,o.height*.32,n>.5?'#405962':'#617B69',n>.5?'#617780':'#8A9D82');
+      c.fillStyle=n>.5?'#6E7779':'#9B998E';
+      for(const q of [[90,20,18],[165,26,22],[250,18,16],[338,30,24],[430,22,18],[505,28,21]]){c.beginPath();c.ellipse(q[0],y-q[2]*.55,q[1],q[2],0,0,7);c.fill();}
+      c.strokeStyle=n>.5?'rgba(210,231,237,.20)':'rgba(249,252,246,.38)';c.lineWidth=1.1;for(let i=0;i<4;i++){c.beginPath();c.moveTo(25+i*135,y-4);c.quadraticCurveTo(80+i*135,y-12,130+i*135,y-5);c.stroke();}
     }else if(o.id==='otago'){
       hill(c,-15,y,o.width+30,o.height*.66,n>.5?'#415A67':'#5D806A',n>.5?'#657A83':'#8AA28B');
       c.fillStyle=n>.5?'#657783':'#CBBEAA';c.strokeStyle='rgba(54,64,76,.45)';c.fillRect(250,y-58,150,58);c.strokeRect(250,y-58,150,58);
@@ -208,16 +264,34 @@
       for(let i=0;i<5;i++){const xx=52+i*105;c.beginPath();c.moveTo(xx,y-3);c.quadraticCurveTo(xx+28,y-10,xx+62,y-4);c.stroke();}
     }else if(o.id==='fiordland'){
       const g=c.createLinearGradient(0,y-o.height,0,y);g.addColorStop(0,n>.5?'#344C64':'#577887');g.addColorStop(1,n>.5?'#273F4A':'#355E59');c.fillStyle=g;
-      c.beginPath();c.moveTo(0,y);c.lineTo(110,y-76);c.lineTo(185,y-55);c.lineTo(270,y-154);c.lineTo(355,y-72);c.lineTo(430,y-138);c.lineTo(540,y-62);c.lineTo(650,y-124);c.lineTo(820,y);c.closePath();c.fill();
-      c.fillStyle=n>.5?'#D4D8D0':'#F4F1E7';c.fillRect(705,y-66,14,66);c.beginPath();c.moveTo(696,y-66);c.lineTo(712,y-91);c.lineTo(728,y-66);c.closePath();c.fill();c.fillStyle='#A84B42';c.fillRect(699,y-69,26,6);
+      c.beginPath();c.moveTo(0,y);c.lineTo(110,y-76);c.lineTo(185,y-55);c.lineTo(270,y-154);c.lineTo(355,y-72);c.lineTo(430,y-138);c.lineTo(540,y-62);c.lineTo(650,y-124);c.lineTo(770,y);c.closePath();c.fill();
+      c.strokeStyle=n>.5?'rgba(209,226,234,.18)':'rgba(239,247,243,.28)';c.lineWidth=1.2;for(let i=0;i<3;i++){c.beginPath();c.moveTo(120+i*190,y-5);c.quadraticCurveTo(190+i*190,y-17,265+i*190,y-6);c.stroke();}
+    }else if(o.id==='bluff'){
+      hill(c,-10,y,o.width+20,o.height*.62,n>.5?'#3C5861':'#587966',n>.5?'#61777E':'#849B82');
+      c.strokeStyle=n>.5?'#D2D7D2':'#E9E3D7';c.lineWidth=3;c.beginPath();c.moveTo(420,y-8);c.lineTo(420,y-92);c.stroke();
+      c.fillStyle=n>.5?'#C8C8BE':'#E8DDC9';for(const q of [[420,-78,55],[420,-58,-62],[420,-38,50]]){c.save();c.translate(q[0],y+q[1]);c.rotate(q[2]>0?-.12:.12);c.fillRect(q[2]>0?0:q[2],-5,Math.abs(q[2]),10);c.restore();}
+      c.fillStyle=n>.5?'#314A52':'#486B5A';for(const xx of [55,130,205,280]){c.beginPath();c.ellipse(xx,y-6,34,12,0,0,7);c.fill();}
     }
     c.restore();
   }
   class CoastLayer{
-    constructor(){this.image=null;}
+    constructor(){this.image=null;this.plate=null;}
     prepare(image){
       if(!image||!image.complete||!image.naturalWidth)return false;
-      if(this.image!==image)this.image=image;
+      if(this.image!==image){
+        this.image=image;
+        const [W,H]=sourceSize(image),plate=surface(W,H),g=plate.getContext('2d');
+        g.drawImage(image,0,0);
+        g.globalCompositeOperation='destination-in';
+        const mask=g.createLinearGradient(0,0,W,0);
+        mask.addColorStop(0,'rgba(0,0,0,0)');
+        mask.addColorStop(.055,'rgba(0,0,0,1)');
+        mask.addColorStop(1-PANORAMA_FEATHER,'rgba(0,0,0,1)');
+        mask.addColorStop(1,'rgba(0,0,0,0)');
+        g.fillStyle=mask;g.fillRect(0,0,W,H);
+        g.globalCompositeOperation='source-over';
+        this.plate=plate;
+      }
       return true;
     }
     label(world,width,reduced=false){
@@ -228,10 +302,15 @@
     drawSky(c,eng,p,reduced){
       const W=eng.width,scroll=camera(eng.world,reduced);
       if(p.night<.72){
-        const warm=Math.max(0,.65-p.night),cell=820;
-        for(let i=Math.floor(scroll*.18/cell)-2;i<=Math.floor((scroll*.18+W)/cell)+2;i++){
-          const x=i*cell-scroll*.18+hash(i,93)*150,y=18+hash(i,94)*44,w=310+hash(i,95)*300,h=36+hash(i,96)*30;
-          longCloud(c,x,y,w,h,(.22+hash(i,97)*.18)*(1-p.night*.88),warm>.4&&hash(i,98)>.78);
+        const warm=Math.max(0,.65-p.night),skySpan=ROUTE_SPAN*.18,skyScroll=scroll*.18,count=12;
+        for(let i=0;i<count;i++){
+          const base=i*(skySpan/count)+hash(i,93)*72;
+          const y=18+hash(i,94)*44,w=310+hash(i,95)*300,h=36+hash(i,96)*30;
+          for(const offset of [-1,0,1]){
+            const x=base+offset*skySpan-skyScroll;
+            if(x+w<-80||x>W+80)continue;
+            longCloud(c,x,y,w,h,(.22+hash(i,97)*.18)*(1-p.night*.88),warm>.4&&hash(i,98)>.78);
+          }
         }
       }
       if(p.night>.16&&!reduced){
@@ -261,31 +340,28 @@
       const sky=c.createLinearGradient(0,0,0,HORIZON);sky.addColorStop(0,p.top);sky.addColorStop(1,p.horizon);c.fillStyle=sky;c.fillRect(0,0,W,HORIZON+4);
       this.drawSky(c,eng,p,reduced);this.drawTerrain(c,eng.world,W,p,reduced);
 
-      // Approved Auckland panorama: preserve its aspect ratio and pin its painted shoreline
-      // to the gameplay horizon. The previous 1840x320 stretch pushed the skyline below water.
+      // Approved Auckland panorama repeats only once per full scenic circuit and has
+      // feathered edges, so there is never a hard vertical boundary against the procedural coast.
       if(this.prepare(image)){
-        const plate=panoramaPlacement(eng.world,reduced);
-        if(plate.x<W&&plate.x+plate.width>0){
-          c.save();c.globalAlpha=p.night>.5?.84:1;c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
-          c.drawImage(this.image,plate.x,plate.y,plate.width,plate.height);
-          if(p.night>.04){
-            const left=Math.max(0,plate.x),right=Math.min(W,plate.x+plate.width);
-            if(right>left){c.fillStyle='rgba(20,42,67,'+(p.night*.30)+')';c.fillRect(left,0,right-left,HORIZON+4);}
-          }
-          c.restore();
+        for(const plate of panoramaPlacements(eng.world,W,reduced)){
+          c.save();c.globalAlpha=plate.alpha??1;c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
+          c.drawImage(this.plate,plate.x,plate.y,plate.width,plate.height);c.restore();
         }
       }
 
-      // Later destinations remain one-way procedural landmarks and never recycle.
+      // Named destinations wrap as one long 11,200px scenic circuit. The first Auckland
+      // landmarks enter before the final Bluff scenery leaves, so the 10k+ repeat is continuous.
       for(const o of layout(eng.world,W,reduced))if(!o.source)drawProcedural(c,o,p);
 
-      // Very light horizon blending only; do not fog the landmark silhouettes.
-      const haze=c.createLinearGradient(0,HORIZON-12,0,HORIZON+4);
+      // One atmosphere layer over every scenic source keeps blue-hour colour continuous.
+      if(p.night>.02){c.fillStyle='rgba(20,42,67,'+(p.night*.28)+')';c.fillRect(0,0,W,HORIZON+4);}
+
+      const haze=c.createLinearGradient(0,HORIZON-14,0,HORIZON+4);
       haze.addColorStop(0,'rgba(220,238,239,0)');
-      haze.addColorStop(1,p.night>.5?'rgba(66,91,109,.12)':'rgba(190,221,222,.15)');
-      c.fillStyle=haze;c.fillRect(0,HORIZON-12,W,16);
+      haze.addColorStop(1,p.night>.5?'rgba(66,91,109,.11)':'rgba(190,221,222,.14)');
+      c.fillStyle=haze;c.fillRect(0,HORIZON-14,W,18);
       c.restore();
     }
   }
-  return Object.freeze({version:VERSION,CoastLayer,LANDMARKS,layout,camera,panoramaPlacement,PANORAMA,height,connectedHeight,noise,animePlate,longCloud,constellation,bridgeMask,rowBackdrop});
+  return Object.freeze({version:VERSION,CoastLayer,LANDMARKS,layout,camera,rawCamera,routeX,ROUTE_SPAN,LOOP_BLEND,PARALLAX,panoramaPlacement,panoramaPlacements,PANORAMA,height,connectedHeight,noise,animePlate,longCloud,constellation,bridgeMask,rowBackdrop});
 });
