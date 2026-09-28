@@ -2,6 +2,21 @@
 (() => {
   'use strict';
   const CUTS={santa:[3,321,314,127],duck:[321,345,318,104],buoy:[10,459,80,166],sailboat:[92,450,132,178],gull:[199,475,105,120],ferry:[266,505,181,118],flower:[435,503,102,119],gold:[537,503,103,119]};
+  const DAY_NIGHT_SECONDS=120,TAU=Math.PI*2;
+  const mixHex=(a,b,t)=>{const rgb=v=>v.match(/\w\w/g).map(x=>parseInt(x,16)),x=rgb(a),y=rgb(b);return '#'+x.map((v,i)=>Math.round(v+(y[i]-v)*t).toString(16).padStart(2,'0')).join('');};
+  function cycleState(time,reduced=false){
+    const u=((Number.isFinite(time)?time:0)%DAY_NIGHT_SECONDS+DAY_NIGHT_SECONDS)%DAY_NIGHT_SECONDS/DAY_NIGHT_SECONDS;
+    const pos=u*4,i=Math.min(3,Math.floor(pos)),local=pos-i,f=(1-Math.cos(local*Math.PI))/2;
+    const keys=[
+      {top:'#A8D8F0',horizon:'#EAF3EE',water:'#3F91A6',label:'Day → dusk'},
+      {top:'#CFA99C',horizon:'#F1D5BA',water:'#4A7D90',label:'Dusk → night'},
+      {top:'#172C49',horizon:'#3D536B',water:'#244E65',label:'Night → dawn'},
+      {top:'#9CB7D0',horizon:'#E1D2C7',water:'#477F93',label:'Dawn → day'},
+      {top:'#A8D8F0',horizon:'#EAF3EE',water:'#3F91A6',label:'Day → dusk'}
+    ],a=keys[i],b=keys[i+1],night=reduced?0:(.5-.5*Math.cos(TAU*u)),
+    warm=reduced?0:Math.max(0,1-Math.abs(u-.25)/.18,1-Math.abs(u-.75)/.18);
+    return {u,top:mixHex(a.top,b.top,f),horizon:mixHex(a.horizon,b.horizon,f),water:mixHex(a.water,b.water,f),night,warm,label:reduced?'Day':a.label};
+  }
   /* One articulated paddle, cut from the existing illustration. The two arm
      textures share its grip points; the complete baked-in standing sprite is
      never composited underneath the animated rig. */
@@ -85,8 +100,8 @@
   class Renderer{
     constructor(canvas,engine,reduced){this.canvas=canvas;this.ctx=canvas.getContext('2d');this.eng=engine;this.reduced=reduced;this.ready=false;this.sprites={};this.splashes=[];this.lastTime=0;this.result=null;this.atlas=new Image();this.atlas.onload=()=>{try{for(const [key,cut]of Object.entries(CUTS))this.sprites[key]=this.cut(cut);this.ready=true;this.draw();}catch(error){console.warn('Harbour art preparation failed',error.name);}};this.atlas.onerror=()=>{console.warn('Harbour artwork unavailable');};this.atlas.src='/gameplay/art/atlas.webp';}
     cut(rect){const c=document.createElement('canvas');c.width=rect[2];c.height=rect[3];const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(this.atlas,...rect,0,0,c.width,c.height);const image=x.getImageData(0,0,c.width,c.height),data=image.data,n=c.width*c.height,seen=new Uint8Array(n),queue=new Int32Array(n);let head=0,tail=0;const add=i=>{if(i<0||i>=n||seen[i])return;const j=i*4,m=Math.min(data[j],data[j+1],data[j+2]),M=Math.max(data[j],data[j+1],data[j+2]);if(m>243||(m>224&&M-m<17)){seen[i]=1;queue[tail++]=i;}};for(let a=0;a<c.width;a++){add(a);add(n-c.width+a);}for(let y=0;y<c.height;y++){add(y*c.width);add((y+1)*c.width-1);}while(head<tail){const i=queue[head++];data[i*4+3]=0;if(i%c.width)add(i-1);if(i%c.width<c.width-1)add(i+1);add(i-c.width);add(i+c.width);}x.putImageData(image,0,0);return c;}
-    palette(){const t=this.eng.time,phase=(t%96)/24,i=Math.floor(phase),f=(1-Math.cos((phase-i)*Math.PI))/2;const p=[['#BFDDF0','#E9F2EE','#3D91A6'],['#D8C6B4','#EFE2CC','#49899B'],['#8198AF','#C7D2D9','#3B7286'],['#B8CBDE','#E9E1D7','#4C879A']];const a=p[i],b=p[(i+1)%4],raw=Math.max(0,Math.sin(Math.PI*phase/2-Math.PI/2));return{top:this.mix(a[0],b[0],f),horizon:this.mix(a[1],b[1],f),water:this.mix(a[2],b[2],f),night:this.reduced?0:raw*.42,label:this.reduced?'Day':['Day → warm light','Warm light → blue hour','Blue hour → dawn','Dawn → day'][i]};}
-    mix(a,b,t){const rgb=s=>s.match(/\w\w/g).map(x=>parseInt(x,16)),x=rgb(a),y=rgb(b);return '#'+x.map((v,i)=>Math.round(v+(y[i]-v)*t).toString(16).padStart(2,'0')).join('');}
+    palette(){return cycleState(this.eng.time,this.reduced);}
+    mix(a,b,t){return mixHex(a,b,t);}
     burst(kind,x,y){if(this.reduced)return;for(let i=0;i<(kind==='gold'?20:kind==='splash'?12:9);i++)this.splashes.push({x,y,vx:(Math.random()-.5)*110,vy:-35-Math.random()*75,born:this.eng.time,life:.55+Math.random()*.4,kind});}
     draw(){const e=this.eng,ctx=this.ctx,W=e.width,H=320,p=this.palette();ctx.setTransform(this.canvas.width/W,0,0,this.canvas.height/H,0,0);ctx.clearRect(0,0,W,H);const gradient=ctx.createLinearGradient(0,0,0,H);gradient.addColorStop(0,p.top);gradient.addColorStop(.57,p.horizon);gradient.addColorStop(1,p.water);ctx.fillStyle=gradient;ctx.fillRect(0,0,W,H);
       if(this.ready)this.landscape(p);else this.fallback(p);
@@ -96,6 +111,7 @@
       for(const r of e.rewards)if(!r.collected)this.reward(r);
       for(const o of e.obstacles)this.hazard(o,p);
       this.santa(p);this.particles();
+      this.environmentLight(p);
       if(e.state!=='running')this.overlay();
       const phase=document.getElementById('runnerSkyPhase');if(phase)phase.textContent=p.label;
       const label=document.getElementById('runnerLandmark');if(label)label.textContent=['Sky Tower · Waitematā','Harbour Bridge · Devonport','Rangitoto · Hauraki Gulf'][Math.floor(e.world*.055/380)%3];
@@ -184,7 +200,20 @@
         c.restore();
       }
 
-      c.save();c.globalAlpha=p.night*.24;c.fillStyle='#173349';c.fillRect(0,horizon,W,140);c.restore();
+      c.save();c.globalAlpha=p.night*.08;c.fillStyle='#173349';c.fillRect(0,horizon,W,140);c.restore();
+    }
+    environmentLight(p){
+      if(this.reduced)return;
+      const c=this.ctx,W=this.eng.width,H=320;
+      c.save();
+      if(p.warm>0){
+        c.globalAlpha=p.warm*.055;c.fillStyle='#E7A270';c.fillRect(0,0,W,H);
+      }
+      if(p.night>0){
+        c.globalAlpha=p.night*.34;c.fillStyle='#07162B';c.fillRect(0,0,W,H);
+        c.globalAlpha=p.night*.07;c.fillStyle='#31577D';c.fillRect(0,0,W,H);
+      }
+      c.restore();
     }
     santa(){
       const c=this.ctx,e=this.eng,p=e.player,water=254;
@@ -253,5 +282,6 @@
     particles(){const c=this.ctx,t=this.eng.time;this.splashes=this.splashes.filter(p=>t-p.born>=0&&t-p.born<p.life);for(const p of this.splashes){const age=t-p.born;c.save();c.globalAlpha=1-age/p.life;c.fillStyle=p.kind==='gold'?'#FFE8A2':p.kind==='splash'?'#E0F8FE':'#F4BBAC';c.beginPath();c.arc(p.x+p.vx*age,p.y+p.vy*age+80*age*age,1.8,0,7);c.fill();c.restore();}}
     overlay(){const c=this.ctx,e=this.eng,W=e.width,ready=e.state==='ready',paused=e.state==='paused';c.save();if(!ready){c.fillStyle='rgba(12,33,55,.25)';c.fillRect(0,0,W,320);}const w=Math.min(320,W-48),x=(W-w)/2;c.fillStyle='rgba(246,253,251,.91)';c.beginPath();c.roundRect(x,85,w,96,14);c.fill();c.textAlign='center';c.fillStyle='#204559';c.font='bold 23px Georgia';c.fillText(ready?'A summer harbour escape':paused?'Take a breather':(this.result?.title||'A good day on the water'),W/2,119);c.font='13px Arial';c.fillStyle='#426C79';c.fillText(ready?'Tap Start Run when you’re ready':paused?'Your run is saved — tap Resume':'See your result below · try another run',W/2,148);c.restore();}
   }
+  window.HarbourVisualCycle=Object.freeze({seconds:DAY_NIGHT_SECONDS,state:cycleState});
   window.HarbourRenderer=Renderer;
 })();
