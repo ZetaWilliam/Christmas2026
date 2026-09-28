@@ -38,8 +38,12 @@ for(const item of before){
 
 for(const w of [320,640,960,1440]){
   const positions=coast.scenePositions(2.4*coast.SCENE_STEP/coast.PARALLAX,w);
-  assert(positions.length>=2,'Overlapping scenes should cover every viewport without switching gaps');
+  assert(positions.length>=1,'At least one panorama plate must cover the viewport');
   for(let i=1;i<positions.length;i++)assert(positions[i].x>=positions[i-1].x,'Scene positions remain ordered');
+  const intervals=positions.map(p=>[Math.max(0,p.x),Math.min(w,p.x+coast.PLATE_WIDTH)]).filter(a=>a[1]>a[0]).sort((a,b)=>a[0]-b[0]);
+  let covered=0;
+  for(const [a,b] of intervals){assert(a<=covered+.001,'Panorama coverage must never leave a switching gap');covered=Math.max(covered,b);}
+  assert(covered>=w-.001,'Panorama plates must cover the full viewport width');
 }
 
 const src=fs.readFileSync(path.join(__dirname,'../gameplay/coastline.js'),'utf8');
