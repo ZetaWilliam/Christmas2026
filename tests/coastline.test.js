@@ -1,7 +1,7 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const coast=require('../gameplay/coastline.js');
-assert.equal(coast.version,'2026.09.28-route-coast.2');
+assert.equal(coast.version,'2026.09.28-crisp-panorama.3');
 assert.equal(coast.LANDMARKS.length,10);
 assert.equal(new Set(coast.LANDMARKS.map(o=>o.id)).size,10);
 assert.deepEqual(coast.LANDMARKS.map(o=>o.id),[
@@ -74,11 +74,11 @@ try{
 }
 const coastSource=fs.readFileSync(path.join(__dirname,'../gameplay/coastline.js'),'utf8');
 assert(!coastSource.includes('scale(-1,1)'),'Named coast artwork must never be mirrored');
-assert(coastSource.includes('function animePlate'),'Previous scenic reference is posterised before use');
+assert(coastSource.includes('plateW=1840'),'Auckland is drawn as one high-resolution panorama plate');
 assert(coastSource.includes('function longCloud'),'Long white clouds are drawn as continuous painted forms');
 assert(coastSource.includes('function constellation'),'Night sky uses grouped constellations, not an even dot grid');
-assert(coastSource.includes('function bridgeMask'),'Bridge uses a structure-only mask instead of an opaque source rectangle');
-assert(coastSource.includes('rowBackdrop'),'Source-sky matte pixels are removed from preserved Auckland landmarks');
+assert(!coastSource.includes("c.filter=p.night>.5?'saturate"),'Crisp panorama must not be blurred by the old landmark filter chain');
+assert(coastSource.includes("c.drawImage(this.image,x,0,plateW,plateH)"),'Panorama is drawn directly instead of extracted into low-resolution landmark sprites');
 // The patch changes only distant rendering; water, Santa, hazards, rewards and results remain inherited.
 class Base {draw(){} ocean(){} santa(){} hazard(){} reward(){} particles(){} overlay(){}}
 const win={HarbourRenderer:Base};
@@ -88,4 +88,4 @@ const Updated=win.HarbourRenderer;assert(Updated!==Base);
 for(const method of ['ocean','santa','hazard','reward','particles','overlay'])
  assert.equal(Updated.prototype[method],Base.prototype[method],method+' remains unchanged');
 assert.equal(coast.camera(NaN),0);
-console.log('Coast tests passed: '+samples+' views; 10 one-time landmarks, accelerated route, long white clouds and continuous terrain.');
+console.log('Coast tests passed: '+samples+' views; crisp Auckland plate, 10 one-time landmarks and continuous route.');
