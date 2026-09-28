@@ -7,7 +7,7 @@ const source=fs.readFileSync('index.html','utf8');
 const begin='    // Santa Harbour Dash — Dino-style Auckland endless runner',end='    // 微粒动画';
 const start=source.indexOf(begin),finish=source.indexOf(end,start);
 if(start<0||finish<=start||source.indexOf(begin,start+begin.length)>=0)throw Error('Cannot isolate legacy game. Source left unchanged.');
-const version='2026.09.28-cinematic-dissolve.14';
+const version='2026.09.29-scene-board.15';
 let html=source.slice(0,start)+'    // The isolated Harbour Dash modules are loaded below.\n'+source.slice(finish);
 const gameMarker='  <!-- Santa Harbour Dash: Auckland Christmas endless runner -->',rsvpMarker='  <!-- 报名表单 -->',modalMarker='  <!-- 报名成功弹窗与电子票 -->';
 const a=html.indexOf(gameMarker),b=html.indexOf(rsvpMarker),c=html.indexOf(modalMarker);
@@ -35,7 +35,7 @@ html=html.replace('</head>',`  <meta name="harbour-build" content="${version}">\
  .replace('</body>',files.map(f=>`  <script src="/gameplay/${f}?v=${version}" defer></script>`).join('\n')+'\n</body>');
 for(const m of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi))if(m[1].trim())new vm.Script(m[1]);
 for(const file of files)new vm.Script(fs.readFileSync('gameplay/'+file,'utf8'),{filename:file});
-for(const id of ['runnerCanvas','runnerStartBtn','runnerDuckBtn','runnerComboBadge','runnerLeaderboard','teamApproach','rsvpForm','rosterModal'])if(!html.includes(id))throw Error('Missing retained UI: '+id);
+for(const id of ['runnerCanvas','runnerStartBtn','runnerDuckBtn','runnerComboBadge','runnerLeaderboard','teamApproach','teamMessageBoardTitle','teamMessageList','rsvpForm','rosterModal'])if(!html.includes(id))throw Error('Missing retained UI: '+id);
 if(html.includes('function runnerSpawnObstacle()'))throw Error('Legacy game would start twice.');
 fs.mkdirSync('public/gameplay/art',{recursive:true});
 fs.writeFileSync('public/index.html',html);
@@ -77,4 +77,4 @@ for(const item of manifest){
  fs.writeFileSync('public/gameplay/music/'+item.file,data);
 }
 fs.copyFileSync('gameplay/music/CREDITS.md','public/gameplay/music/CREDITS.md');
-console.log(`Built ${version}: original six text-free panoramas with long cinematic dissolves, slow boat-linked panning, post-light twinkling constellations, preserved day-night cycle and 20000-point top tier.`);
+console.log(`Built ${version}: six panoramas rotate every 900 distance with cinematic dissolves, preserved day-night stars, 20000-point top tier and a friendly public team message board.`);
