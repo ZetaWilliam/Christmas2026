@@ -1,7 +1,7 @@
 name: Harbour quality checks
 on:
   push:
-    branches: [main, ui/message-board-sidebar]
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
