@@ -50,7 +50,7 @@ async function request(method,body){
 
   r=await request('POST',{name:'X',message:'hello'});
   assert.equal(r.code,400);
-  r=await request('POST',{name:'Friendly User',message:'x'.repeat(241)});
+  r=await request('POST',{name:'Friendly User',message:'x'.repeat(101)});
   assert.equal(r.code,400);
 
   mode='rate';
@@ -58,7 +58,7 @@ async function request(method,body){
   assert.equal(r.code,429);
 
   const html=fs.readFileSync(__dirname+'/../index.html','utf8');
-  for(const needle of ['teamMessageBoardTitle','teamMessageList','teamMessageName','teamMessageText','postTeamMessage','refreshTeamMessages','Please keep it friendly and respectful.'])
+  for(const needle of ['teamMessageBoardTitle','teamMessageList','teamMessageName','teamMessageText','teamMessageCount','postTeamMessage','refreshTeamMessages','Please keep it friendly and respectful.','maxlength="100"'])
     assert(html.includes(needle),'Missing message-board UI or friendliness guidance: '+needle);
-  console.log(JSON.stringify({messageBoard:'ok',privacy:'nickname + message only',friendlyPrompt:true,rateLimit:'15s/name'}));
+  console.log(JSON.stringify({messageBoard:'ok',privacy:'nickname + message only',friendlyPrompt:true,limit:100,rateLimit:'15s/name'}));
 })().catch(e=>{console.error(e);process.exit(1);});
