@@ -56,6 +56,7 @@ assert(src.includes('Math.sin(time*3.1'),'Stars must twinkle over time');
 assert(src.includes('function starPoint'),'Night sky uses individual glowing star points');
 assert(src.includes('function constellation'),'Night sky includes point-star constellations');
 assert(src.includes("strokeStyle='rgba(196,218,242,.34)'"),'Constellation guide lines remain faint');
+assert(src.includes("scene.id==='auckland'?.875:1"),'Auckland composition crops before the mountain overlaps the Harbour Bridge');
 
 const polish=fs.readFileSync(path.join(__dirname,'../gameplay/polish.js'),'utf8');
 assert(polish.includes("image.decoding='async'"),'Panorama images request asynchronous decode');
