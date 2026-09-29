@@ -77,7 +77,27 @@
     }
     ocean(p){
       const c=this.ctx,e=this.eng,W=e.width,t=this.reduced?0:e.time,h=178;
-      const base=c.createLinearGradient(0,h,0,320);base.addColorStop(0,this.mix(p.water,p.horizon,.37));base.addColorStop(.48,p.water);base.addColorStop(1,this.mix(p.water,'#294F6B',.20));c.fillStyle=base;c.fillRect(0,h,W,142);
+      const scene=window.HarbourCoastline?.sceneState?.(e.world,this.reduced);
+      const wellingtonWeight=scene
+        ? (scene.current.id==='wellington' ? 1-scene.dissolve : (scene.nextScene.id==='wellington' ? scene.dissolve : 0))
+        : 0;
+      const normalTop=this.mix(p.water,p.horizon,.37);
+      const wellingtonTop=this.mix(normalTop,'#5A788F',.82*wellingtonWeight);
+      const wellingtonMid=this.mix(p.water,'#4D7488',.44*wellingtonWeight);
+      const joinDepth=26;
+      const base=c.createLinearGradient(0,h,0,320);
+      base.addColorStop(0,wellingtonTop);base.addColorStop(.22,wellingtonMid);base.addColorStop(.48,p.water);base.addColorStop(1,this.mix(p.water,'#294F6B',.20));
+      if(wellingtonWeight>.001){
+        c.fillStyle=base;c.fillRect(0,h+joinDepth,W,142-joinDepth);
+        const rgb=hex=>hex.match(/\w\w/g).map(v=>parseInt(v,16));
+        const rgba=(hex,a)=>{const v=rgb(hex);return 'rgba('+v[0]+','+v[1]+','+v[2]+','+a+')';};
+        const seam=c.createLinearGradient(0,h,0,h+joinDepth);
+        seam.addColorStop(0,rgba(wellingtonTop,1-.74*wellingtonWeight));
+        seam.addColorStop(1,rgba(wellingtonMid,1));
+        c.fillStyle=seam;c.fillRect(0,h,W,joinDepth);
+      }else{
+        c.fillStyle=base;c.fillRect(0,h,W,142);
+      }
       // Perspective swells approach the viewer and drift sideways with the journey.
       // Broad cel-shaded faces, sparse broken foam, no repeating wave icons.
       for(let row=0;row<8;row++){
