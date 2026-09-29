@@ -44,7 +44,7 @@ assert.equal(coast.sceneState(45000).current.id,'wellington');
 const src=fs.readFileSync(path.join(__dirname,'../gameplay/coastline.js'),'utf8');
 assert(!src.includes('scenePositions'),'Side-by-side stitched panorama mode must not return');
 assert(!src.includes("scene.id==='auckland'?.875:1"),'Auckland must use the original full composition rather than the destructive crop');
-assert(!src.includes("globalCompositeOperation='destination-in'"),'Panorama edges must not be feather-cut into visible strips');
+assert(!src.includes("mask.addColorStop(0,'rgba(0,0,0,0)')"),'Full panorama scenes must not regain edge feather strips.');
 assert(!src.includes('drawProcedural'),'Procedural placeholder scenery must not return');
 assert(!src.includes('scale(-1,1)'),'Panoramas must never be mirrored');
 assert(src.includes('this.drawPlate(c,current,W,H,state.local,1-d)'),'Outgoing panorama uses full-screen gentle pan');
