@@ -1,4 +1,4 @@
-/* Cinematic six-scene New Zealand panoramas: Auckland → Queenstown → Milford Sound → Christchurch → Dunedin → Wellington. */
+/* Cinematic seven-scene New Zealand panoramas: Auckland → Queenstown → Milford Sound → Christchurch → Dunedin → Wellington → Cape Reinga. */
 (function(root,factory){
   'use strict';
   const api=factory();
@@ -26,16 +26,18 @@
   }
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
-  const VERSION='2026.09.30-dunedin-repair.14';
-  const HORIZON=178,SCENE_DISTANCE=900,ROUTE_DISTANCE=SCENE_DISTANCE*6,DISSOLVE_FRACTION=.28,PAN_FRACTION=.065,CHRISTCHURCH_FOCUS_Y=0,DUNEDIN_REPAIR_X=400/768,DUNEDIN_REPAIR_Y=70/360,DUNEDIN_REPAIR_W=368/768,DUNEDIN_REPAIR_H=200/360,WELLINGTON_WATER_EXTENSION=26,TAU=Math.PI*2;
+  const VERSION='2026.09.30-cape-reinga.15';
+  const HORIZON=178,SCENE_DISTANCE=900,DISSOLVE_FRACTION=.28,PAN_FRACTION=.065,CHRISTCHURCH_FOCUS_Y=0,DUNEDIN_REPAIR_X=400/768,DUNEDIN_REPAIR_Y=70/360,DUNEDIN_REPAIR_W=368/768,DUNEDIN_REPAIR_H=200/360,WELLINGTON_WATER_EXTENSION=26,TAU=Math.PI*2;
   const SCENES=Object.freeze([
     Object.freeze({id:'auckland',label:'Auckland · Tāmaki Makaurau'}),
     Object.freeze({id:'queenstown',label:'Queenstown · Tāhuna'}),
     Object.freeze({id:'milford',label:'Milford Sound · Piopiotahi'}),
     Object.freeze({id:'christchurch',label:'Christchurch · Ōtautahi'}),
     Object.freeze({id:'dunedin',label:'Dunedin · Ōtepoti'}),
-    Object.freeze({id:'wellington',label:'Wellington · Te Whanganui-a-Tara'})
+    Object.freeze({id:'wellington',label:'Wellington · Te Whanganui-a-Tara'}),
+    Object.freeze({id:'capereinga',label:'Cape Reinga · Te Rerenga Wairua'})
   ]);
+  const ROUTE_DISTANCE=SCENE_DISTANCE*SCENES.length;
   const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
   const smoother=t=>{t=clamp(t,0,1);return t*t*t*(t*(t*6-15)+10);};
   const hash=(i,s=0)=>{let x=Math.imul(i|0,374761393)^Math.imul(s|0,668265263);x=Math.imul(x^(x>>>13),1274126177);return((x^(x>>>16))>>>0)/4294967295;};
