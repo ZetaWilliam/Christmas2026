@@ -2,13 +2,14 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const coast=require('../gameplay/coastline.js');
 
-assert.equal(coast.version,'2026.09.29-scene-rotation.11');
+assert.equal(coast.version,'2026.09.29-bg-gifts-spire.12');
 assert.deepEqual(coast.SCENES.map(s=>s.id),['auckland','queenstown','milford','christchurch','dunedin','wellington']);
 assert.equal(new Set(coast.SCENES.map(s=>s.id)).size,6);
 assert.equal(coast.SCENE_DISTANCE,900,'Each scene should advance after about 900 distance');
 assert.equal(coast.ROUTE_DISTANCE,5400,'All six panoramas should rotate in a 5400-distance loop');
 assert(coast.PAN_FRACTION<=.065,'Each full panorama should still move only gently within its scene');
-assert.equal(coast.CHRISTCHURCH_FOCUS_Y,.31,'Only Christchurch should shift its vertical focal point upward to preserve the spire.');
+assert.equal(coast.CHRISTCHURCH_FOCUS_Y,0,'Christchurch must preserve the very top of the source image so the spire cannot be cropped.');
+assert.equal(coast.DUNEDIN_COLOR_FIX_DEPTH,38,'Dunedin colour repair must stay confined to the lower shoreline/reflection strip.');
 assert.equal(coast.WELLINGTON_WATER_EXTENSION,26,'Only Wellington gets a short harbour-water extension below the horizon.');
 
 for(let i=0;i<coast.SCENES.length;i++){
@@ -59,6 +60,9 @@ assert(polish.includes("scene.nextScene.id==='wellington'"),'Wellington water bl
 assert(polish.includes("this.mix(normalTop,'#5A788F',.82*wellingtonWeight)"),'Wellington horizon water must blend toward the muted harbour steel-blue.');
 assert(polish.includes("1-.94*wellingtonWeight"),'Wellington dynamic water must begin mostly transparent so the retained harbour water remains visible at the horizon.');
 assert(src.includes("scene.id==='christchurch'?CHRISTCHURCH_FOCUS_Y:.5"),'Christchurch must use the dedicated upward focal point while all other scenes retain center framing.');
+assert(src.includes("scene.id==='dunedin'"),'Dunedin must have the scene-specific colour-cleanup pass.');
+assert(src.includes("wash.addColorStop(1,'rgba(72,102,106,.56)')"),'Dunedin cleanup must mute the saturated lower reflection colours with a restrained harbour wash.');
+assert(!src.includes("scene.id==='auckland'&&")&&!src.includes("scene.id==='queenstown'&&")&&!src.includes("scene.id==='milford'&&"),'No new colour repair may affect the other panoramas.');
 assert(src.includes("const srcRatio=img.naturalWidth/img.naturalHeight,targetRatio=targetW/H"),'Wellington extension must not change the panorama framing height.');
 assert(src.includes("g.drawImage(img,sx,sy,sw,sh,0,0,targetW,H)"),'All panoramas must keep their original visual height.');
 assert(src.includes("const waterSlice=sh*.10"),'Wellington must extend only the bottom harbour-water slice below the horizon.');
@@ -70,4 +74,4 @@ vm.runInNewContext(src,context);
 const Updated=win.HarbourRenderer;assert(Updated!==Base);
 for(const method of ['ocean','santa','hazard','reward','particles','overlay'])assert.equal(Updated.prototype[method],Base.prototype[method]);
 
-console.log(JSON.stringify({scenes:6,sceneDistance:coast.SCENE_DISTANCE,loopDistance:coast.ROUTE_DISTANCE,cinematicDissolve:true,originalPanoramas:true,christchurchSpireFix:true,wellingtonWaterOnlyExtension:true}));
+console.log(JSON.stringify({scenes:6,sceneDistance:coast.SCENE_DISTANCE,loopDistance:coast.ROUTE_DISTANCE,cinematicDissolve:true,originalPanoramas:true,christchurchSpireTopSafe:true,dunedinColourRepair:true,wellingtonWaterOnlyExtension:true}));
