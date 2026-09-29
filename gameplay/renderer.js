@@ -217,6 +217,28 @@
       }
       c.restore();
     }
+    boatGifts(c,duck=false){
+      const parcels=[
+        {x:-49,y:duck?-17:-20,w:17,h:13,box:'#C74436',ribbon:'#F0D18C'},
+        {x:-34,y:duck?-21:-24,w:15,h:16,box:'#2F7563',ribbon:'#F5E4B7'},
+        {x:-21,y:duck?-15:-18,w:13,h:11,box:'#D39A2C',ribbon:'#A7332F'}
+      ];
+      c.save();
+      for(const p of parcels){
+        c.fillStyle='rgba(12,40,50,.16)';
+        c.beginPath();c.ellipse(p.x+p.w*.5,p.y+p.h+2,p.w*.58,2.2,0,0,Math.PI*2);c.fill();
+        c.fillStyle=p.box;c.strokeStyle='rgba(70,45,35,.30)';c.lineWidth=.7;
+        c.beginPath();c.roundRect(p.x,p.y,p.w,p.h,2.2);c.fill();c.stroke();
+        c.fillStyle=p.ribbon;
+        c.fillRect(p.x+p.w*.43,p.y,Math.max(2,p.w*.15),p.h);
+        c.fillRect(p.x,p.y+p.h*.42,p.w,Math.max(2,p.h*.17));
+        const bx=p.x+p.w*.5,by=p.y-1;
+        c.strokeStyle=p.ribbon;c.lineWidth=1.4;c.beginPath();
+        c.ellipse(bx-3.1,by,3.2,1.8,-.28,0,Math.PI*2);
+        c.ellipse(bx+3.1,by,3.2,1.8,.28,0,Math.PI*2);c.stroke();
+      }
+      c.restore();
+    }
     santa(){
       const c=this.ctx,e=this.eng,p=e.player,water=254;
       const bob=p.grounded&&!this.reduced?Math.sin(e.time*5.4)*1.1:0;
@@ -235,9 +257,11 @@
           c.save();c.translate(-64,-60);c.scale(132/314,62/127);
           pose=this.rowingRig.draw(c,e.time,p.grounded,this.reduced);c.restore();
         }
+        this.boatGifts(c,p.duck);
       }else{
         c.fillStyle='#BD4234';c.beginPath();c.ellipse(0,-7,48,8,0,0,Math.PI*2);c.fill();
         c.fillStyle='#FFF5E5';c.font='28px Georgia';c.fillText('🎅',-14,-14);
+        this.boatGifts(c,false);
       }
       c.restore();
       // Water contact uses the same blade tip as the hand rig, not a second prop.
