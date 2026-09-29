@@ -26,8 +26,8 @@
   }
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
-  const VERSION='2026.09.29-scene-rotation.11';
-  const HORIZON=178,SCENE_DISTANCE=900,ROUTE_DISTANCE=SCENE_DISTANCE*6,DISSOLVE_FRACTION=.28,PAN_FRACTION=.065,CHRISTCHURCH_FOCUS_Y=.31,WELLINGTON_WATER_EXTENSION=26,TAU=Math.PI*2;
+  const VERSION='2026.09.29-bg-gifts-spire.12';
+  const HORIZON=178,SCENE_DISTANCE=900,ROUTE_DISTANCE=SCENE_DISTANCE*6,DISSOLVE_FRACTION=.28,PAN_FRACTION=.065,CHRISTCHURCH_FOCUS_Y=0,DUNEDIN_COLOR_FIX_DEPTH=38,WELLINGTON_WATER_EXTENSION=26,TAU=Math.PI*2;
   const SCENES=Object.freeze([
     Object.freeze({id:'auckland',label:'Auckland · Tāmaki Makaurau'}),
     Object.freeze({id:'queenstown',label:'Queenstown · Tāhuna'}),
@@ -111,6 +111,16 @@
         }
         g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';
         g.drawImage(img,sx,sy,sw,sh,0,0,targetW,H);
+        if(scene.id==='dunedin'){
+          const wash=g.createLinearGradient(0,H-DUNEDIN_COLOR_FIX_DEPTH,0,H);
+          wash.addColorStop(0,'rgba(86,111,110,0)');
+          wash.addColorStop(.46,'rgba(84,109,109,.18)');
+          wash.addColorStop(1,'rgba(72,102,106,.56)');
+          g.fillStyle=wash;
+          g.fillRect(0,H-DUNEDIN_COLOR_FIX_DEPTH,targetW,DUNEDIN_COLOR_FIX_DEPTH);
+          g.fillStyle='rgba(222,230,217,.10)';
+          g.fillRect(0,H-8,targetW,8);
+        }
         if(scene.id==='wellington'&&extraH){
           const waterSlice=sh*.10;
           g.globalAlpha=.96;
@@ -160,5 +170,5 @@
       c.restore();
     }
   }
-  return Object.freeze({version:VERSION,SCENES,SCENE_DISTANCE,ROUTE_DISTANCE,DISSOLVE_FRACTION,PAN_FRACTION,CHRISTCHURCH_FOCUS_Y,WELLINGTON_WATER_EXTENSION,routeDistance,sceneState,sceneIndex,CoastLayer});
+  return Object.freeze({version:VERSION,SCENES,SCENE_DISTANCE,ROUTE_DISTANCE,DISSOLVE_FRACTION,PAN_FRACTION,CHRISTCHURCH_FOCUS_Y,DUNEDIN_COLOR_FIX_DEPTH,WELLINGTON_WATER_EXTENSION,routeDistance,sceneState,sceneIndex,CoastLayer});
 });
