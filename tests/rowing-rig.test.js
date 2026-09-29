@@ -27,4 +27,7 @@ assert.deepEqual(draws,[base,paddle,far,near],'Hands must cover the shaft; no ba
 const standing=source.slice(source.indexOf('    santa(){'),source.indexOf('    warning('));
 assert(!standing.includes('this.paddle('),'Remove the disconnected extra paddle');
 assert(standing.includes('this.sprites.duck'),'Crouching keeps its one held paddle');
+assert(source.includes('    boatGifts(c,duck=false){'),'Festive gift parcels must be drawn as part of the canoe renderer.');
+assert(standing.includes('this.boatGifts(c,p.duck)'),'Gift parcels must move with Santa and the canoe in standing/crouching poses.');
+for(const colour of ['#C74436','#2F7563','#D39A2C'])assert(source.includes(colour),'Three distinct festive parcel colours must remain present.');
 console.log(JSON.stringify({rowingRigPoses:poses,maxGripError:maxError,paddlesPerStandingFrame:1,airborneStroke:false},null,2));
