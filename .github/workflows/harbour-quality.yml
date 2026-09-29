@@ -1,7 +1,7 @@
 name: Harbour quality checks
 on:
   push:
-    branches: [main, fix/bg-color-gifts-spire]
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
