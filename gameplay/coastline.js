@@ -26,8 +26,8 @@
   }
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
-  const VERSION='2026.09.30-christchurch-spire.13';
-  const HORIZON=178,SCENE_DISTANCE=900,ROUTE_DISTANCE=SCENE_DISTANCE*6,DISSOLVE_FRACTION=.28,PAN_FRACTION=.065,CHRISTCHURCH_FOCUS_Y=0,DUNEDIN_COLOR_FIX_DEPTH=38,WELLINGTON_WATER_EXTENSION=26,TAU=Math.PI*2;
+  const VERSION='2026.09.30-dunedin-repair.14';
+  const HORIZON=178,SCENE_DISTANCE=900,ROUTE_DISTANCE=SCENE_DISTANCE*6,DISSOLVE_FRACTION=.28,PAN_FRACTION=.065,CHRISTCHURCH_FOCUS_Y=0,DUNEDIN_REPAIR_X=400/768,DUNEDIN_REPAIR_Y=70/360,DUNEDIN_REPAIR_W=368/768,DUNEDIN_REPAIR_H=200/360,WELLINGTON_WATER_EXTENSION=26,TAU=Math.PI*2;
   const SCENES=Object.freeze([
     Object.freeze({id:'auckland',label:'Auckland · Tāmaki Makaurau'}),
     Object.freeze({id:'queenstown',label:'Queenstown · Tāhuna'}),
@@ -109,7 +109,23 @@
     g.restore();
   }
   class CoastLayer{
-    constructor(){this.cache={};this.cacheKey='';}
+    constructor(){this.cache={};this.cacheKey='';this.dunedinRepairCanvas=null;this.dunedinRepairSource=null;}
+    prepareDunedinRepair(images){
+      const img=images?.dunedinRepair;
+      if(!img||!img.complete||!img.naturalWidth)return null;
+      if(this.dunedinRepairSource===img&&this.dunedinRepairCanvas)return this.dunedinRepairCanvas;
+      const plate=makeSurface(img.naturalWidth,img.naturalHeight),g=plate.getContext('2d');
+      g.drawImage(img,0,0);
+      g.globalCompositeOperation='destination-in';
+      const edge=.08,h=g.createLinearGradient(0,0,plate.width,0);
+      h.addColorStop(0,'rgba(0,0,0,0)');h.addColorStop(edge,'rgba(0,0,0,1)');h.addColorStop(1-edge,'rgba(0,0,0,1)');h.addColorStop(1,'rgba(0,0,0,0)');
+      g.fillStyle=h;g.fillRect(0,0,plate.width,plate.height);
+      const v=g.createLinearGradient(0,0,0,plate.height);
+      v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(edge,'rgba(0,0,0,1)');v.addColorStop(1-edge,'rgba(0,0,0,1)');v.addColorStop(1,'rgba(0,0,0,0)');
+      g.fillStyle=v;g.fillRect(0,0,plate.width,plate.height);
+      g.globalCompositeOperation='source-over';
+      this.dunedinRepairSource=img;this.dunedinRepairCanvas=plate;return plate;
+    }
     label(world,reduced=false){
       const s=sceneState(world,reduced);
       return (s.dissolve>=.5?s.nextScene:s.current).label;
@@ -135,14 +151,12 @@
         g.drawImage(img,sx,sy,sw,sh,0,0,targetW,H);
         if(scene.id==='christchurch')drawChristchurchSpire(g,img,sx,sy,sw,sh,targetW,H);
         if(scene.id==='dunedin'){
-          const wash=g.createLinearGradient(0,H-DUNEDIN_COLOR_FIX_DEPTH,0,H);
-          wash.addColorStop(0,'rgba(86,111,110,0)');
-          wash.addColorStop(.46,'rgba(84,109,109,.18)');
-          wash.addColorStop(1,'rgba(72,102,106,.56)');
-          g.fillStyle=wash;
-          g.fillRect(0,H-DUNEDIN_COLOR_FIX_DEPTH,targetW,DUNEDIN_COLOR_FIX_DEPTH);
-          g.fillStyle='rgba(222,230,217,.10)';
-          g.fillRect(0,H-8,targetW,8);
+          const repair=this.prepareDunedinRepair(images);
+          if(repair){
+            const rx=img.naturalWidth*DUNEDIN_REPAIR_X,ry=img.naturalHeight*DUNEDIN_REPAIR_Y,rw=img.naturalWidth*DUNEDIN_REPAIR_W,rh=img.naturalHeight*DUNEDIN_REPAIR_H;
+            const dx=(rx-sx)/sw*targetW,dy=(ry-sy)/sh*H,dw=rw/sw*targetW,dh=rh/sh*H;
+            g.drawImage(repair,dx,dy,dw,dh);
+          }
         }
         if(scene.id==='wellington'&&extraH){
           const waterSlice=sh*.10;
@@ -193,5 +207,5 @@
       c.restore();
     }
   }
-  return Object.freeze({version:VERSION,SCENES,SCENE_DISTANCE,ROUTE_DISTANCE,DISSOLVE_FRACTION,PAN_FRACTION,CHRISTCHURCH_FOCUS_Y,DUNEDIN_COLOR_FIX_DEPTH,WELLINGTON_WATER_EXTENSION,routeDistance,sceneState,sceneIndex,CoastLayer});
+  return Object.freeze({version:VERSION,SCENES,SCENE_DISTANCE,ROUTE_DISTANCE,DISSOLVE_FRACTION,PAN_FRACTION,CHRISTCHURCH_FOCUS_Y,DUNEDIN_REPAIR_X,DUNEDIN_REPAIR_Y,DUNEDIN_REPAIR_W,DUNEDIN_REPAIR_H,WELLINGTON_WATER_EXTENSION,routeDistance,sceneState,sceneIndex,CoastLayer});
 });
