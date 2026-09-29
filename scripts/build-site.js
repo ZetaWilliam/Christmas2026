@@ -7,7 +7,7 @@ const source=fs.readFileSync('index.html','utf8');
 const begin='    // Santa Harbour Dash — Dino-style Auckland endless runner',end='    // 微粒动画';
 const start=source.indexOf(begin),finish=source.indexOf(end,start);
 if(start<0||finish<=start||source.indexOf(begin,start+begin.length)>=0)throw Error('Cannot isolate legacy game. Source left unchanged.');
-const version='2026.09.30-christchurch-spire.25';
+const version='2026.09.30-dunedin-repair.26';
 let html=source.slice(0,start)+'    // The isolated Harbour Dash modules are loaded below.\n'+source.slice(finish);
 const gameMarker='  <!-- Santa Harbour Dash: Auckland Christmas endless runner -->',rsvpMarker='  <!-- 报名表单 -->',modalMarker='  <!-- 报名成功弹窗与电子票 -->';
 const a=html.indexOf(gameMarker),b=html.indexOf(rsvpMarker),c=html.indexOf(modalMarker);
@@ -66,6 +66,10 @@ for(const [id,sha] of Object.entries(sceneHashes)){
   if(crypto.createHash('sha256').update(data).digest('hex')!==sha)throw Error('Scene artwork integrity check failed: '+id);
   fs.writeFileSync('public/gameplay/art/scenes/'+id+'.webp',data);
 }
+const dunedinRepair=Buffer.from(fs.readFileSync('gameplay/art/scenes/dunedin-repair.b64','utf8').trim(),'base64');
+if(dunedinRepair.toString('ascii',0,4)!=='RIFF'||dunedinRepair.toString('ascii',8,12)!=='WEBP')throw Error('Invalid Dunedin repair artwork');
+if(crypto.createHash('sha256').update(dunedinRepair).digest('hex')!=='add3ad4adc5521e2bb294f05819441552064ae0a45ca437136c6440eda32a652')throw Error('Dunedin repair artwork integrity check failed');
+fs.writeFileSync('public/gameplay/art/scenes/dunedin-repair.webp',dunedinRepair);
 // Serve the credited recordings from our own origin; never hotlink during gameplay.
 const manifest=JSON.parse(fs.readFileSync('gameplay/music/manifest.json','utf8'));
 if(manifest.length!==2)throw Error('Expected two licensed recordings');
@@ -77,4 +81,4 @@ for(const item of manifest){
  fs.writeFileSync('public/gameplay/music/'+item.file,data);
 }
 fs.copyFileSync('gameplay/music/CREDITS.md','public/gameplay/music/CREDITS.md');
-console.log(`Built ${version}: preserve the archived stable game while restoring the missing Christchurch Gothic spire as scene-anchored artwork; all other scenes and gameplay remain unchanged.`);
+console.log(`Built ${version}: preserve the stable game while repairing only the corrupted Dunedin waterfront with a clean feathered patch from the original six-scene artwork.`);
