@@ -8,6 +8,8 @@ assert.equal(new Set(coast.SCENES.map(s=>s.id)).size,6);
 assert.equal(coast.SCENE_DISTANCE,900,'Each scene should advance after about 900 distance');
 assert.equal(coast.ROUTE_DISTANCE,5400,'All six panoramas should rotate in a 5400-distance loop');
 assert(coast.PAN_FRACTION<=.065,'Each full panorama should still move only gently within its scene');
+assert.equal(coast.CHRISTCHURCH_FOCUS_Y,.31,'Only Christchurch should shift its vertical focal point upward to preserve the spire.');
+assert.equal(coast.WELLINGTON_WATER_EXTENSION,26,'Only Wellington gets extra background depth below the horizon for water blending.');
 
 for(let i=0;i<coast.SCENES.length;i++){
   const world=(i*coast.SCENE_DISTANCE+80)*10;
@@ -52,6 +54,11 @@ const polish=fs.readFileSync(path.join(__dirname,'../gameplay/polish.js'),'utf8'
 assert(polish.includes("image.decoding='async'"),'Panorama images request asynchronous decode');
 assert(polish.includes("typeof image.decode==='function'?image.decode()"),'All panoramas are decoded before sceneReady');
 assert(polish.includes('this.sceneReady=this.sceneLoaded===SCENES.length'),'All six decoded scenes must be ready before the game uses them');
+assert(polish.includes("scene.current.id==='wellington'"),'Wellington water treatment must be scene-specific.');
+assert(polish.includes("scene.nextScene.id==='wellington'"),'Wellington water blend must enter and leave smoothly during dissolves.');
+assert(polish.includes("this.mix(normalTop,'#5A788F',.82*wellingtonWeight)"),'Wellington horizon water must blend toward the muted harbour steel-blue.');
+assert(src.includes("scene.id==='christchurch'?CHRISTCHURCH_FOCUS_Y:.5"),'Christchurch must use the dedicated upward focal point while all other scenes retain center framing.');
+assert(!polish.includes("current.id==='auckland'")&&!polish.includes("current.id==='queenstown'")&&!polish.includes("current.id==='milford'")&&!polish.includes("current.id==='dunedin'"),'No other scene may receive a new ocean override.');
 
 class Base {draw(){} ocean(){} santa(){} hazard(){} reward(){} particles(){} overlay(){}}
 const win={HarbourRenderer:Base},context={window:win,document:{getElementById:()=>null}};context.globalThis=win;
@@ -59,4 +66,4 @@ vm.runInNewContext(src,context);
 const Updated=win.HarbourRenderer;assert(Updated!==Base);
 for(const method of ['ocean','santa','hazard','reward','particles','overlay'])assert.equal(Updated.prototype[method],Base.prototype[method]);
 
-console.log(JSON.stringify({scenes:6,sceneDistance:coast.SCENE_DISTANCE,loopDistance:coast.ROUTE_DISTANCE,cinematicDissolve:true,originalPanoramas:true}));
+console.log(JSON.stringify({scenes:6,sceneDistance:coast.SCENE_DISTANCE,loopDistance:coast.ROUTE_DISTANCE,cinematicDissolve:true,originalPanoramas:true,christchurchSpireFix:true,wellingtonWaterBlend:true}));
