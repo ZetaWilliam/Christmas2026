@@ -7,7 +7,7 @@ const source=fs.readFileSync('index.html','utf8');
 const begin='    // Santa Harbour Dash — Dino-style Auckland endless runner',end='    // 微粒动画';
 const start=source.indexOf(begin),finish=source.indexOf(end,start);
 if(start<0||finish<=start||source.indexOf(begin,start+begin.length)>=0)throw Error('Cannot isolate legacy game. Source left unchanged.');
-const version='2026.09.29-bg-gifts-spire.24';
+const version='2026.09.30-christchurch-spire.25';
 let html=source.slice(0,start)+'    // The isolated Harbour Dash modules are loaded below.\n'+source.slice(finish);
 const gameMarker='  <!-- Santa Harbour Dash: Auckland Christmas endless runner -->',rsvpMarker='  <!-- 报名表单 -->',modalMarker='  <!-- 报名成功弹窗与电子票 -->';
 const a=html.indexOf(gameMarker),b=html.indexOf(rsvpMarker),c=html.indexOf(modalMarker);
@@ -77,4 +77,4 @@ for(const item of manifest){
  fs.writeFileSync('public/gameplay/music/'+item.file,data);
 }
 fs.copyFileSync('gameplay/music/CREDITS.md','public/gameplay/music/CREDITS.md');
-console.log(`Built ${version}: preserve the current stable game while muting Dunedin lower-shore colour artifacts, making Christchurch spire top-safe, and adding three festive gift parcels to Santa's canoe.`);
+console.log(`Built ${version}: preserve the archived stable game while restoring the missing Christchurch Gothic spire as scene-anchored artwork; all other scenes and gameplay remain unchanged.`);
