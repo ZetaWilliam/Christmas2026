@@ -92,7 +92,8 @@
         const rgb=hex=>hex.match(/\w\w/g).map(v=>parseInt(v,16));
         const rgba=(hex,a)=>{const v=rgb(hex);return 'rgba('+v[0]+','+v[1]+','+v[2]+','+a+')';};
         const seam=c.createLinearGradient(0,h,0,h+joinDepth);
-        seam.addColorStop(0,rgba(wellingtonTop,1-.74*wellingtonWeight));
+        seam.addColorStop(0,rgba(wellingtonTop,1-.94*wellingtonWeight));
+        seam.addColorStop(.55,rgba(this.mix(wellingtonTop,wellingtonMid,.55),1-.45*wellingtonWeight));
         seam.addColorStop(1,rgba(wellingtonMid,1));
         c.fillStyle=seam;c.fillRect(0,h,W,joinDepth);
       }else{
