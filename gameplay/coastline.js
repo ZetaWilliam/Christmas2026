@@ -26,7 +26,7 @@
   }
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
-  const VERSION='2026.09.29-bg-gifts-spire.12';
+  const VERSION='2026.09.30-christchurch-spire.13';
   const HORIZON=178,SCENE_DISTANCE=900,ROUTE_DISTANCE=SCENE_DISTANCE*6,DISSOLVE_FRACTION=.28,PAN_FRACTION=.065,CHRISTCHURCH_FOCUS_Y=0,DUNEDIN_COLOR_FIX_DEPTH=38,WELLINGTON_WATER_EXTENSION=26,TAU=Math.PI*2;
   const SCENES=Object.freeze([
     Object.freeze({id:'auckland',label:'Auckland · Tāmaki Makaurau'}),
@@ -86,6 +86,28 @@
       starPoint(c,x,y,r,alpha*(.18+hash(i,404)*.32),time,i+401);
     }
   }
+  function drawChristchurchSpire(g,img,sx,sy,sw,sh,targetW,H){
+    const sourceX=img.naturalWidth*.7215,baseSourceY=img.naturalHeight*.365,shoulderSourceY=img.naturalHeight*.285,tipSourceY=img.naturalHeight*.105;
+    const mapX=x=>(x-sx)/sw*targetW,mapY=y=>(y-sy)/sh*H;
+    const cx=mapX(sourceX),baseY=mapY(baseSourceY),shoulderY=mapY(shoulderSourceY),tipY=mapY(tipSourceY);
+    if(cx<-20||cx>targetW+20||baseY<0||tipY>H)return;
+    const halfW=Math.max(3.2,(img.naturalWidth*.009/sw)*targetW);
+    g.save();
+    const fill=g.createLinearGradient(cx-halfW,tipY,cx+halfW,baseY);
+    fill.addColorStop(0,'#59616A');fill.addColorStop(.46,'#73777B');fill.addColorStop(1,'#4A535C');
+    g.fillStyle=fill;g.strokeStyle='rgba(57,64,70,.62)';g.lineWidth=Math.max(.65,H/260);
+    g.beginPath();
+    g.moveTo(cx,tipY);
+    g.lineTo(cx+halfW*.38,shoulderY);
+    g.lineTo(cx+halfW,baseY);
+    g.lineTo(cx-halfW,baseY);
+    g.lineTo(cx-halfW*.38,shoulderY);
+    g.closePath();g.fill();g.stroke();
+    g.strokeStyle='rgba(214,215,207,.46)';g.lineWidth=Math.max(.5,H/330);
+    g.beginPath();g.moveTo(cx-.6,tipY+2);g.lineTo(cx-.9,baseY-1);g.stroke();
+    g.fillStyle='#545C62';g.beginPath();g.arc(cx,tipY-1.4,Math.max(.65,H/230),0,TAU);g.fill();
+    g.restore();
+  }
   class CoastLayer{
     constructor(){this.cache={};this.cacheKey='';}
     label(world,reduced=false){
@@ -111,6 +133,7 @@
         }
         g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';
         g.drawImage(img,sx,sy,sw,sh,0,0,targetW,H);
+        if(scene.id==='christchurch')drawChristchurchSpire(g,img,sx,sy,sw,sh,targetW,H);
         if(scene.id==='dunedin'){
           const wash=g.createLinearGradient(0,H-DUNEDIN_COLOR_FIX_DEPTH,0,H);
           wash.addColorStop(0,'rgba(86,111,110,0)');
