@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const coast=require('../gameplay/coastline.js');
 
-assert.equal(coast.version,'2026.09.29-bg-gifts-spire.12');
+assert.equal(coast.version,'2026.09.30-christchurch-spire.13');
 assert.deepEqual(coast.SCENES.map(s=>s.id),['auckland','queenstown','milford','christchurch','dunedin','wellington']);
 assert.equal(new Set(coast.SCENES.map(s=>s.id)).size,6);
 assert.equal(coast.SCENE_DISTANCE,900,'Each scene should advance after about 900 distance');
@@ -60,6 +60,10 @@ assert(polish.includes("scene.nextScene.id==='wellington'"),'Wellington water bl
 assert(polish.includes("this.mix(normalTop,'#5A788F',.82*wellingtonWeight)"),'Wellington horizon water must blend toward the muted harbour steel-blue.');
 assert(polish.includes("1-.94*wellingtonWeight"),'Wellington dynamic water must begin mostly transparent so the retained harbour water remains visible at the horizon.');
 assert(src.includes("scene.id==='christchurch'?CHRISTCHURCH_FOCUS_Y:.5"),'Christchurch must use the dedicated upward focal point while all other scenes retain center framing.');
+assert(src.includes('function drawChristchurchSpire'),'Christchurch must include a scene-anchored Gothic spire repair layer.');
+assert(src.includes("if(scene.id==='christchurch')drawChristchurchSpire"),'The spire repair must only run for Christchurch.');
+assert(src.includes("sourceX=img.naturalWidth*.7215"),'Spire repair must stay anchored to the tower position in the source panorama.');
+assert(src.includes("tipSourceY=img.naturalHeight*.105"),'Spire repair must extend well above the truncated source tower top.');
 assert(src.includes("scene.id==='dunedin'"),'Dunedin must have the scene-specific colour-cleanup pass.');
 assert(src.includes("wash.addColorStop(1,'rgba(72,102,106,.56)')"),'Dunedin cleanup must mute the saturated lower reflection colours with a restrained harbour wash.');
 assert(!src.includes("scene.id==='auckland'&&")&&!src.includes("scene.id==='queenstown'&&")&&!src.includes("scene.id==='milford'&&"),'No new colour repair may affect the other panoramas.');
@@ -74,4 +78,4 @@ vm.runInNewContext(src,context);
 const Updated=win.HarbourRenderer;assert(Updated!==Base);
 for(const method of ['ocean','santa','hazard','reward','particles','overlay'])assert.equal(Updated.prototype[method],Base.prototype[method]);
 
-console.log(JSON.stringify({scenes:6,sceneDistance:coast.SCENE_DISTANCE,loopDistance:coast.ROUTE_DISTANCE,cinematicDissolve:true,originalPanoramas:true,christchurchSpireTopSafe:true,dunedinColourRepair:true,wellingtonWaterOnlyExtension:true}));
+console.log(JSON.stringify({scenes:6,sceneDistance:coast.SCENE_DISTANCE,loopDistance:coast.ROUTE_DISTANCE,cinematicDissolve:true,originalPanoramas:true,christchurchSpireRestored:true,dunedinColourRepair:true,wellingtonWaterOnlyExtension:true}));
