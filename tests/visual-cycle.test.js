@@ -14,7 +14,10 @@ assert(cycle.state(120).night<1e-9,'Cycle returns seamlessly to daylight');
 let dark=0,total=2400;
 for(let i=0;i<total;i++)if(cycle.state(i/total*cycle.seconds).night>=.5)dark++;
 const darkShare=dark/total;
-assert(darkShare>.495&&darkShare<.505,'Day and night must occupy equal halves of the cycle');
+assert(darkShare>.245&&darkShare<.255,'Visible night must occupy about one quarter of the 120-second cycle (about 30 seconds).');
+assert(Math.abs(cycle.state(45).night-.5)<.001,'Night threshold begins around 45 seconds.');
+assert(cycle.state(60).night>.999,'Mid-cycle still reaches full night.');
+assert(Math.abs(cycle.state(75).night-.5)<.001,'Night threshold ends around 75 seconds.');
 
 const drawCall=rendererSource.indexOf('this.environmentLight(p);');
 const starHook=rendererSource.indexOf("if(typeof this.nightSkyHighlights==='function')this.nightSkyHighlights(p);");
@@ -30,4 +33,4 @@ assert(runner.includes("{min:20000,id:'legend',band:'high',name:'Harbour Hero'}"
 assert(runner.includes('const scoreMilestones=[2000,5000,10000,20000];'),'Visible score milestones must end at 20000');
 assert(!runner.includes("{min:8000,id:'legend'"),'Legacy 8000-point top tier must not return');
 
-console.log(JSON.stringify({cycleSeconds:cycle.seconds,darkShare:Number(darkShare.toFixed(3)),topTier:20000,wholeSceneLighting:true,starsAfterNightLighting:true}));
+console.log(JSON.stringify({cycleSeconds:cycle.seconds,visibleNightSeconds:Number((cycle.seconds*darkShare).toFixed(1)),darkShare:Number(darkShare.toFixed(3)),topTier:20000,wholeSceneLighting:true,starsAfterNightLighting:true}));

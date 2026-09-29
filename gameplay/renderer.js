@@ -6,16 +6,17 @@
   const mixHex=(a,b,t)=>{const rgb=v=>v.match(/\w\w/g).map(x=>parseInt(x,16)),x=rgb(a),y=rgb(b);return '#'+x.map((v,i)=>Math.round(v+(y[i]-v)*t).toString(16).padStart(2,'0')).join('');};
   function cycleState(time,reduced=false){
     const u=((Number.isFinite(time)?time:0)%DAY_NIGHT_SECONDS+DAY_NIGHT_SECONDS)%DAY_NIGHT_SECONDS/DAY_NIGHT_SECONDS;
-    const pos=u*4,i=Math.min(3,Math.floor(pos)),local=pos-i,f=(1-Math.cos(local*Math.PI))/2;
+    const visualU=u<.375?u*(2/3):u<.625?.25+(u-.375)*2:.75+(u-.625)*(2/3);
+    const pos=visualU*4,i=Math.min(3,Math.floor(pos)),local=pos-i,f=(1-Math.cos(local*Math.PI))/2;
     const keys=[
       {top:'#A8D8F0',horizon:'#EAF3EE',water:'#3F91A6',label:'Day → dusk'},
       {top:'#CFA99C',horizon:'#F1D5BA',water:'#4A7D90',label:'Dusk → night'},
       {top:'#172C49',horizon:'#3D536B',water:'#244E65',label:'Night → dawn'},
       {top:'#9CB7D0',horizon:'#E1D2C7',water:'#477F93',label:'Dawn → day'},
       {top:'#A8D8F0',horizon:'#EAF3EE',water:'#3F91A6',label:'Day → dusk'}
-    ],a=keys[i],b=keys[i+1],night=reduced?0:(.5-.5*Math.cos(TAU*u)),
-    warm=reduced?0:Math.max(0,1-Math.abs(u-.25)/.18,1-Math.abs(u-.75)/.18);
-    return {u,top:mixHex(a.top,b.top,f),horizon:mixHex(a.horizon,b.horizon,f),water:mixHex(a.water,b.water,f),night,warm,label:reduced?'Day':a.label};
+    ],a=keys[i],b=keys[i+1],night=reduced?0:(.5-.5*Math.cos(TAU*visualU)),
+    warm=reduced?0:Math.max(0,1-Math.abs(visualU-.25)/.18,1-Math.abs(visualU-.75)/.18);
+    return {u,visualU,top:mixHex(a.top,b.top,f),horizon:mixHex(a.horizon,b.horizon,f),water:mixHex(a.water,b.water,f),night,warm,label:reduced?'Day':a.label};
   }
   /* One articulated paddle, cut from the existing illustration. The two arm
      textures share its grip points; the complete baked-in standing sprite is

@@ -101,7 +101,7 @@
         const img=images[scene.id];
         if(!img||!img.complete||!img.naturalWidth)return false;
         const targetW=Math.ceil(W+pan),extraH=scene.id==='wellington'?WELLINGTON_WATER_EXTENSION:0,targetH=H+extraH,plate=makeSurface(targetW,targetH),g=plate.getContext('2d');
-        const srcRatio=img.naturalWidth/img.naturalHeight,targetRatio=targetW/targetH;
+        const srcRatio=img.naturalWidth/img.naturalHeight,targetRatio=targetW/H;
         let sx=0,sy=0,sw=img.naturalWidth,sh=img.naturalHeight;
         if(srcRatio>targetRatio){sw=sh*targetRatio;sx=(img.naturalWidth-sw)/2;}
         else{
@@ -110,7 +110,13 @@
           sy=(img.naturalHeight-sh)*focusY;
         }
         g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';
-        g.drawImage(img,sx,sy,sw,sh,0,0,targetW,targetH);
+        g.drawImage(img,sx,sy,sw,sh,0,0,targetW,H);
+        if(scene.id==='wellington'&&extraH){
+          const waterSlice=sh*.10;
+          g.globalAlpha=.96;
+          g.drawImage(img,sx,sy+sh-waterSlice,sw,waterSlice,0,H-1,targetW,extraH+1);
+          g.globalAlpha=1;
+        }
         next[scene.id]=Object.freeze({canvas:plate,travel:targetW-W});
       }
       this.cache=next;this.cacheKey=key;return true;
