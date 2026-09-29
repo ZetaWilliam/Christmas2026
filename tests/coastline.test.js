@@ -2,14 +2,17 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const coast=require('../gameplay/coastline.js');
 
-assert.equal(coast.version,'2026.09.30-christchurch-spire.13');
+assert.equal(coast.version,'2026.09.30-dunedin-repair.14');
 assert.deepEqual(coast.SCENES.map(s=>s.id),['auckland','queenstown','milford','christchurch','dunedin','wellington']);
 assert.equal(new Set(coast.SCENES.map(s=>s.id)).size,6);
 assert.equal(coast.SCENE_DISTANCE,900,'Each scene should advance after about 900 distance');
 assert.equal(coast.ROUTE_DISTANCE,5400,'All six panoramas should rotate in a 5400-distance loop');
 assert(coast.PAN_FRACTION<=.065,'Each full panorama should still move only gently within its scene');
 assert.equal(coast.CHRISTCHURCH_FOCUS_Y,0,'Christchurch must preserve the very top of the source image so the spire cannot be cropped.');
-assert.equal(coast.DUNEDIN_COLOR_FIX_DEPTH,38,'Dunedin colour repair must stay confined to the lower shoreline/reflection strip.');
+assert(Math.abs(coast.DUNEDIN_REPAIR_X-400/768)<1e-12);
+assert(Math.abs(coast.DUNEDIN_REPAIR_Y-70/360)<1e-12);
+assert(Math.abs(coast.DUNEDIN_REPAIR_W-368/768)<1e-12);
+assert(Math.abs(coast.DUNEDIN_REPAIR_H-200/360)<1e-12);
 assert.equal(coast.WELLINGTON_WATER_EXTENSION,26,'Only Wellington gets a short harbour-water extension below the horizon.');
 
 for(let i=0;i<coast.SCENES.length;i++){
@@ -41,7 +44,7 @@ assert.equal(coast.sceneState(45000).current.id,'wellington');
 const src=fs.readFileSync(path.join(__dirname,'../gameplay/coastline.js'),'utf8');
 assert(!src.includes('scenePositions'),'Side-by-side stitched panorama mode must not return');
 assert(!src.includes("scene.id==='auckland'?.875:1"),'Auckland must use the original full composition rather than the destructive crop');
-assert(!src.includes("globalCompositeOperation='destination-in'"),'Panorama edges must not be feather-cut into visible strips');
+assert(!src.includes("mask.addColorStop(0,'rgba(0,0,0,0)')"),'Full panorama scenes must not regain edge feather strips.');
 assert(!src.includes('drawProcedural'),'Procedural placeholder scenery must not return');
 assert(!src.includes('scale(-1,1)'),'Panoramas must never be mirrored');
 assert(src.includes('this.drawPlate(c,current,W,H,state.local,1-d)'),'Outgoing panorama uses full-screen gentle pan');
@@ -54,7 +57,9 @@ assert(src.includes('drawNightSky'),'Stars are separated from the background pas
 const polish=fs.readFileSync(path.join(__dirname,'../gameplay/polish.js'),'utf8');
 assert(polish.includes("image.decoding='async'"),'Panorama images request asynchronous decode');
 assert(polish.includes("typeof image.decode==='function'?image.decode()"),'All panoramas are decoded before sceneReady');
-assert(polish.includes('this.sceneReady=this.sceneLoaded===SCENES.length'),'All six decoded scenes must be ready before the game uses them');
+assert(polish.includes('this.sceneExpected=SCENES.length+1'),'Dunedin repair asset must be counted in scene readiness.');
+assert(polish.includes("repair.src='/gameplay/art/scenes/dunedin-repair.webp?v='+VERSION"),'Dunedin repair asset must preload with the six scenes.');
+assert(polish.includes('this.sceneReady=this.sceneLoaded===this.sceneExpected'),'All six scenes plus the repair patch must be decoded before use.');
 assert(polish.includes("scene.current.id==='wellington'"),'Wellington water treatment must be scene-specific.');
 assert(polish.includes("scene.nextScene.id==='wellington'"),'Wellington water blend must enter and leave smoothly during dissolves.');
 assert(polish.includes("this.mix(normalTop,'#5A788F',.82*wellingtonWeight)"),'Wellington horizon water must blend toward the muted harbour steel-blue.');
@@ -64,8 +69,11 @@ assert(src.includes('function drawChristchurchSpire'),'Christchurch must include
 assert(src.includes("if(scene.id==='christchurch')drawChristchurchSpire"),'The spire repair must only run for Christchurch.');
 assert(src.includes("sourceX=img.naturalWidth*.7215"),'Spire repair must stay anchored to the tower position in the source panorama.');
 assert(src.includes("tipSourceY=img.naturalHeight*.105"),'Spire repair must extend well above the truncated source tower top.');
-assert(src.includes("scene.id==='dunedin'"),'Dunedin must have the scene-specific colour-cleanup pass.');
-assert(src.includes("wash.addColorStop(1,'rgba(72,102,106,.56)')"),'Dunedin cleanup must mute the saturated lower reflection colours with a restrained harbour wash.');
+assert(src.includes("scene.id==='dunedin'"),'Dunedin must have a scene-specific repair pass.');
+assert(src.includes('prepareDunedinRepair'),'Dunedin repair artwork must be cached and feathered.');
+assert(src.includes("g.globalCompositeOperation='destination-in'"),'Repair patch edges must be alpha-feathered.');
+assert(src.includes("g.drawImage(repair,dx,dy,dw,dh)"),'Clean Dunedin repair patch must be drawn into the damaged source region.');
+assert(!src.includes("wash.addColorStop(1,'rgba(72,102,106,.56)')"),'Legacy colour-wash masking must be removed once clean repair artwork is available.');
 assert(!src.includes("scene.id==='auckland'&&")&&!src.includes("scene.id==='queenstown'&&")&&!src.includes("scene.id==='milford'&&"),'No new colour repair may affect the other panoramas.');
 assert(src.includes("const srcRatio=img.naturalWidth/img.naturalHeight,targetRatio=targetW/H"),'Wellington extension must not change the panorama framing height.');
 assert(src.includes("g.drawImage(img,sx,sy,sw,sh,0,0,targetW,H)"),'All panoramas must keep their original visual height.');
@@ -78,4 +86,4 @@ vm.runInNewContext(src,context);
 const Updated=win.HarbourRenderer;assert(Updated!==Base);
 for(const method of ['ocean','santa','hazard','reward','particles','overlay'])assert.equal(Updated.prototype[method],Base.prototype[method]);
 
-console.log(JSON.stringify({scenes:6,sceneDistance:coast.SCENE_DISTANCE,loopDistance:coast.ROUTE_DISTANCE,cinematicDissolve:true,originalPanoramas:true,christchurchSpireRestored:true,dunedinColourRepair:true,wellingtonWaterOnlyExtension:true}));
+console.log(JSON.stringify({scenes:6,sceneDistance:coast.SCENE_DISTANCE,loopDistance:coast.ROUTE_DISTANCE,cinematicDissolve:true,originalPanoramas:true,christchurchSpireRestored:true,dunedinCleanRepair:true,wellingtonWaterOnlyExtension:true}));
