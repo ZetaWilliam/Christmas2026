@@ -3,7 +3,7 @@
   'use strict';
   const BaseRenderer=window.HarbourRenderer, BaseAudio=window.HarbourAudio;
   if(!BaseRenderer||!BaseAudio)return;
-  const VERSION='2026.09.30-cape-reinga.7';
+  const VERSION='2026.09.30-cape-reinga-loadfix.8';
   const SCENES=['auckland','queenstown','milford','christchurch','dunedin','wellington','capereinga'];
   class CleanRenderer extends BaseRenderer {
     constructor(canvas,engine,reduced){
@@ -12,8 +12,12 @@
       for(const id of SCENES){
         const image=new Image();let settled=false;
         image.decoding='async';
-        const finish=()=>{if(settled)return;settled=true;this.sceneLoaded++;this.sceneReady=this.sceneLoaded===this.sceneExpected;if(this.sceneReady)this.draw();};
-        image.onload=()=>{const decoded=typeof image.decode==='function'?image.decode():Promise.resolve();decoded.catch(()=>{}).then(finish);};
+        const finish=()=>{if(settled)return;settled=true;this.sceneLoaded++;this.sceneReady=this.sceneLoaded>0;this.draw();};
+        image.onload=()=>{
+          if(id==='capereinga'){finish();return;}
+          const decoded=typeof image.decode==='function'?image.decode():Promise.resolve();
+          decoded.catch(()=>{}).then(finish);
+        };
         image.onerror=()=>{console.warn('Illustrated scene unavailable:',id);finish();};
         image.src='/gameplay/art/scenes/'+id+(id==='capereinga'?'.svg':'.webp')+'?v='+VERSION;
         this.sceneImages[id]=image;
@@ -21,7 +25,7 @@
       {
         const repair=new Image();let settled=false;
         repair.decoding='async';
-        const finish=()=>{if(settled)return;settled=true;this.sceneLoaded++;this.sceneReady=this.sceneLoaded===this.sceneExpected;if(this.sceneReady)this.draw();};
+        const finish=()=>{if(settled)return;settled=true;this.sceneLoaded++;this.sceneReady=this.sceneLoaded>0;this.draw();};
         repair.onload=()=>{const decoded=typeof repair.decode==='function'?repair.decode():Promise.resolve();decoded.catch(()=>{}).then(finish);};
         repair.onerror=()=>{console.warn('Dunedin repair unavailable');finish();};
         repair.src='/gameplay/art/scenes/dunedin-repair.webp?v='+VERSION;
