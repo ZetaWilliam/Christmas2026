@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const coast=require('../gameplay/coastline.js');
 
-assert.equal(coast.version,'2026.09.30-cape-reinga.15');
+assert.equal(coast.version,'2026.09.30-cape-reinga-loadfix.16');
 assert.deepEqual(coast.SCENES.map(s=>s.id),['auckland','queenstown','milford','christchurch','dunedin','wellington','capereinga']);
 assert.equal(new Set(coast.SCENES.map(s=>s.id)).size,7);
 assert.equal(coast.SCENE_DISTANCE,900,'Each scene should advance after about 900 distance');
@@ -49,7 +49,12 @@ assert(!src.includes("scene.id==='auckland'?.875:1"),'Auckland must use the orig
 assert(!src.includes("mask.addColorStop(0,'rgba(0,0,0,0)')"),'Full panorama scenes must not regain edge feather strips.');
 assert(!src.includes('drawProcedural'),'Procedural placeholder scenery must not return');
 assert(!src.includes('scale(-1,1)'),'Panoramas must never be mirrored');
-assert(src.includes('this.drawPlate(c,current,W,H,state.local,1-d)'),'Outgoing panorama uses full-screen gentle pan');
+assert(src.includes('this.drawPlate(c,current,W,H,state.local,incoming?1-d:1)'),'Current panorama must remain fully visible if the next scene is not loaded yet.');
+assert(src.includes('if(incoming&&d>0)this.drawPlate'),'Incoming panorama is optional during preload and must never blank the current scene.');
+assert(src.includes('if(!img||!img.complete||!img.naturalWidth)continue;'),'Scene preparation must skip unavailable assets instead of aborting all backgrounds.');
+assert(!src.includes('if(ready&&this.prepare(images,W,H))'),'Global sceneReady gating must not be able to blank Auckland.');
+assert(src.includes('this.prepare(images,W,H);'),'Available scenes must be prepared incrementally every frame.');
+assert(src.includes('this.drawPlate(c,current,W,H,state.local,incoming?1-d:1)'),'Outgoing panorama uses full-screen gentle pan');
 assert(src.includes('this.drawPlate(c,incoming,W,H,0,d)'),'Incoming panorama dissolves in at its natural starting composition');
 assert(src.includes('Math.sin(Math.PI*d)*.10'),'Transition uses a light atmospheric veil to suppress landmark ghosting');
 assert(src.includes('function starPoint'),'Night sky uses individual luminous star points');
@@ -58,12 +63,14 @@ assert(src.includes('drawNightSky'),'Stars are separated from the background pas
 
 const polish=fs.readFileSync(path.join(__dirname,'../gameplay/polish.js'),'utf8');
 assert(polish.includes("image.decoding='async'"),'Panorama images request asynchronous decode');
-assert(polish.includes("typeof image.decode==='function'?image.decode()"),'All panoramas are decoded before sceneReady');
+assert(polish.includes("typeof image.decode==='function'?image.decode()"),'Raster panoramas still use async decode when available.');
+assert(polish.includes("if(id==='capereinga'){finish();return;}"),'Cape Reinga SVG must not hold the whole scene set behind image.decode().');
 assert(polish.includes("const SCENES=['auckland','queenstown','milford','christchurch','dunedin','wellington','capereinga'];"),'Renderer preload order must match the seven-scene route.');
 assert(polish.includes("id==='capereinga'?'.svg':'.webp'"),'Cape Reinga must load its dedicated SVG scene asset.');
 assert(polish.includes('this.sceneExpected=SCENES.length+1'),'Dunedin repair asset must remain counted in scene readiness alongside seven panoramas.');
 assert(polish.includes("repair.src='/gameplay/art/scenes/dunedin-repair.webp?v='+VERSION"),'Dunedin repair asset must preload with the six scenes.');
-assert(polish.includes('this.sceneReady=this.sceneLoaded===this.sceneExpected'),'All seven scenes plus the repair patch must be decoded before use.');
+assert(polish.includes('this.sceneReady=this.sceneLoaded>0'),'Background rendering must start as soon as the first scene is available.');
+assert(polish.includes('this.draw();'),'Every completed scene load must request an immediate redraw.');
 assert(polish.includes("scene.current.id==='wellington'"),'Wellington water treatment must be scene-specific.');
 assert(polish.includes("scene.nextScene.id==='wellington'"),'Wellington water blend must enter and leave smoothly during dissolves.');
 assert(polish.includes("this.mix(normalTop,'#5A788F',.82*wellingtonWeight)"),'Wellington horizon water must blend toward the muted harbour steel-blue.');
@@ -90,4 +97,4 @@ vm.runInNewContext(src,context);
 const Updated=win.HarbourRenderer;assert(Updated!==Base);
 for(const method of ['ocean','santa','hazard','reward','particles','overlay'])assert.equal(Updated.prototype[method],Base.prototype[method]);
 
-console.log(JSON.stringify({scenes:7,sceneDistance:coast.SCENE_DISTANCE,loopDistance:coast.ROUTE_DISTANCE,estimatedScoreLoopMultiplier:Number((7/6).toFixed(3)),capeReinga:true,cinematicDissolve:true,originalPanoramas:true,christchurchSpireRestored:true,dunedinCleanRepair:true,wellingtonWaterOnlyExtension:true}));
+console.log(JSON.stringify({scenes:7,sceneDistance:coast.SCENE_DISTANCE,loopDistance:coast.ROUTE_DISTANCE,estimatedScoreLoopMultiplier:Number((7/6).toFixed(3)),capeReinga:true,incrementalSceneLoading:true,cinematicDissolve:true,originalPanoramas:true,christchurchSpireRestored:true,dunedinCleanRepair:true,wellingtonWaterOnlyExtension:true}));
