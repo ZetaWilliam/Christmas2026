@@ -26,7 +26,7 @@
   }
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
-  const VERSION='2026.09.30-cape-reinga.15';
+  const VERSION='2026.09.30-cape-reinga-loadfix.16';
   const HORIZON=178,SCENE_DISTANCE=900,DISSOLVE_FRACTION=.28,PAN_FRACTION=.065,CHRISTCHURCH_FOCUS_Y=0,DUNEDIN_REPAIR_X=400/768,DUNEDIN_REPAIR_Y=70/360,DUNEDIN_REPAIR_W=368/768,DUNEDIN_REPAIR_H=200/360,WELLINGTON_WATER_EXTENSION=26,TAU=Math.PI*2;
   const SCENES=Object.freeze([
     Object.freeze({id:'auckland',label:'Auckland · Tāmaki Makaurau'}),
@@ -135,11 +135,11 @@
     prepare(images,W,H){
       if(!images)return false;
       const pan=Math.max(28,Math.min(72,W*PAN_FRACTION)),key=W+'x'+H+'@'+pan;
-      if(this.cacheKey===key&&SCENES.every(s=>this.cache[s.id]))return true;
-      const next={};
+      if(this.cacheKey!==key){this.cache={};this.cacheKey=key;}
       for(const scene of SCENES){
+        if(this.cache[scene.id])continue;
         const img=images[scene.id];
-        if(!img||!img.complete||!img.naturalWidth)return false;
+        if(!img||!img.complete||!img.naturalWidth)continue;
         const targetW=Math.ceil(W+pan),extraH=scene.id==='wellington'?WELLINGTON_WATER_EXTENSION:0,targetH=H+extraH,plate=makeSurface(targetW,targetH),g=plate.getContext('2d');
         const srcRatio=img.naturalWidth/img.naturalHeight,targetRatio=targetW/H;
         let sx=0,sy=0,sw=img.naturalWidth,sh=img.naturalHeight;
@@ -166,9 +166,9 @@
           g.drawImage(img,sx,sy+sh-waterSlice,sw,waterSlice,0,H-1,targetW,extraH+1);
           g.globalAlpha=1;
         }
-        next[scene.id]=Object.freeze({canvas:plate,travel:targetW-W});
+        this.cache[scene.id]=Object.freeze({canvas:plate,travel:targetW-W});
       }
-      this.cache=next;this.cacheKey=key;return true;
+      return Object.keys(this.cache).length>0;
     }
     drawPlate(c,item,W,H,progress,alpha){
       if(!item||alpha<=0)return;
@@ -180,11 +180,12 @@
       c.save();c.beginPath();c.rect(0,0,W,clipH);c.clip();
       const fallback=c.createLinearGradient(0,0,0,H);
       fallback.addColorStop(0,p.top);fallback.addColorStop(1,p.horizon);c.fillStyle=fallback;c.fillRect(0,0,W,clipH);
-      if(ready&&this.prepare(images,W,H)){
-        const current=this.cache[state.current.id],incoming=this.cache[state.nextScene.id],d=state.dissolve;
-        this.drawPlate(c,current,W,H,state.local,1-d);
-        if(d>0)this.drawPlate(c,incoming,W,H,0,d);
-        if(d>0&&d<1){
+      this.prepare(images,W,H);
+      const current=this.cache[state.current.id],incoming=this.cache[state.nextScene.id],d=state.dissolve;
+      if(current){
+        this.drawPlate(c,current,W,H,state.local,incoming?1-d:1);
+        if(incoming&&d>0)this.drawPlate(c,incoming,W,H,0,d);
+        if(incoming&&d>0&&d<1){
           const mist=Math.sin(Math.PI*d)*.10;
           c.fillStyle='rgba(222,235,234,'+mist+')';c.fillRect(0,0,W,H);
         }
