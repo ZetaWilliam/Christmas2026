@@ -20,6 +20,20 @@ try{
   if(file==='runner.js')expected=expected.replaceAll("'Harbour Pop ↻'","'Instrumental 1 ↻'").replaceAll("'Summer Bossa ↻'","'Instrumental 2 ↻'");
   assert.equal(fs.readFileSync(path.join(tmp,'public/gameplay',file),'utf8'),expected);
  }
+ // Execute the production preloader and resolve every requested scene URL against
+ // the actual build output. Matching source snippets alone missed the Cape typo.
+ const requests=[],win={HarbourRenderer:class {draw(){}},HarbourAudio:class {}};
+ const vm=require('node:vm');
+ vm.runInNewContext(fs.readFileSync(path.join(tmp,'public/gameplay/polish.js'),'utf8'),{
+  window:win,document:{addEventListener(){}},Image:class {set src(url){requests.push(url);}}
+ });
+ new win.HarbourRenderer({}, {}, false);
+ assert.equal(requests.length,7,'The preloader must request exactly seven scene images');
+ for(const url of requests){
+  const relative=new URL(url,'https://harbour.test').pathname.slice(1);
+  assert(fs.existsSync(path.join(tmp,'public',relative)),'Requested scene asset missing from production build: '+url);
+ }
+ assert(requests.some(url=>url.includes('/cape-reinga.svg?')),'Cape Reinga uses its published hyphenated filename');
  const art=fs.readFileSync(path.join(tmp,'public/gameplay/art/atlas.webp'));
  assert.equal(art.toString('ascii',0,4),'RIFF');assert.equal(art.toString('ascii',8,12),'WEBP');
  const authStart='    let isAuthorized = false;',legacy='    // Santa Harbour Dash — Dino-style Auckland endless runner';
