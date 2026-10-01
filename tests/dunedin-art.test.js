@@ -1,0 +1,35 @@
+'use strict';
+// The clean lower shoreline is registered from the approved original illustration.
+// Keep the existing 768x144 frame and never rely on an asynchronous repair overlay.
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
+const encoded=Array.from({length:6},(_,i)=>fs.readFileSync(path.join(__dirname,'../gameplay/art/scenes/dunedin-waterfront.'+i+'.b64'),'utf8').trim()).join('');
+const image=Buffer.from(encoded,'base64');
+assert.equal(image.toString('base64'),encoded,'Artwork must survive transport without truncation');
+assert.equal(image.toString('ascii',0,4),'RIFF');
+assert.equal(image.toString('ascii',8,12),'WEBP');
+assert.equal(image.readUInt32LE(4)+8,image.length,'Complete RIFF payload required');
+assert.equal(image.length,33232);
+assert.equal(crypto.createHash('sha256').update(image).digest('hex'),'9afb9889fc6c84e3833763ac5152e9a3ac70056732d641f5c14370c391acb279');
+assert.equal(image.toString('ascii',12,16),'VP8 ');
+assert.equal(image.readUInt16LE(26)&0x3fff,768);
+assert.equal(image.readUInt16LE(28)&0x3fff,144);
+const source=fs.readFileSync(path.join(__dirname,'../gameplay/coastline.js'),'utf8');
+assert(!source.includes('prepareDunedinRepair'),'A late overlay cannot corrupt the clean source');
+const vm=require('node:vm');
+let painted=[];
+const context={module:{exports:{}},document:{createElement:()=>({getContext:()=>({drawImage:(img)=>painted.push(img.id)})})}};
+vm.runInNewContext(source,context);
+const layer=new context.module.exports.CoastLayer();
+const auckland={id:'auckland',complete:true,naturalWidth:768,naturalHeight:144};
+const dunedin={id:'dunedin',complete:false,naturalWidth:0,naturalHeight:0};
+const images={auckland,dunedin};
+assert(layer.prepare(images,960,182),'Auckland must display independently');
+assert.deepEqual(painted,['auckland']);
+dunedin.complete=true;dunedin.naturalWidth=768;dunedin.naturalHeight=144;
+assert(layer.prepare(images,960,182));
+assert.deepEqual(painted,['auckland','dunedin'],'Late Dunedin loads directly from clean source');
+layer.prepare(images,960,182);
+assert.equal(painted.length,2,'Steady frames must reuse the cached source');
+layer.prepare(images,768,182);
+assert.deepEqual(painted,['auckland','dunedin','auckland','dunedin'],'Resize must retain clean sources');
+console.log(JSON.stringify({dunedinWaterfront:'verified',width:768,height:144,bytes:image.length,independentLoading:true}));

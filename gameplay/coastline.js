@@ -26,8 +26,8 @@
   }
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
-  const VERSION='2026.09.30-cape-reinga-loadfix.16';
-  const HORIZON=178,SCENE_DISTANCE=900,DISSOLVE_FRACTION=.28,PAN_FRACTION=.065,CHRISTCHURCH_FOCUS_Y=0,DUNEDIN_REPAIR_X=400/768,DUNEDIN_REPAIR_Y=70/360,DUNEDIN_REPAIR_W=368/768,DUNEDIN_REPAIR_H=200/360,WELLINGTON_WATER_EXTENSION=26,TAU=Math.PI*2;
+  const VERSION='2026.10.01-dunedin-source.17';
+  const HORIZON=178,SCENE_DISTANCE=900,DISSOLVE_FRACTION=.28,PAN_FRACTION=.065,CHRISTCHURCH_FOCUS_Y=0,WELLINGTON_WATER_EXTENSION=26,TAU=Math.PI*2;
   const SCENES=Object.freeze([
     Object.freeze({id:'auckland',label:'Auckland · Tāmaki Makaurau'}),
     Object.freeze({id:'queenstown',label:'Queenstown · Tāhuna'}),
@@ -111,23 +111,8 @@
     g.restore();
   }
   class CoastLayer{
-    constructor(){this.cache={};this.cacheKey='';this.dunedinRepairCanvas=null;this.dunedinRepairSource=null;}
-    prepareDunedinRepair(images){
-      const img=images?.dunedinRepair;
-      if(!img||!img.complete||!img.naturalWidth)return null;
-      if(this.dunedinRepairSource===img&&this.dunedinRepairCanvas)return this.dunedinRepairCanvas;
-      const plate=makeSurface(img.naturalWidth,img.naturalHeight),g=plate.getContext('2d');
-      g.drawImage(img,0,0);
-      g.globalCompositeOperation='destination-in';
-      const edge=.08,h=g.createLinearGradient(0,0,plate.width,0);
-      h.addColorStop(0,'rgba(0,0,0,0)');h.addColorStop(edge,'rgba(0,0,0,1)');h.addColorStop(1-edge,'rgba(0,0,0,1)');h.addColorStop(1,'rgba(0,0,0,0)');
-      g.fillStyle=h;g.fillRect(0,0,plate.width,plate.height);
-      const v=g.createLinearGradient(0,0,0,plate.height);
-      v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(edge,'rgba(0,0,0,1)');v.addColorStop(1-edge,'rgba(0,0,0,1)');v.addColorStop(1,'rgba(0,0,0,0)');
-      g.fillStyle=v;g.fillRect(0,0,plate.width,plate.height);
-      g.globalCompositeOperation='source-over';
-      this.dunedinRepairSource=img;this.dunedinRepairCanvas=plate;return plate;
-    }
+    // Dunedin repair is baked into its checked source image; no late overlay asset.
+    constructor(){this.cache={};this.cacheKey='';}
     label(world,reduced=false){
       const s=sceneState(world,reduced);
       return (s.dissolve>=.5?s.nextScene:s.current).label;
@@ -152,14 +137,6 @@
         g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';
         g.drawImage(img,sx,sy,sw,sh,0,0,targetW,H);
         if(scene.id==='christchurch')drawChristchurchSpire(g,img,sx,sy,sw,sh,targetW,H);
-        if(scene.id==='dunedin'){
-          const repair=this.prepareDunedinRepair(images);
-          if(repair){
-            const rx=img.naturalWidth*DUNEDIN_REPAIR_X,ry=img.naturalHeight*DUNEDIN_REPAIR_Y,rw=img.naturalWidth*DUNEDIN_REPAIR_W,rh=img.naturalHeight*DUNEDIN_REPAIR_H;
-            const dx=(rx-sx)/sw*targetW,dy=(ry-sy)/sh*H,dw=rw/sw*targetW,dh=rh/sh*H;
-            g.drawImage(repair,dx,dy,dw,dh);
-          }
-        }
         if(scene.id==='wellington'&&extraH){
           const waterSlice=sh*.10;
           g.globalAlpha=.96;
@@ -210,5 +187,5 @@
       c.restore();
     }
   }
-  return Object.freeze({version:VERSION,SCENES,SCENE_DISTANCE,ROUTE_DISTANCE,DISSOLVE_FRACTION,PAN_FRACTION,CHRISTCHURCH_FOCUS_Y,DUNEDIN_REPAIR_X,DUNEDIN_REPAIR_Y,DUNEDIN_REPAIR_W,DUNEDIN_REPAIR_H,WELLINGTON_WATER_EXTENSION,routeDistance,sceneState,sceneIndex,CoastLayer});
+  return Object.freeze({version:VERSION,SCENES,SCENE_DISTANCE,ROUTE_DISTANCE,DISSOLVE_FRACTION,PAN_FRACTION,CHRISTCHURCH_FOCUS_Y,WELLINGTON_WATER_EXTENSION,routeDistance,sceneState,sceneIndex,CoastLayer});
 });

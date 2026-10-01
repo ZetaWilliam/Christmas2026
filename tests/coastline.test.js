@@ -2,17 +2,13 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const coast=require('../gameplay/coastline.js');
 
-assert.equal(coast.version,'2026.09.30-cape-reinga-loadfix.16');
+assert.equal(coast.version,'2026.10.01-dunedin-source.17');
 assert.deepEqual(coast.SCENES.map(s=>s.id),['auckland','queenstown','milford','christchurch','dunedin','wellington','capereinga']);
 assert.equal(new Set(coast.SCENES.map(s=>s.id)).size,7);
 assert.equal(coast.SCENE_DISTANCE,900,'Each scene should advance after about 900 distance');
 assert.equal(coast.ROUTE_DISTANCE,6300,'Seven panoramas should rotate in a 6300-distance loop');
 assert(coast.PAN_FRACTION<=.065,'Each full panorama should still move only gently within its scene');
 assert.equal(coast.CHRISTCHURCH_FOCUS_Y,0,'Christchurch must preserve the very top of the source image so the spire cannot be cropped.');
-assert(Math.abs(coast.DUNEDIN_REPAIR_X-400/768)<1e-12);
-assert(Math.abs(coast.DUNEDIN_REPAIR_Y-70/360)<1e-12);
-assert(Math.abs(coast.DUNEDIN_REPAIR_W-368/768)<1e-12);
-assert(Math.abs(coast.DUNEDIN_REPAIR_H-200/360)<1e-12);
 assert.equal(coast.WELLINGTON_WATER_EXTENSION,26,'Only Wellington gets a short harbour-water extension below the horizon.');
 
 for(let i=0;i<coast.SCENES.length;i++){
@@ -67,8 +63,6 @@ assert(polish.includes("typeof image.decode==='function'?image.decode()"),'Raste
 assert(polish.includes("if(id==='capereinga'){finish();return;}"),'Cape Reinga SVG must not hold the whole scene set behind image.decode().');
 assert(polish.includes("const SCENES=['auckland','queenstown','milford','christchurch','dunedin','wellington','capereinga'];"),'Renderer preload order must match the seven-scene route.');
 assert(polish.includes("id==='capereinga'?'.svg':'.webp'"),'Cape Reinga must load its dedicated SVG scene asset.');
-assert(polish.includes('this.sceneExpected=SCENES.length+1'),'Dunedin repair asset must remain counted in scene readiness alongside seven panoramas.');
-assert(polish.includes("repair.src='/gameplay/art/scenes/dunedin-repair.webp?v='+VERSION"),'Dunedin repair asset must preload with the six scenes.');
 assert(polish.includes('this.sceneReady=this.sceneLoaded>0'),'Background rendering must start as soon as the first scene is available.');
 assert(polish.includes('this.draw();'),'Every completed scene load must request an immediate redraw.');
 assert(polish.includes("scene.current.id==='wellington'"),'Wellington water treatment must be scene-specific.');
@@ -80,10 +74,6 @@ assert(src.includes('function drawChristchurchSpire'),'Christchurch must include
 assert(src.includes("if(scene.id==='christchurch')drawChristchurchSpire"),'The spire repair must only run for Christchurch.');
 assert(src.includes("sourceX=img.naturalWidth*.7215"),'Spire repair must stay anchored to the tower position in the source panorama.');
 assert(src.includes("tipSourceY=img.naturalHeight*.105"),'Spire repair must extend well above the truncated source tower top.');
-assert(src.includes("scene.id==='dunedin'"),'Dunedin must have a scene-specific repair pass.');
-assert(src.includes('prepareDunedinRepair'),'Dunedin repair artwork must be cached and feathered.');
-assert(src.includes("g.globalCompositeOperation='destination-in'"),'Repair patch edges must be alpha-feathered.');
-assert(src.includes("g.drawImage(repair,dx,dy,dw,dh)"),'Clean Dunedin repair patch must be drawn into the damaged source region.');
 assert(!src.includes("wash.addColorStop(1,'rgba(72,102,106,.56)')"),'Legacy colour-wash masking must be removed once clean repair artwork is available.');
 assert(!src.includes("scene.id==='auckland'&&")&&!src.includes("scene.id==='queenstown'&&")&&!src.includes("scene.id==='milford'&&"),'No new colour repair may affect the other panoramas.');
 assert(src.includes("const srcRatio=img.naturalWidth/img.naturalHeight,targetRatio=targetW/H"),'Wellington extension must not change the panorama framing height.');
@@ -91,10 +81,14 @@ assert(src.includes("g.drawImage(img,sx,sy,sw,sh,0,0,targetW,H)"),'All panoramas
 assert(src.includes("const waterSlice=sh*.10"),'Wellington must extend only the bottom harbour-water slice below the horizon.');
 assert(!polish.includes("current.id==='auckland'")&&!polish.includes("current.id==='queenstown'")&&!polish.includes("current.id==='milford'")&&!polish.includes("current.id==='dunedin'"),'No other scene may receive a new ocean override.');
 
+assert(!src.includes('prepareDunedinRepair'),'No asynchronously loaded repair may override the clean source image.');
+assert(!polish.includes('dunedin-repair.webp'),'Dunedin must not require a second image request.');
+assert(polish.includes('this.sceneExpected=SCENES.length;'),'Only the seven scene images should be loaded.');
+
 class Base {draw(){} ocean(){} santa(){} hazard(){} reward(){} particles(){} overlay(){}}
 const win={HarbourRenderer:Base},context={window:win,document:{getElementById:()=>null}};context.globalThis=win;
 vm.runInNewContext(src,context);
 const Updated=win.HarbourRenderer;assert(Updated!==Base);
 for(const method of ['ocean','santa','hazard','reward','particles','overlay'])assert.equal(Updated.prototype[method],Base.prototype[method]);
 
-console.log(JSON.stringify({scenes:7,sceneDistance:coast.SCENE_DISTANCE,loopDistance:coast.ROUTE_DISTANCE,estimatedScoreLoopMultiplier:Number((7/6).toFixed(3)),capeReinga:true,incrementalSceneLoading:true,cinematicDissolve:true,originalPanoramas:true,christchurchSpireRestored:true,dunedinCleanRepair:true,wellingtonWaterOnlyExtension:true}));
+console.log(JSON.stringify({scenes:7,sceneDistance:coast.SCENE_DISTANCE,loopDistance:coast.ROUTE_DISTANCE,estimatedScoreLoopMultiplier:Number((7/6).toFixed(3)),capeReinga:true,incrementalSceneLoading:true,cinematicDissolve:true,originalPanoramas:true,christchurchSpireRestored:true,dunedinSourceRepair:true,wellingtonWaterOnlyExtension:true}));
