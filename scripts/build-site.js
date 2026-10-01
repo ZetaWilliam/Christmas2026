@@ -2,12 +2,13 @@
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),crypto=require('node:crypto');
 require('../tests/rowing-rig.test.js');
 require('../tests/coastline.test.js');
+require('../tests/christchurch-art.test.js');
 require('../tests/audio-feedback.test.js');
 const source=fs.readFileSync('index.html','utf8');
 const begin='    // Santa Harbour Dash — Dino-style Auckland endless runner',end='    // 微粒动画';
 const start=source.indexOf(begin),finish=source.indexOf(end,start);
 if(start<0||finish<=start||source.indexOf(begin,start+begin.length)>=0)throw Error('Cannot isolate legacy game. Source left unchanged.');
-const version='2026.09.30-cape-reinga-loadfix.28';
+const version='2026.10.01-christchurch-shoreline.29';
 let html=source.slice(0,start)+'    // The isolated Harbour Dash modules are loaded below.\n'+source.slice(finish);
 const gameMarker='  <!-- Santa Harbour Dash: Auckland Christmas endless runner -->',rsvpMarker='  <!-- 报名表单 -->',modalMarker='  <!-- 报名成功弹窗与电子票 -->';
 const a=html.indexOf(gameMarker),b=html.indexOf(rsvpMarker),c=html.indexOf(modalMarker);
@@ -55,13 +56,16 @@ const sceneHashes={
   auckland:'2cc0531da6d51cebaa3b6504567c0e532c437bac148639743ba57456dd2bf59a',
   queenstown:'ad863dac256512f76c8a970144ff004853c4ebcff588e415bdefc0fc31f33602',
   milford:'606417594644ced1dc22bc17cf0a17bdf661d864e51b2534005eb1f7edac4f38',
-  christchurch:'514811a1b2dac6ec3e4b10854e293d5cbec8bea0d4f71c958550ae06d0176b1d',
+  christchurch:'ae270dad15fb5022b5876013da81ef0345378615e21cfa7bf041d0d22ebbe5ab',
   dunedin:'2dd4f5c49e320059a7f218c747958ded855c74eb4bd9d95496868c30aa9f2476',
   wellington:'e55977f1a40413a6328f1e1666761ecf89b2867f8fce9cecb5a900e9a0f743ce'
 };
 fs.mkdirSync('public/gameplay/art/scenes',{recursive:true});
 for(const [id,sha] of Object.entries(sceneHashes)){
-  const data=Buffer.from(fs.readFileSync('gameplay/art/scenes/'+id+'.b64','utf8').trim(),'base64');
+  const encoded=id==='christchurch'
+    ? Array.from({length:4},(_,i)=>fs.readFileSync('gameplay/art/scenes/christchurch-shoreline.'+i+'.b64','utf8').trim()).join('')
+    : fs.readFileSync('gameplay/art/scenes/'+id+'.b64','utf8').trim();
+  const data=Buffer.from(encoded,'base64');
   if(data.toString('ascii',0,4)!=='RIFF'||data.toString('ascii',8,12)!=='WEBP')throw Error('Invalid scene artwork: '+id);
   if(crypto.createHash('sha256').update(data).digest('hex')!==sha)throw Error('Scene artwork integrity check failed: '+id);
   fs.writeFileSync('public/gameplay/art/scenes/'+id+'.webp',data);
@@ -84,4 +88,4 @@ for(const item of manifest){
  fs.writeFileSync('public/gameplay/music/'+item.file,data);
 }
 fs.copyFileSync('gameplay/music/CREDITS.md','public/gameplay/music/CREDITS.md');
-console.log(`Built ${version}: keep the seven-scene Cape Reinga route while rendering Auckland and other loaded panoramas immediately instead of waiting for every scene asset to decode.`);
+console.log(`Built ${version}: restore Christchurch shoreline pixels from the original artwork; retain all scene framing, loading, spire, water, gifts, lighting and gameplay.`);
