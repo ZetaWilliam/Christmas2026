@@ -3,12 +3,13 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),cryp
 require('../tests/rowing-rig.test.js');
 require('../tests/coastline.test.js');
 require('../tests/christchurch-art.test.js');
+require('../tests/dunedin-art.test.js');
 require('../tests/audio-feedback.test.js');
 const source=fs.readFileSync('index.html','utf8');
 const begin='    // Santa Harbour Dash — Dino-style Auckland endless runner',end='    // 微粒动画';
 const start=source.indexOf(begin),finish=source.indexOf(end,start);
 if(start<0||finish<=start||source.indexOf(begin,start+begin.length)>=0)throw Error('Cannot isolate legacy game. Source left unchanged.');
-const version='2026.10.01-christchurch-shoreline.29';
+const version='2026.10.01-dunedin-waterfront.30';
 let html=source.slice(0,start)+'    // The isolated Harbour Dash modules are loaded below.\n'+source.slice(finish);
 const gameMarker='  <!-- Santa Harbour Dash: Auckland Christmas endless runner -->',rsvpMarker='  <!-- 报名表单 -->',modalMarker='  <!-- 报名成功弹窗与电子票 -->';
 const a=html.indexOf(gameMarker),b=html.indexOf(rsvpMarker),c=html.indexOf(modalMarker);
@@ -57,23 +58,21 @@ const sceneHashes={
   queenstown:'ad863dac256512f76c8a970144ff004853c4ebcff588e415bdefc0fc31f33602',
   milford:'606417594644ced1dc22bc17cf0a17bdf661d864e51b2534005eb1f7edac4f38',
   christchurch:'ae270dad15fb5022b5876013da81ef0345378615e21cfa7bf041d0d22ebbe5ab',
-  dunedin:'2dd4f5c49e320059a7f218c747958ded855c74eb4bd9d95496868c30aa9f2476',
+  dunedin:'9afb9889fc6c84e3833763ac5152e9a3ac70056732d641f5c14370c391acb279',
   wellington:'e55977f1a40413a6328f1e1666761ecf89b2867f8fce9cecb5a900e9a0f743ce'
 };
 fs.mkdirSync('public/gameplay/art/scenes',{recursive:true});
 for(const [id,sha] of Object.entries(sceneHashes)){
   const encoded=id==='christchurch'
     ? Array.from({length:4},(_,i)=>fs.readFileSync('gameplay/art/scenes/christchurch-shoreline.'+i+'.b64','utf8').trim()).join('')
-    : fs.readFileSync('gameplay/art/scenes/'+id+'.b64','utf8').trim();
+    : id==='dunedin'
+      ? Array.from({length:6},(_,i)=>fs.readFileSync('gameplay/art/scenes/dunedin-waterfront.'+i+'.b64','utf8').trim()).join('')
+      : fs.readFileSync('gameplay/art/scenes/'+id+'.b64','utf8').trim();
   const data=Buffer.from(encoded,'base64');
   if(data.toString('ascii',0,4)!=='RIFF'||data.toString('ascii',8,12)!=='WEBP')throw Error('Invalid scene artwork: '+id);
   if(crypto.createHash('sha256').update(data).digest('hex')!==sha)throw Error('Scene artwork integrity check failed: '+id);
   fs.writeFileSync('public/gameplay/art/scenes/'+id+'.webp',data);
 }
-const dunedinRepair=Buffer.from(fs.readFileSync('gameplay/art/scenes/dunedin-repair.b64','utf8').trim(),'base64');
-if(dunedinRepair.toString('ascii',0,4)!=='RIFF'||dunedinRepair.toString('ascii',8,12)!=='WEBP')throw Error('Invalid Dunedin repair artwork');
-if(crypto.createHash('sha256').update(dunedinRepair).digest('hex')!=='add3ad4adc5521e2bb294f05819441552064ae0a45ca437136c6440eda32a652')throw Error('Dunedin repair artwork integrity check failed');
-fs.writeFileSync('public/gameplay/art/scenes/dunedin-repair.webp',dunedinRepair);
 const capeReingaSvg=fs.readFileSync('gameplay/art/scenes/cape-reinga.svg','utf8');
 if(!capeReingaSvg.includes('<svg')||!capeReingaSvg.includes('Cape Reinga')&&!capeReingaSvg.includes('lighthouse'))throw Error('Invalid Cape Reinga artwork');
 fs.writeFileSync('public/gameplay/art/scenes/cape-reinga.svg',capeReingaSvg);
@@ -88,4 +87,4 @@ for(const item of manifest){
  fs.writeFileSync('public/gameplay/music/'+item.file,data);
 }
 fs.copyFileSync('gameplay/music/CREDITS.md','public/gameplay/music/CREDITS.md');
-console.log(`Built ${version}: restore Christchurch shoreline pixels from the original artwork; retain all scene framing, loading, spire, water, gifts, lighting and gameplay.`);
+console.log(`Built ${version}: repair the Dunedin source waterfront, remove the obsolete asynchronous overlay, and preserve every other scene and gameplay behavior.`);
