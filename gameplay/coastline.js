@@ -26,8 +26,8 @@
   }
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
-  const VERSION='2026.10.01-dunedin-source.17';
-  const HORIZON=178,SCENE_DISTANCE=900,DISSOLVE_FRACTION=.28,PAN_FRACTION=.065,CHRISTCHURCH_FOCUS_Y=0,WELLINGTON_WATER_EXTENSION=26,TAU=Math.PI*2;
+  const VERSION='2026.10.01-coast-framing.18';
+  const HORIZON=178,SCENE_DISTANCE=900,DISSOLVE_FRACTION=.28,PAN_FRACTION=.065,CHRISTCHURCH_FOCUS_Y=0,WELLINGTON_WATER_EXTENSION=26,WELLINGTON_FRAME_LIFT=24,CAPE_REINGA_FOCUS_Y=.4,TAU=Math.PI*2;
   const SCENES=Object.freeze([
     Object.freeze({id:'auckland',label:'Auckland · Tāmaki Makaurau'}),
     Object.freeze({id:'queenstown',label:'Queenstown · Tāhuna'}),
@@ -112,15 +112,15 @@
   }
   class CoastLayer{
     // Dunedin repair is baked into its checked source image; no late overlay asset.
-    constructor(){this.cache={};this.cacheKey='';}
+    constructor(){this.cache={};this.cacheKey='';this.lastPlate=null;this.displayedScene=null;}
     label(world,reduced=false){
       const s=sceneState(world,reduced);
-      return (s.dissolve>=.5?s.nextScene:s.current).label;
+      return (this.displayedScene||(s.dissolve>=.5?s.nextScene:s.current)).label;
     }
     prepare(images,W,H){
       if(!images)return false;
       const pan=Math.max(28,Math.min(72,W*PAN_FRACTION)),key=W+'x'+H+'@'+pan;
-      if(this.cacheKey!==key){this.cache={};this.cacheKey=key;}
+      if(this.cacheKey!==key){this.cache={};this.cacheKey=key;this.lastPlate=null;}
       for(const scene of SCENES){
         if(this.cache[scene.id])continue;
         const img=images[scene.id];
@@ -131,19 +131,26 @@
         if(srcRatio>targetRatio){sw=sh*targetRatio;sx=(img.naturalWidth-sw)/2;}
         else{
           sh=sw/targetRatio;
-          const focusY=scene.id==='christchurch'?CHRISTCHURCH_FOCUS_Y:.5;
+          const focusY=scene.id==='christchurch'?CHRISTCHURCH_FOCUS_Y:scene.id==='capereinga'?CAPE_REINGA_FOCUS_Y:.5;
           sy=(img.naturalHeight-sh)*focusY;
         }
         g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';
-        g.drawImage(img,sx,sy,sw,sh,0,0,targetW,H);
-        if(scene.id==='christchurch')drawChristchurchSpire(g,img,sx,sy,sw,sh,targetW,H);
-        if(scene.id==='wellington'&&extraH){
-          const waterSlice=sh*.10;
-          g.globalAlpha=.96;
-          g.drawImage(img,sx,sy+sh-waterSlice,sw,waterSlice,0,H-1,targetW,extraH+1);
-          g.globalAlpha=1;
+        if(scene.id==='wellington'){
+          // Lift the photograph at its original scale; never stretch buildings into the sea.
+          // The old bottom-10% copy included towers/trees, not just harbour water.
+          const shoreY=H-WELLINGTON_FRAME_LIFT;
+          const water=g.createLinearGradient(0,shoreY,0,targetH);
+          water.addColorStop(0,'#6177A6');water.addColorStop(.55,'#5A788F');water.addColorStop(1,'#4D7488');
+          g.fillStyle=water;g.fillRect(0,shoreY-1,targetW,targetH-shoreY+1);
+          g.drawImage(img,sx,sy,sw,sh,0,-WELLINGTON_FRAME_LIFT,targetW,H);
+          const edge=g.createLinearGradient(0,shoreY-5,0,shoreY);
+          edge.addColorStop(0,'rgba(97,119,166,0)');edge.addColorStop(1,'rgba(97,119,166,1)');
+          g.fillStyle=edge;g.fillRect(0,shoreY-5,targetW,5);
+        }else{
+          g.drawImage(img,sx,sy,sw,sh,0,0,targetW,H);
         }
-        this.cache[scene.id]=Object.freeze({canvas:plate,travel:targetW-W});
+        if(scene.id==='christchurch')drawChristchurchSpire(g,img,sx,sy,sw,sh,targetW,H);
+        this.cache[scene.id]=Object.freeze({canvas:plate,travel:targetW-W,scene});
       }
       return Object.keys(this.cache).length>0;
     }
@@ -160,11 +167,22 @@
       this.prepare(images,W,H);
       const current=this.cache[state.current.id],incoming=this.cache[state.nextScene.id],d=state.dissolve;
       if(current){
+        this.lastPlate=incoming&&d>=.5?incoming:current;
+        this.displayedScene=this.lastPlate.scene;
         this.drawPlate(c,current,W,H,state.local,incoming?1-d:1);
         if(incoming&&d>0)this.drawPlate(c,incoming,W,H,0,d);
         if(incoming&&d>0&&d<1){
           const mist=Math.sin(Math.PI*d)*.10;
           c.fillStyle='rgba(222,235,234,'+mist+')';c.fillRect(0,0,W,H);
+        }
+      }else{
+        // A failed/slow current asset must not erase a panorama that already loaded.
+        let retained=this.lastPlate;
+        for(let back=1;!retained&&back<=SCENES.length;back++)retained=this.cache[SCENES[(state.index-back+SCENES.length)%SCENES.length].id];
+        if(retained){
+          this.lastPlate=retained;this.displayedScene=retained.scene;
+          this.drawPlate(c,retained,W,H,0,1);
+          if(incoming&&d>0){this.drawPlate(c,incoming,W,H,0,d);if(d>=.5)this.displayedScene=incoming.scene;}
         }
       }
       const haze=c.createLinearGradient(0,HORIZON-14,0,HORIZON+4);
@@ -187,5 +205,5 @@
       c.restore();
     }
   }
-  return Object.freeze({version:VERSION,SCENES,SCENE_DISTANCE,ROUTE_DISTANCE,DISSOLVE_FRACTION,PAN_FRACTION,CHRISTCHURCH_FOCUS_Y,WELLINGTON_WATER_EXTENSION,routeDistance,sceneState,sceneIndex,CoastLayer});
+  return Object.freeze({version:VERSION,SCENES,SCENE_DISTANCE,ROUTE_DISTANCE,DISSOLVE_FRACTION,PAN_FRACTION,CHRISTCHURCH_FOCUS_Y,WELLINGTON_WATER_EXTENSION,WELLINGTON_FRAME_LIFT,CAPE_REINGA_FOCUS_Y,routeDistance,sceneState,sceneIndex,CoastLayer});
 });

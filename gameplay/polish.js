@@ -3,7 +3,7 @@
   'use strict';
   const BaseRenderer=window.HarbourRenderer, BaseAudio=window.HarbourAudio;
   if(!BaseRenderer||!BaseAudio)return;
-  const VERSION='2026.10.01-dunedin-source.9';
+  const VERSION='2026.10.01-coast-framing.10';
   const SCENES=['auckland','queenstown','milford','christchurch','dunedin','wellington','capereinga'];
   class CleanRenderer extends BaseRenderer {
     constructor(canvas,engine,reduced){
@@ -19,7 +19,8 @@
           decoded.catch(()=>{}).then(finish);
         };
         image.onerror=()=>{console.warn('Illustrated scene unavailable:',id);finish();};
-        image.src='/gameplay/art/scenes/'+id+(id==='capereinga'?'.svg':'.webp')+'?v='+VERSION;
+        const asset=id==='capereinga'?'cape-reinga.svg':id+'.webp';
+        image.src='/gameplay/art/scenes/'+asset+'?v='+VERSION;
         this.sceneImages[id]=image;
       }
     }

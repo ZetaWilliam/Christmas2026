@@ -2,6 +2,7 @@
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),crypto=require('node:crypto');
 require('../tests/rowing-rig.test.js');
 require('../tests/coastline.test.js');
+require('../tests/scene-loading.test.js');
 require('../tests/christchurch-art.test.js');
 require('../tests/dunedin-art.test.js');
 require('../tests/audio-feedback.test.js');
@@ -9,7 +10,7 @@ const source=fs.readFileSync('index.html','utf8');
 const begin='    // Santa Harbour Dash — Dino-style Auckland endless runner',end='    // 微粒动画';
 const start=source.indexOf(begin),finish=source.indexOf(end,start);
 if(start<0||finish<=start||source.indexOf(begin,start+begin.length)>=0)throw Error('Cannot isolate legacy game. Source left unchanged.');
-const version='2026.10.01-dunedin-waterfront.30';
+const version='2026.10.01-coast-framing.31';
 let html=source.slice(0,start)+'    // The isolated Harbour Dash modules are loaded below.\n'+source.slice(finish);
 const gameMarker='  <!-- Santa Harbour Dash: Auckland Christmas endless runner -->',rsvpMarker='  <!-- 报名表单 -->',modalMarker='  <!-- 报名成功弹窗与电子票 -->';
 const a=html.indexOf(gameMarker),b=html.indexOf(rsvpMarker),c=html.indexOf(modalMarker);
@@ -87,4 +88,4 @@ for(const item of manifest){
  fs.writeFileSync('public/gameplay/music/'+item.file,data);
 }
 fs.copyFileSync('gameplay/music/CREDITS.md','public/gameplay/music/CREDITS.md');
-console.log(`Built ${version}: repair the Dunedin source waterfront, remove the obsolete asynchronous overlay, and preserve every other scene and gameplay behavior.`);
+console.log(`Built ${version}: restore Cape Reinga asset loading, lift Wellington above the sea, and retain loaded panoramas through asset failures.`);
