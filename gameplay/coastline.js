@@ -26,7 +26,7 @@
   }
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
-  const VERSION='2026.10.01-coast-framing.18';
+  const VERSION='2026.10.02-continuous-coast.19';
   const HORIZON=178,SCENE_DISTANCE=900,DISSOLVE_FRACTION=.28,PAN_FRACTION=.065,CHRISTCHURCH_FOCUS_Y=0,WELLINGTON_WATER_EXTENSION=26,WELLINGTON_FRAME_LIFT=24,CAPE_REINGA_FOCUS_Y=.4,TAU=Math.PI*2;
   const SCENES=Object.freeze([
     Object.freeze({id:'auckland',label:'Auckland · Tāmaki Makaurau'}),
@@ -112,7 +112,7 @@
   }
   class CoastLayer{
     // Dunedin repair is baked into its checked source image; no late overlay asset.
-    constructor(){this.cache={};this.cacheKey='';this.lastPlate=null;this.displayedScene=null;}
+    constructor(){this.cache={};this.cacheKey='';this.lastPlate=null;this.displayedScene=null;this.wellingtonWeight=0;}
     label(world,reduced=false){
       const s=sceneState(world,reduced);
       return (this.displayedScene||(s.dissolve>=.5?s.nextScene:s.current)).label;
@@ -136,16 +136,9 @@
         }
         g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';
         if(scene.id==='wellington'){
-          // Lift the photograph at its original scale; never stretch buildings into the sea.
-          // The old bottom-10% copy included towers/trees, not just harbour water.
-          const shoreY=H-WELLINGTON_FRAME_LIFT;
-          const water=g.createLinearGradient(0,shoreY,0,targetH);
-          water.addColorStop(0,'#6177A6');water.addColorStop(.55,'#5A788F');water.addColorStop(1,'#4D7488');
-          g.fillStyle=water;g.fillRect(0,shoreY-1,targetW,targetH-shoreY+1);
+          // The lifted panorama ends at y=158. The live ocean meets it directly:
+          // do not paint a second, static blue rectangle or repeat photo pixels.
           g.drawImage(img,sx,sy,sw,sh,0,-WELLINGTON_FRAME_LIFT,targetW,H);
-          const edge=g.createLinearGradient(0,shoreY-5,0,shoreY);
-          edge.addColorStop(0,'rgba(97,119,166,0)');edge.addColorStop(1,'rgba(97,119,166,1)');
-          g.fillStyle=edge;g.fillRect(0,shoreY-5,targetW,5);
         }else{
           g.drawImage(img,sx,sy,sw,sh,0,0,targetW,H);
         }
@@ -166,7 +159,9 @@
       fallback.addColorStop(0,p.top);fallback.addColorStop(1,p.horizon);c.fillStyle=fallback;c.fillRect(0,0,W,clipH);
       this.prepare(images,W,H);
       const current=this.cache[state.current.id],incoming=this.cache[state.nextScene.id],d=state.dissolve;
+      this.wellingtonWeight=0;
       if(current){
+        this.wellingtonWeight=(state.current.id==='wellington'?(incoming?1-d:1):0)+(incoming&&state.nextScene.id==='wellington'?d:0);
         this.lastPlate=incoming&&d>=.5?incoming:current;
         this.displayedScene=this.lastPlate.scene;
         this.drawPlate(c,current,W,H,state.local,incoming?1-d:1);
@@ -180,6 +175,7 @@
         let retained=this.lastPlate;
         for(let back=1;!retained&&back<=SCENES.length;back++)retained=this.cache[SCENES[(state.index-back+SCENES.length)%SCENES.length].id];
         if(retained){
+          this.wellingtonWeight=(retained.scene.id==='wellington'?1-(incoming?d:0):0)+(incoming&&incoming.scene.id==='wellington'?d:0);
           this.lastPlate=retained;this.displayedScene=retained.scene;
           this.drawPlate(c,retained,W,H,0,1);
           if(incoming&&d>0){this.drawPlate(c,incoming,W,H,0,d);if(d>=.5)this.displayedScene=incoming.scene;}
