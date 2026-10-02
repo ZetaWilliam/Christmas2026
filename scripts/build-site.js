@@ -1,5 +1,6 @@
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),crypto=require('node:crypto');
+require('../tests/engine.test.js');
 require('../tests/rowing-rig.test.js');
 require('../tests/coastline.test.js');
 require('../tests/scene-loading.test.js');
@@ -11,7 +12,7 @@ const source=fs.readFileSync('index.html','utf8');
 const begin='    // Santa Harbour Dash — Dino-style Auckland endless runner',end='    // 微粒动画';
 const start=source.indexOf(begin),finish=source.indexOf(end,start);
 if(start<0||finish<=start||source.indexOf(begin,start+begin.length)>=0)throw Error('Cannot isolate legacy game. Source left unchanged.');
-const version='2026.10.03-scene-art.33';
+const version='2026.10.03-post-50k.34';
 let html=source.slice(0,start)+'    // The isolated Harbour Dash modules are loaded below.\n'+source.slice(finish);
 const gameMarker='  <!-- Santa Harbour Dash: Auckland Christmas endless runner -->',rsvpMarker='  <!-- 报名表单 -->',modalMarker='  <!-- 报名成功弹窗与电子票 -->';
 const a=html.indexOf(gameMarker),b=html.indexOf(rsvpMarker),c=html.indexOf(modalMarker);
@@ -89,4 +90,4 @@ for(const item of manifest){
  fs.writeFileSync('public/gameplay/music/'+item.file,data);
 }
 fs.copyFileSync('gameplay/music/CREDITS.md','public/gameplay/music/CREDITS.md');
-console.log(`Built ${version}: refresh only the Wellington and Cape Reinga panorama artwork; preserve the existing route, ocean seam, gameplay, RSVP and site behavior.`);
+console.log(`Built ${version}: add a progressive expert difficulty ramp after 50,000 points while preserving pre-50k gameplay, scenery, RSVP, API and site behavior.`);
