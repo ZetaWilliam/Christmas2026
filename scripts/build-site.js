@@ -1,5 +1,6 @@
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),crypto=require('node:crypto');
+require('../tests/engine.test.js');
 require('../tests/rowing-rig.test.js');
 require('../tests/coastline.test.js');
 require('../tests/scene-loading.test.js');
