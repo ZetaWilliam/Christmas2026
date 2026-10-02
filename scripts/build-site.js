@@ -11,7 +11,7 @@ const source=fs.readFileSync('index.html','utf8');
 const begin='    // Santa Harbour Dash — Dino-style Auckland endless runner',end='    // 微粒动画';
 const start=source.indexOf(begin),finish=source.indexOf(end,start);
 if(start<0||finish<=start||source.indexOf(begin,start+begin.length)>=0)throw Error('Cannot isolate legacy game. Source left unchanged.');
-const version='2026.10.02-continuous-coast.32';
+const version='2026.10.03-scene-art.33';
 let html=source.slice(0,start)+'    // The isolated Harbour Dash modules are loaded below.\n'+source.slice(finish);
 const gameMarker='  <!-- Santa Harbour Dash: Auckland Christmas endless runner -->',rsvpMarker='  <!-- 报名表单 -->',modalMarker='  <!-- 报名成功弹窗与电子票 -->';
 const a=html.indexOf(gameMarker),b=html.indexOf(rsvpMarker),c=html.indexOf(modalMarker);
@@ -61,7 +61,7 @@ const sceneHashes={
   milford:'606417594644ced1dc22bc17cf0a17bdf661d864e51b2534005eb1f7edac4f38',
   christchurch:'ae270dad15fb5022b5876013da81ef0345378615e21cfa7bf041d0d22ebbe5ab',
   dunedin:'9afb9889fc6c84e3833763ac5152e9a3ac70056732d641f5c14370c391acb279',
-  wellington:'e55977f1a40413a6328f1e1666761ecf89b2867f8fce9cecb5a900e9a0f743ce'
+  wellington:'ee8a3d2b0de89d0d43d76f4600a04d7039ba3e2e932a5c87281148555b32c8d7'
 };
 fs.mkdirSync('public/gameplay/art/scenes',{recursive:true});
 for(const [id,sha] of Object.entries(sceneHashes)){
@@ -89,4 +89,4 @@ for(const item of manifest){
  fs.writeFileSync('public/gameplay/music/'+item.file,data);
 }
 fs.copyFileSync('gameplay/music/CREDITS.md','public/gameplay/music/CREDITS.md');
-console.log(`Built ${version}: remove the static Wellington blue band and connect the raised shoreline directly to the animated sea; keep Cape Reinga artwork unchanged pending a style-matched replacement.`);
+console.log(`Built ${version}: refresh only the Wellington and Cape Reinga panorama artwork; preserve the existing route, ocean seam, gameplay, RSVP and site behavior.`);
