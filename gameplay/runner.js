@@ -114,6 +114,7 @@
     if(ev.type==='chainComplete'){art.burst(ev.golden?'gold':'flower',176,177);music.effect('combo');tell('Perfect bloom line · '+ev.count+'/'+ev.count+'!',2.6);}
     if(ev.type==='comboEnd')combo.classList.add('hidden');
     if(ev.type==='milestone'){chime('milestone');if(eng.time>feedbackUntil)tell(ev.distance+' distance — keep going!');}
+    if(ev.type==='difficulty'){chime('milestone');tell('50,000 — expert waters! Faster pace and tighter hazard clusters.',3.2);}
     if(ev.type==='pause')pauseRun();
     if(ev.type==='end'){endedWall=performance.now();controls();held.clear();duckPointers.clear();chime('end');celebrate(ev.result);panel.classList.remove('hidden');save.disabled=false;save.textContent='Submit Score';status.textContent='';tell(ev.reason,999);runSummary.textContent=ev.result.score+' points · '+ev.result.flowers+' blooms · '+ev.result.goldenFlowers+' gold · best combo ×'+ev.result.maxCombo;if(eng.score>best){best=eng.score;bestEl.textContent='Your best: '+best;try{localStorage.setItem('harbour.personalBest.v2',String(best));}catch(_){}}}
   }}
