@@ -14,6 +14,7 @@ const layer=new coast.CoastLayer(),ctx=makeContext(),p={top:'#A8D8F0',horizon:'#
 const eng={width:960,world:48200};
 layer.draw(ctx,eng,p,images,true);
 assert.equal(layer.displayedScene.id,'wellington');
+assert.equal(layer.wellingtonWeight,1,'The visible Wellington plate determines the ocean geometry');
 const wellingtonPlate=layer.cache.wellington.canvas;
 const painted=surfaces.find(s=>s.canvas===wellingtonPlate).ctx.calls;
 assert.equal(painted.length,1,'Wellington source must be painted exactly once, never repeated under the sea');
@@ -26,9 +27,11 @@ eng.world=58940;ctx.calls=[];
 layer.draw(ctx,eng,p,images,true);
 assert(ctx.calls.some(call=>call[0]===wellingtonPlate),'A missing Cape Reinga must retain a loaded panorama');
 assert.equal(layer.displayedScene.id,'wellington','The label must describe the fallback that is actually visible');
+assert.equal(layer.wellingtonWeight,1,'A missing Cape image must retain the matching Wellington ocean edge');
 images.capereinga=cape;ctx.calls=[];
 layer.draw(ctx,eng,p,images,true);
 assert.equal(layer.displayedScene.id,'capereinga','A late Cape Reinga image must replace the fallback');
+assert.equal(layer.wellingtonWeight,0,'The normal sea edge returns when Cape Reinga loads');
 assert(ctx.calls.some(call=>call[0]===layer.cache.capereinga.canvas));
 // A direct late-game render or resize also needs a useful fallback without a previous frame.
 const direct=new coast.CoastLayer();

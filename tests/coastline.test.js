@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const coast=require('../gameplay/coastline.js');
 
-assert.equal(coast.version,'2026.10.01-coast-framing.18');
+assert.equal(coast.version,'2026.10.02-continuous-coast.19');
 assert.deepEqual(coast.SCENES.map(s=>s.id),['auckland','queenstown','milford','christchurch','dunedin','wellington','capereinga']);
 assert.equal(new Set(coast.SCENES.map(s=>s.id)).size,7);
 assert.equal(coast.SCENE_DISTANCE,900,'Each scene should advance after about 900 distance');
@@ -67,8 +67,11 @@ assert(polish.includes('this.sceneReady=this.sceneLoaded>0'),'Background renderi
 assert(polish.includes('this.draw();'),'Every completed scene load must request an immediate redraw.');
 assert(polish.includes("scene.current.id==='wellington'"),'Wellington water treatment must be scene-specific.');
 assert(polish.includes("scene.nextScene.id==='wellington'"),'Wellington water blend must enter and leave smoothly during dissolves.');
-assert(polish.includes("this.mix(normalTop,'#5A788F',.82*wellingtonWeight)"),'Wellington horizon water must blend toward the muted harbour steel-blue.');
-assert(polish.includes("1-.94*wellingtonWeight"),'Wellington dynamic water must begin mostly transparent so the retained harbour water remains visible at the horizon.');
+assert(polish.includes('this.mix(p.water,p.horizon,.37-.23*wellingtonWeight)'), 'The shore must use the same live water palette, not a static steel-blue band.');
+assert(polish.includes('joinDepth=6*wellingtonWeight'),'A narrow six-pixel feather must connect the photograph directly to the animated sea.');
+assert(!src.includes('#6177A6'),'The separately colored static background strip must not return.');
+assert(polish.includes('h=178-26*wellingtonWeight'),'The live sea must reach the raised shoreline.');
+assert(polish.includes('this.coastLayer?.wellingtonWeight??routeWeight'),'Fallback scenery and ocean geometry must stay synchronized.');
 assert(src.includes("scene.id==='christchurch'?CHRISTCHURCH_FOCUS_Y:scene.id==='capereinga'?CAPE_REINGA_FOCUS_Y:.5"),'Christchurch and Cape Reinga keep dedicated landmark-safe focal points.');
 assert(src.includes('function drawChristchurchSpire'),'Christchurch must include a scene-anchored Gothic spire repair layer.');
 assert(src.includes("if(scene.id==='christchurch')drawChristchurchSpire"),'The spire repair must only run for Christchurch.');
